@@ -14,13 +14,13 @@ export function CTASection() {
           <h2 className="text-foreground text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-4 md:mb-6 tracking-tight">
             ¿Listo para transformar
             <br />
-            <span className="font-medium text-primary">tu trading?</span>
+            <span className="font-medium text-primary">tu plataforma?</span>
           </h2>
 
           {/* Subtitle */}
           <p className="text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-8 md:mb-12 font-light">
-            Únete a traders profesionales que ya están escalando sus operaciones
-            con FENIZ
+            Únete a profesionales que ya están escalando sus operaciones con
+            MyApp
           </p>
 
           {/* CTA Button */}

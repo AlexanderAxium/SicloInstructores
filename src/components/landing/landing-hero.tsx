@@ -592,17 +592,16 @@ export function LandingHero() {
       {/* Main content */}
       <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 pt-6 pb-10 max-w-5xl mx-auto">
         <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 md:mb-5">
-          Sistema para Funded <span className="text-primary">Traders</span>
+          Plataforma <span className="text-primary">Modern</span>
         </h1>
         <p className="text-white/80 text-base sm:text-lg md:text-xl font-normal leading-relaxed max-w-3xl mx-auto mb-6 md:mb-7">
-          La forma más inteligente de aprobar cuentas de fondeo, opera con tu
-          capital sin miedo a perderlo, optimiza tu estrategia y aumenta tus
-          probabilidades de éxito.
+          La forma más inteligente de gestionar usuarios, contenido y configurar
+          tu plataforma de manera eficiente y escalable.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
           <Link href="/signup">
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 sm:px-8 py-3 rounded-full font-semibold text-sm sm:text-base shadow-lg w-full sm:w-auto">
-              Hablar con un Asesor
+              Comenzar Ahora
             </Button>
           </Link>
           <Link href="#features-section">

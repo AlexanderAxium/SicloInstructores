@@ -32,9 +32,10 @@ export function Footer() {
 
   // Default values if no company info is available
   const defaultInfo = {
-    name: "Feniz",
-    displayName: "Feniz Trading Platform",
-    description: "La plataforma líder para traders de propfirms y brokers.",
+    name: "MyApp",
+    displayName: "My Application Platform",
+    description:
+      "La plataforma líder para gestión de usuarios y autenticación.",
     email: null,
     phone: null,
     address: null,
@@ -49,9 +50,9 @@ export function Footer() {
     foundedYear: null,
     logoUrl: null,
     faviconUrl: null,
-    metaTitle: "Feniz - Trading Platform",
-    metaDescription: "Plataforma de trading profesional",
-    metaKeywords: "trading, propfirm, broker, gestión",
+    metaTitle: "MyApp - Modern Platform",
+    metaDescription: "Plataforma moderna y escalable",
+    metaKeywords: "gestión, usuarios, plataforma, moderno, escalable",
     termsUrl: "/legal/terms",
     privacyUrl: "/legal/privacy",
     cookiesUrl: "/legal/cookies",

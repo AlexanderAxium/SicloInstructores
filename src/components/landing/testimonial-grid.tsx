@@ -11,33 +11,33 @@ interface TestimonialCardProps {
 const testimonials: TestimonialCardProps[] = [
   {
     quote:
-      "Las sugerencias en tiempo real de FENIZ son como tener un trader senior revisando cada operación mientras operas. La precisión de sus recomendaciones mejoró nuestra calidad general, redujo el tiempo de revisión.",
+      "Las sugerencias en tiempo real de MyApp son como tener un experto revisando cada proceso mientras trabajas. La precisión de sus recomendaciones mejoró nuestra eficiencia general, reduciendo el tiempo de gestión.",
     name: "Ana García",
-    company: "PropFirm Elite",
+    company: "Tech Solutions",
     avatar: "/images/avatars/annette-black.png",
     type: "large-teal",
   },
   {
     quote:
-      "Integrar FENIZ en nuestro stack fue sencillo, y las conexiones con propfirms nos ahorraron días de configuración",
+      "Integrar MyApp en nuestro stack fue sencillo, y las conexiones con servicios externos nos ahorraron días de configuración",
     name: "Diego Ruiz",
-    company: "Trading Masters",
+    company: "Digital Agency",
     avatar: "/images/avatars/dianne-russell.png",
     type: "small-dark",
   },
   {
     quote:
-      "Configurar FENIZ fue simple, se sintió perfecto. Pasamos de operar a ver nuestros cambios en vivo en minutos sin preocuparnos por latencia o problemas de configuración.",
+      "Configurar MyApp fue simple, se sintió perfecto. Pasamos de desarrollo a ver nuestros cambios en vivo en minutos sin preocuparnos por rendimiento o problemas de configuración.",
     name: "Alberto Flores",
-    company: "Elite Traders",
+    company: "Innovation Hub",
     avatar: "/images/avatars/albert-flores.png",
     type: "large-light",
   },
   {
     quote:
-      "La función de copy trading de FENIZ cambió las reglas del juego. Estamos escalando cuentas en horas en lugar de gastar semanas enteras.",
+      "La función de automatización de MyApp cambió las reglas del juego. Estamos escalando operaciones en horas en lugar de gastar semanas enteras.",
     name: "Camila Torres",
-    company: "Forex Pro",
+    company: "Startup Pro",
     avatar: "/images/avatars/cameron-williamson.png",
     type: "small-dark",
   },
@@ -148,14 +148,14 @@ export function TestimonialGrid() {
           <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-6 md:mb-8" />
 
           <h2 className="text-foreground text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-4 md:mb-6 tracking-tight">
-            Trading
+            Gestión
             <br />
             <span className="font-medium text-primary">sin esfuerzo</span>
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mx-auto font-light">
-            Escucha cómo traders escalan sus operaciones más rápido, colaboran
-            sin problemas, y operan con confianza usando las poderosas
-            herramientas de FENIZ
+            Escucha cómo profesionales escalan sus operaciones más rápido,
+            colaboran sin problemas, y gestionan con confianza usando las
+            poderosas herramientas de MyApp
           </p>
         </div>
         <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">

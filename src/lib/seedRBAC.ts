@@ -56,27 +56,14 @@ export async function seedRBAC() {
     },
   });
 
-  // Moderator Role
-  const moderatorRole = await prisma.role.upsert({
-    where: { name: DEFAULT_ROLES.MODERATOR },
+  // User Role
+  const userRole = await prisma.role.upsert({
+    where: { name: DEFAULT_ROLES.USER },
     update: {},
     create: {
-      name: DEFAULT_ROLES.MODERATOR,
-      displayName: "Moderator",
-      description: "Moderation access to user content and basic management",
-      isSystem: true,
-      isActive: true,
-    },
-  });
-
-  // Trader Role
-  const traderRole = await prisma.role.upsert({
-    where: { name: DEFAULT_ROLES.TRADER },
-    update: {},
-    create: {
-      name: DEFAULT_ROLES.TRADER,
-      displayName: "Trader",
-      description: "Full trading access and account management",
+      name: DEFAULT_ROLES.USER,
+      displayName: "User",
+      description: "Regular user access",
       isSystem: true,
       isActive: true,
     },
@@ -134,52 +121,24 @@ export async function seedRBAC() {
     });
   }
 
-  // Moderator gets user management and basic permissions
-  const moderatorPermissions = permissions.filter(
+  // User gets basic permissions
+  const userPermissions = permissions.filter(
     (p) =>
-      (p.resource === PermissionResource.USER &&
-        p.action !== PermissionAction.DELETE) ||
       p.resource === PermissionResource.DASHBOARD ||
-      (p.resource === PermissionResource.TRADE &&
+      (p.resource === PermissionResource.USER &&
         p.action === PermissionAction.READ)
   );
-  for (const permission of moderatorPermissions) {
+  for (const permission of userPermissions) {
     await prisma.rolePermission.upsert({
       where: {
         roleId_permissionId: {
-          roleId: moderatorRole.id,
+          roleId: userRole.id,
           permissionId: permission.id,
         },
       },
       update: {},
       create: {
-        roleId: moderatorRole.id,
-        permissionId: permission.id,
-      },
-    });
-  }
-
-  // Trader gets trading-related permissions
-  const traderPermissions = permissions.filter(
-    (p) =>
-      p.resource === PermissionResource.TRADING_ACCOUNT ||
-      p.resource === PermissionResource.TRADE ||
-      p.resource === PermissionResource.DASHBOARD ||
-      p.resource === PermissionResource.SYMBOL ||
-      p.resource === PermissionResource.PROPFIRM ||
-      p.resource === PermissionResource.BROKER
-  );
-  for (const permission of traderPermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: traderRole.id,
-          permissionId: permission.id,
-        },
-      },
-      update: {},
-      create: {
-        roleId: traderRole.id,
+        roleId: userRole.id,
         permissionId: permission.id,
       },
     });
@@ -189,11 +148,7 @@ export async function seedRBAC() {
   const viewerPermissions = permissions.filter(
     (p) =>
       p.action === PermissionAction.READ &&
-      (p.resource === PermissionResource.DASHBOARD ||
-        p.resource === PermissionResource.TRADE ||
-        p.resource === PermissionResource.SYMBOL ||
-        p.resource === PermissionResource.PROPFIRM ||
-        p.resource === PermissionResource.BROKER)
+      p.resource === PermissionResource.DASHBOARD
   );
   for (const permission of viewerPermissions) {
     await prisma.rolePermission.upsert({
@@ -221,17 +176,17 @@ export async function seedRBAC() {
   });
 
   for (const user of existingUsers) {
-    // Assign trader role by default
+    // Assign user role by default
     await prisma.userRole.create({
       data: {
         userId: user.id,
-        roleId: traderRole.id,
+        roleId: userRole.id,
       },
     });
   }
 
   return {
-    roles: [superAdminRole, adminRole, moderatorRole, traderRole, viewerRole],
+    roles: [superAdminRole, adminRole, userRole, viewerRole],
     permissions: permissions.length,
   };
 }

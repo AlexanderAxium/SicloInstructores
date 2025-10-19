@@ -59,7 +59,7 @@ export default function CookiesPage() {
                 <li>Recordar configuraciones de la plataforma</li>
                 <li>Personalizar la interfaz de usuario</li>
                 <li>Guardar preferencias de visualización</li>
-                <li>Mantener configuraciones de trading</li>
+                <li>Mantener configuraciones de la plataforma</li>
               </ul>
             </div>
 
@@ -212,10 +212,10 @@ export default function CookiesPage() {
               <p className="text-muted-foreground">
                 Email:{" "}
                 <a
-                  href="mailto:privacy@tradingplatform.com"
+                  href="mailto:privacy@myapp.com"
                   className="text-primary hover:underline"
                 >
-                  privacy@tradingplatform.com
+                  privacy@myapp.com
                 </a>
               </p>
               <p className="text-muted-foreground">

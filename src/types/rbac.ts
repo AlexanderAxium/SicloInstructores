@@ -11,12 +11,6 @@ export enum PermissionResource {
   USER = "USER",
   ROLE = "ROLE",
   PERMISSION = "PERMISSION",
-  TRADING_ACCOUNT = "TRADING_ACCOUNT",
-  TRADE = "TRADE",
-  PROPFIRM = "PROPFIRM",
-  BROKER = "BROKER",
-  SYMBOL = "SYMBOL",
-  SUBSCRIPTION = "SUBSCRIPTION",
   DASHBOARD = "DASHBOARD",
   ADMIN = "ADMIN",
 }
@@ -92,8 +86,7 @@ export interface RBACContext {
 export const DEFAULT_ROLES = {
   SUPER_ADMIN: "super_admin",
   ADMIN: "admin",
-  MODERATOR: "moderator",
-  TRADER: "trader",
+  USER: "user",
   VIEWER: "viewer",
 } as const;
 
@@ -141,138 +134,6 @@ export const DEFAULT_PERMISSIONS = {
   ROLE_MANAGE: {
     action: PermissionAction.MANAGE,
     resource: PermissionResource.ROLE,
-  },
-
-  // Trading account management
-  TRADING_ACCOUNT_CREATE: {
-    action: PermissionAction.CREATE,
-    resource: PermissionResource.TRADING_ACCOUNT,
-  },
-  TRADING_ACCOUNT_READ: {
-    action: PermissionAction.READ,
-    resource: PermissionResource.TRADING_ACCOUNT,
-  },
-  TRADING_ACCOUNT_UPDATE: {
-    action: PermissionAction.UPDATE,
-    resource: PermissionResource.TRADING_ACCOUNT,
-  },
-  TRADING_ACCOUNT_DELETE: {
-    action: PermissionAction.DELETE,
-    resource: PermissionResource.TRADING_ACCOUNT,
-  },
-  TRADING_ACCOUNT_MANAGE: {
-    action: PermissionAction.MANAGE,
-    resource: PermissionResource.TRADING_ACCOUNT,
-  },
-
-  // Trade management
-  TRADE_CREATE: {
-    action: PermissionAction.CREATE,
-    resource: PermissionResource.TRADE,
-  },
-  TRADE_READ: {
-    action: PermissionAction.READ,
-    resource: PermissionResource.TRADE,
-  },
-  TRADE_UPDATE: {
-    action: PermissionAction.UPDATE,
-    resource: PermissionResource.TRADE,
-  },
-  TRADE_DELETE: {
-    action: PermissionAction.DELETE,
-    resource: PermissionResource.TRADE,
-  },
-  TRADE_MANAGE: {
-    action: PermissionAction.MANAGE,
-    resource: PermissionResource.TRADE,
-  },
-
-  // Propfirm management
-  PROPFIRM_CREATE: {
-    action: PermissionAction.CREATE,
-    resource: PermissionResource.PROPFIRM,
-  },
-  PROPFIRM_READ: {
-    action: PermissionAction.READ,
-    resource: PermissionResource.PROPFIRM,
-  },
-  PROPFIRM_UPDATE: {
-    action: PermissionAction.UPDATE,
-    resource: PermissionResource.PROPFIRM,
-  },
-  PROPFIRM_DELETE: {
-    action: PermissionAction.DELETE,
-    resource: PermissionResource.PROPFIRM,
-  },
-  PROPFIRM_MANAGE: {
-    action: PermissionAction.MANAGE,
-    resource: PermissionResource.PROPFIRM,
-  },
-
-  // Broker management
-  BROKER_CREATE: {
-    action: PermissionAction.CREATE,
-    resource: PermissionResource.BROKER,
-  },
-  BROKER_READ: {
-    action: PermissionAction.READ,
-    resource: PermissionResource.BROKER,
-  },
-  BROKER_UPDATE: {
-    action: PermissionAction.UPDATE,
-    resource: PermissionResource.BROKER,
-  },
-  BROKER_DELETE: {
-    action: PermissionAction.DELETE,
-    resource: PermissionResource.BROKER,
-  },
-  BROKER_MANAGE: {
-    action: PermissionAction.MANAGE,
-    resource: PermissionResource.BROKER,
-  },
-
-  // Symbol management
-  SYMBOL_CREATE: {
-    action: PermissionAction.CREATE,
-    resource: PermissionResource.SYMBOL,
-  },
-  SYMBOL_READ: {
-    action: PermissionAction.READ,
-    resource: PermissionResource.SYMBOL,
-  },
-  SYMBOL_UPDATE: {
-    action: PermissionAction.UPDATE,
-    resource: PermissionResource.SYMBOL,
-  },
-  SYMBOL_DELETE: {
-    action: PermissionAction.DELETE,
-    resource: PermissionResource.SYMBOL,
-  },
-  SYMBOL_MANAGE: {
-    action: PermissionAction.MANAGE,
-    resource: PermissionResource.SYMBOL,
-  },
-
-  // Subscription management
-  SUBSCRIPTION_CREATE: {
-    action: PermissionAction.CREATE,
-    resource: PermissionResource.SUBSCRIPTION,
-  },
-  SUBSCRIPTION_READ: {
-    action: PermissionAction.READ,
-    resource: PermissionResource.SUBSCRIPTION,
-  },
-  SUBSCRIPTION_UPDATE: {
-    action: PermissionAction.UPDATE,
-    resource: PermissionResource.SUBSCRIPTION,
-  },
-  SUBSCRIPTION_DELETE: {
-    action: PermissionAction.DELETE,
-    resource: PermissionResource.SUBSCRIPTION,
-  },
-  SUBSCRIPTION_MANAGE: {
-    action: PermissionAction.MANAGE,
-    resource: PermissionResource.SUBSCRIPTION,
   },
 
   // Dashboard access

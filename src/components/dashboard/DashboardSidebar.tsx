@@ -58,34 +58,16 @@ export function DashboardSidebar() {
           description: "Configurar sistema RBAC",
         },
         {
-          title: "Propfirms",
-          href: "/dashboard/propfirms",
-          icon: Building2,
-          description: "Gestionar propfirms del sistema",
-        },
-        {
-          title: "Brokers",
-          href: "/dashboard/brokers",
-          icon: Briefcase,
-          description: "Gestionar brokers del sistema",
-        },
-        {
-          title: "Símbolos",
-          href: "/dashboard/symbols",
-          icon: TrendingUp,
-          description: "Gestionar símbolos de trading",
-        },
-        {
           title: "Configuraciones",
-          href: "/dashboard/symbol-configs",
+          href: "/dashboard/settings",
           icon: Settings,
-          description: "Configuraciones de símbolos",
+          description: "Configuraciones del sistema",
         },
         {
           title: "Información de la Empresa",
           href: "/dashboard/company-info",
           icon: Building2,
-          description: "Gestionar información de Feniz",
+          description: "Gestionar información de la empresa",
         },
       ];
     }
@@ -101,28 +83,10 @@ export function DashboardSidebar() {
           description: "Ver usuarios del sistema",
         },
         {
-          title: "Propfirms",
-          href: "/dashboard/propfirms",
-          icon: Building2,
-          description: "Ver propfirms del sistema",
-        },
-        {
-          title: "Brokers",
-          href: "/dashboard/brokers",
-          icon: Briefcase,
-          description: "Ver brokers del sistema",
-        },
-        {
-          title: "Símbolos",
-          href: "/dashboard/symbols",
-          icon: TrendingUp,
-          description: "Ver símbolos de trading",
-        },
-        {
           title: "Configuraciones",
-          href: "/dashboard/symbol-configs",
+          href: "/dashboard/settings",
           icon: Settings,
-          description: "Ver configuraciones de símbolos",
+          description: "Ver configuraciones del sistema",
         },
       ];
     }

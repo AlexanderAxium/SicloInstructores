@@ -69,26 +69,6 @@ export function useRBAC() {
     );
   }, [userPermissions]);
 
-  const canManageTradingAccounts = useMemo(() => {
-    if (!userPermissions.length) return false;
-    return userPermissions.some(
-      (permission) =>
-        permission.action === PermissionAction.MANAGE &&
-        permission.resource === PermissionResource.TRADING_ACCOUNT &&
-        permission.isActive
-    );
-  }, [userPermissions]);
-
-  const canManageTrades = useMemo(() => {
-    if (!userPermissions.length) return false;
-    return userPermissions.some(
-      (permission) =>
-        permission.action === PermissionAction.MANAGE &&
-        permission.resource === PermissionResource.TRADE &&
-        permission.isActive
-    );
-  }, [userPermissions]);
-
   const canViewDashboard = useMemo(() => {
     if (!userPermissions.length) return false;
     return userPermissions.some(
@@ -174,8 +154,6 @@ export function useRBAC() {
     canManageUsers,
     canManageRoles,
     canAccessAdmin,
-    canManageTradingAccounts,
-    canManageTrades,
     canViewDashboard,
 
     // Loading state

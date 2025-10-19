@@ -460,30 +460,6 @@ export async function canAccessAdmin(userId: string): Promise<boolean> {
 }
 
 /**
- * Check if user can manage trading accounts
- */
-export async function canManageTradingAccounts(
-  userId: string
-): Promise<boolean> {
-  return await hasPermission(
-    userId,
-    PermissionAction.MANAGE,
-    PermissionResource.TRADING_ACCOUNT
-  );
-}
-
-/**
- * Check if user can manage trades
- */
-export async function canManageTrades(userId: string): Promise<boolean> {
-  return await hasPermission(
-    userId,
-    PermissionAction.MANAGE,
-    PermissionResource.TRADE
-  );
-}
-
-/**
  * Check if user can view dashboard
  */
 export async function canViewDashboard(userId: string): Promise<boolean> {
@@ -491,49 +467,5 @@ export async function canViewDashboard(userId: string): Promise<boolean> {
     userId,
     PermissionAction.READ,
     PermissionResource.DASHBOARD
-  );
-}
-
-/**
- * Check if user can manage propfirms
- */
-export async function canManagePropfirms(userId: string): Promise<boolean> {
-  return await hasPermission(
-    userId,
-    PermissionAction.MANAGE,
-    PermissionResource.PROPFIRM
-  );
-}
-
-/**
- * Check if user can create propfirms
- */
-export async function canCreatePropfirms(userId: string): Promise<boolean> {
-  return await hasPermission(
-    userId,
-    PermissionAction.CREATE,
-    PermissionResource.PROPFIRM
-  );
-}
-
-/**
- * Check if user can update propfirms
- */
-export async function canUpdatePropfirms(userId: string): Promise<boolean> {
-  return await hasPermission(
-    userId,
-    PermissionAction.UPDATE,
-    PermissionResource.PROPFIRM
-  );
-}
-
-/**
- * Check if user can delete propfirms
- */
-export async function canDeletePropfirms(userId: string): Promise<boolean> {
-  return await hasPermission(
-    userId,
-    PermissionAction.DELETE,
-    PermissionResource.PROPFIRM
   );
 }

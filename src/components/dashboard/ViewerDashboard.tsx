@@ -60,9 +60,9 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
     },
     {
       id: 4,
-      title: "Actividad de Trading",
-      description: "Resumen de actividad de trading",
-      type: "trading",
+      title: "Actividad de la Plataforma",
+      description: "Resumen de actividad de la plataforma",
+      type: "platform",
       lastUpdated: "Hace 12 horas",
       icon: <DollarSign className="h-5 w-5 text-orange-600" />,
     },

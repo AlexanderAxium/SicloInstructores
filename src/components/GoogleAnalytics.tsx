@@ -1,7 +1,5 @@
 "use client";
 
-import { env } from "~/env.js";
-
 interface GoogleAnalyticsProps {
   gaTrackingId: string;
 }

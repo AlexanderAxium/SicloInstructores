@@ -5,8 +5,8 @@ export function generateOrganizationSchema() {
     name: "MiApp",
     description:
       "Una plataforma moderna para gestionar proyectos, colaborar en equipo y alcanzar tus objetivos.",
-    url: process.env.SITE_URL!,
-    logo: `${process.env.SITE_URL!}/logo.png`,
+    url: process.env.SITE_URL || "https://myapp.example.com",
+    logo: `${process.env.SITE_URL || "https://myapp.example.com"}/logo.png`,
     sameAs: [
       // Agregar URLs de redes sociales cuando estén disponibles
       // "https://twitter.com/miapp",

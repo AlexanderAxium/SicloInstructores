@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = generateSEOMetadata({
   title: "Platform",
-  description: "Plataforma de trading y gestión administrativa.",
-  keywords: ["platform", "trading", "gestión", "dashboard"],
+  description: "Plataforma moderna de gestión administrativa.",
+  keywords: ["platform", "gestión", "dashboard", "administración"],
 });
 
 export default function AuthenticatedLayout({

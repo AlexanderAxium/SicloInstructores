@@ -248,7 +248,7 @@ export default function CompanyInfoPage() {
             Información de la Empresa
           </h1>
           <p className="text-muted-foreground">
-            Gestiona la información general de Feniz
+            Gestiona la información general de la empresa
           </p>
         </div>
       </div>
@@ -273,7 +273,7 @@ export default function CompanyInfoPage() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Feniz"
+                  placeholder="MyApp"
                 />
               </div>
               <div className="space-y-2">
@@ -284,7 +284,7 @@ export default function CompanyInfoPage() {
                   onChange={(e) =>
                     handleInputChange("displayName", e.target.value)
                   }
-                  placeholder="Feniz Trading Platform"
+                  placeholder="My Application Platform"
                 />
               </div>
             </div>
@@ -321,7 +321,7 @@ export default function CompanyInfoPage() {
                   id="website"
                   value={formData.website}
                   onChange={(e) => handleInputChange("website", e.target.value)}
-                  placeholder="https://feniz.com"
+                  placeholder="https://myapp.com"
                 />
               </div>
             </div>
@@ -346,7 +346,7 @@ export default function CompanyInfoPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="info@feniz.com"
+                  placeholder="info@myapp.com"
                 />
               </div>
               <div className="space-y-2">
@@ -414,7 +414,7 @@ export default function CompanyInfoPage() {
                   onChange={(e) =>
                     handleInputChange("facebookUrl", e.target.value)
                   }
-                  placeholder="https://facebook.com/feniz"
+                  placeholder="https://facebook.com/myapp"
                 />
               </div>
               <div className="space-y-2">
@@ -425,7 +425,7 @@ export default function CompanyInfoPage() {
                   onChange={(e) =>
                     handleInputChange("twitterUrl", e.target.value)
                   }
-                  placeholder="https://twitter.com/feniz"
+                  placeholder="https://twitter.com/myapp"
                 />
               </div>
               <div className="space-y-2">
@@ -436,7 +436,7 @@ export default function CompanyInfoPage() {
                   onChange={(e) =>
                     handleInputChange("instagramUrl", e.target.value)
                   }
-                  placeholder="https://instagram.com/feniz"
+                  placeholder="https://instagram.com/myapp"
                 />
               </div>
               <div className="space-y-2">
@@ -447,7 +447,7 @@ export default function CompanyInfoPage() {
                   onChange={(e) =>
                     handleInputChange("linkedinUrl", e.target.value)
                   }
-                  placeholder="https://linkedin.com/company/feniz"
+                  placeholder="https://linkedin.com/company/myapp"
                 />
               </div>
               <div className="space-y-2">
@@ -458,7 +458,7 @@ export default function CompanyInfoPage() {
                   onChange={(e) =>
                     handleInputChange("youtubeUrl", e.target.value)
                   }
-                  placeholder="https://youtube.com/@feniz"
+                  placeholder="https://youtube.com/@myapp"
                 />
               </div>
             </div>
@@ -483,7 +483,7 @@ export default function CompanyInfoPage() {
                 id="metaTitle"
                 value={formData.metaTitle}
                 onChange={(e) => handleInputChange("metaTitle", e.target.value)}
-                placeholder="Feniz - Trading Platform"
+                placeholder="MyApp - Modern Platform"
               />
             </div>
             <div className="space-y-2">
@@ -506,7 +506,7 @@ export default function CompanyInfoPage() {
                 onChange={(e) =>
                   handleInputChange("metaKeywords", e.target.value)
                 }
-                placeholder="trading, propfirm, broker, gestión"
+                placeholder="gestión, usuarios, plataforma, moderno, escalable"
               />
             </div>
           </CardContent>

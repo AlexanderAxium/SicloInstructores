@@ -31,9 +31,9 @@ const BentoCard = ({ title, description, image }: BentoCardProps) => (
 export function BentoSection() {
   const cards = [
     {
-      title: "Revisiones de trades con IA",
+      title: "Análisis inteligente con IA",
       description:
-        "Obtén sugerencias inteligentes en tiempo real para mejores operaciones.",
+        "Obtén sugerencias inteligentes en tiempo real para optimizar tu plataforma.",
       image: "/images/ai-code-reviews.png",
     },
     {
@@ -44,24 +44,24 @@ export function BentoSection() {
     {
       title: "Integraciones con un click",
       description:
-        "Conecta fácilmente con tus herramientas favoritas de trading.",
+        "Conecta fácilmente con tus herramientas favoritas y servicios externos.",
       image: "/images/one-click-integrations.png",
     },
     {
-      title: "Conectividad MCP flexible",
+      title: "Conectividad flexible",
       description:
-        "Gestiona y configura el acceso a servidores MCP sin esfuerzo.",
+        "Gestiona y configura el acceso a servicios externos sin esfuerzo.",
       image: "/images/mcp-connectivity.png",
     },
     {
-      title: "Agentes de trading paralelos",
+      title: "Automatización avanzada",
       description:
         "Resuelve problemas complejos más rápido con múltiples agentes IA.",
       image: "/images/parallel-coding-agents.png",
     },
     {
       title: "Despliegue simplificado",
-      description: "Pasa de operar a producción al instante.",
+      description: "Pasa de desarrollo a producción al instante.",
       image: "/images/deployment-easy.png",
     },
   ];
@@ -74,14 +74,14 @@ export function BentoSection() {
           <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-6 md:mb-8" />
 
           <h2 className="text-foreground text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-4 md:mb-6 tracking-tight">
-            Potencia tu Operativa
+            Potencia tu
             <br />
-            <span className="font-medium text-primary">de Trading</span>
+            <span className="font-medium text-primary">Plataforma</span>
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mx-auto font-light">
             Plataforma profesional con sincronización en tiempo real,
-            integraciones perfectas y análisis potentes para optimizar tus
-            operaciones.
+            integraciones perfectas y análisis potentes para optimizar tu
+            gestión.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">

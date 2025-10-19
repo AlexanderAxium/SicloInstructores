@@ -10,8 +10,6 @@ import {
   assignRole,
   canAccessAdmin,
   canManageRoles,
-  canManageTrades,
-  canManageTradingAccounts,
   canManageUsers,
   canViewDashboard,
   createPermission,
@@ -415,20 +413,6 @@ export const rbacRouter = router({
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       return await canAccessAdmin(input.userId);
-    }),
-
-  // Check if user can manage trading accounts
-  canManageTradingAccounts: publicProcedure
-    .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await canManageTradingAccounts(input.userId);
-    }),
-
-  // Check if user can manage trades
-  canManageTrades: publicProcedure
-    .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await canManageTrades(input.userId);
     }),
 
   // Check if user can view dashboard

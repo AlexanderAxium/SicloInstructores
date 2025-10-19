@@ -10,19 +10,19 @@ import {
 export function FAQSection() {
   const faqs = [
     {
-      question: "¿Qué es el copy trading?",
+      question: "¿Cómo funciona la gestión de usuarios?",
       answer:
-        "El copy trading permite replicar automáticamente operaciones de una cuenta a múltiples cuentas en tiempo real con latencia ultra-baja.",
+        "Nuestro sistema permite crear, gestionar y organizar usuarios con diferentes roles y permisos de manera sencilla y eficiente.",
     },
     {
-      question: "¿Qué propfirms son compatibles?",
+      question: "¿Qué integraciones están disponibles?",
       answer:
-        "Soportamos más de 50 propfirms incluyendo FTMO, TopStep, MyForexFunds, y muchas más. Agregamos integraciones regularmente.",
+        "Soportamos más de 50 integraciones populares incluyendo APIs de terceros, servicios de autenticación, y herramientas de análisis.",
     },
     {
-      question: "¿Cuál es la latencia de ejecución?",
+      question: "¿Cuál es el rendimiento de la plataforma?",
       answer:
-        "Nuestra plataforma ofrece ejecución con latencia ultra-baja menor a 50ms en planes Profesional y menor a 25ms en planes Empresarial.",
+        "Nuestra plataforma ofrece un rendimiento optimizado con tiempos de respuesta menores a 100ms en planes Básico y menores a 50ms en planes superiores.",
     },
     {
       question: "¿Puedo gestionar permisos de equipo?",
@@ -37,7 +37,7 @@ export function FAQSection() {
     {
       question: "¿Qué opciones de soporte están disponibles?",
       answer:
-        "Ofrecemos soporte por email en Inicial, soporte prioritario en Profesional, y soporte dedicado 24/7 en planes Empresarial.",
+        "Ofrecemos soporte por email en Básico, soporte prioritario en Profesional, y soporte dedicado 24/7 en planes Empresarial.",
     },
   ];
 

@@ -823,8 +823,8 @@ export default function UsersPage() {
     },
   ];
 
-  // Función para ver detalles del trader
-  const handleViewTrader = (user: User) => {
+  // Función para ver detalles del usuario
+  const handleViewUser = (user: User) => {
     window.location.href = `/dashboard/users/${user.id}`;
   };
 
@@ -833,7 +833,7 @@ export default function UsersPage() {
     {
       label: "Ver Detalles",
       icon: <Eye className="h-4 w-4" />,
-      onClick: handleViewTrader,
+      onClick: handleViewUser,
       variant: "default",
     },
     {

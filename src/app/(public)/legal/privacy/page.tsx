@@ -34,11 +34,11 @@ export default function PrivacyPage() {
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold">Información de Trading:</h4>
+              <h4 className="font-semibold">Información de la Plataforma:</h4>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                <li>Datos de cuentas de trading conectadas</li>
-                <li>Información de trades y transacciones</li>
-                <li>Configuraciones de riesgo y lotaje</li>
+                <li>Datos de cuentas conectadas</li>
+                <li>Información de configuraciones</li>
+                <li>Preferencias de usuario</li>
                 <li>Historial de actividad en la plataforma</li>
               </ul>
             </div>
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
               <li>Proporcionar y mantener nuestros servicios</li>
               <li>Procesar pagos y gestionar suscripciones</li>
-              <li>Conectar cuentas de propfirms con brokers</li>
+              <li>Gestionar usuarios y permisos</li>
               <li>Generar análisis y reportes personalizados</li>
               <li>Mejorar la funcionalidad de la plataforma</li>
               <li>Enviar notificaciones importantes del servicio</li>
@@ -122,10 +122,10 @@ export default function PrivacyPage() {
             <p className="text-muted-foreground">
               Para ejercer estos derechos, contacte a:
               <a
-                href="mailto:privacy@tradingplatform.com"
+                href="mailto:privacy@myapp.com"
                 className="text-primary hover:underline ml-1"
               >
-                privacy@tradingplatform.com
+                privacy@myapp.com
               </a>
             </p>
           </CardContent>
@@ -188,10 +188,10 @@ export default function PrivacyPage() {
               <p className="text-muted-foreground">
                 Email:{" "}
                 <a
-                  href="mailto:privacy@tradingplatform.com"
+                  href="mailto:privacy@myapp.com"
                   className="text-primary hover:underline"
                 >
-                  privacy@tradingplatform.com
+                  privacy@myapp.com
                 </a>
               </p>
               <p className="text-muted-foreground">

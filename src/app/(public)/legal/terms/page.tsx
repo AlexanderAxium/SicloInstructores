@@ -19,9 +19,9 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Al acceder y utilizar TradingPlatform, usted acepta estar sujeto a
-              estos términos y condiciones de uso. Si no está de acuerdo con
-              alguna parte de estos términos, no debe utilizar nuestro servicio.
+              Al acceder y utilizar MyApp, usted acepta estar sujeto a estos
+              términos y condiciones de uso. Si no está de acuerdo con alguna
+              parte de estos términos, no debe utilizar nuestro servicio.
             </p>
             <p className="text-muted-foreground">
               Estos términos se aplican a todos los visitantes, usuarios y otras
@@ -36,16 +36,15 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              TradingPlatform es una plataforma de gestión de trading que
-              permite a los usuarios conectar cuentas de propfirms con brokers,
-              gestionar múltiples cuentas de trading, y utilizar herramientas de
-              análisis y cálculo.
+              MyApp es una plataforma moderna de gestión que permite a los
+              usuarios gestionar contenido, usuarios y configuraciones, y
+              utilizar herramientas de análisis y automatización.
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-              <li>Conexión automática entre propfirms y brokers</li>
-              <li>Gestión de cuentas de trading múltiples</li>
-              <li>Calculadora de lotaje y gestión de riesgo</li>
-              <li>Análisis de performance y reportes</li>
+              <li>Gestión de usuarios y roles</li>
+              <li>Configuración de permisos y acceso</li>
+              <li>Herramientas de análisis y reportes</li>
+              <li>Automatización de procesos</li>
               <li>API para integraciones personalizadas</li>
             </ul>
           </CardContent>
@@ -112,14 +111,14 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              TradingPlatform se proporciona "tal como está" sin garantías de
-              ningún tipo. No somos responsables por:
+              MyApp se proporciona "tal como está" sin garantías de ningún tipo.
+              No somos responsables por:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-              <li>Pérdidas financieras derivadas del trading</li>
+              <li>Pérdidas derivadas del uso de la plataforma</li>
               <li>Interrupciones del servicio</li>
               <li>Pérdida de datos</li>
-              <li>Decisiones de trading basadas en nuestros análisis</li>
+              <li>Decisiones basadas en nuestros análisis</li>
             </ul>
           </CardContent>
         </Card>
@@ -151,10 +150,10 @@ export default function TermsPage() {
               <p className="text-muted-foreground">
                 Email:{" "}
                 <a
-                  href="mailto:legal@tradingplatform.com"
+                  href="mailto:legal@myapp.com"
                   className="text-primary hover:underline"
                 >
-                  legal@tradingplatform.com
+                  legal@myapp.com
                 </a>
               </p>
               <p className="text-muted-foreground">

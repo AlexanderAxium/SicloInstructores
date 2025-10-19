@@ -4,12 +4,7 @@ import { useAuthContext } from "@/AuthContext";
 import { useRBAC } from "@/hooks/useRBAC";
 import { useEffect, useState } from "react";
 
-export type UserRole =
-  | "trader"
-  | "admin"
-  | "viewer"
-  | "super_admin"
-  | "unknown";
+export type UserRole = "admin" | "user" | "viewer" | "super_admin" | "unknown";
 
 export function useUserRole() {
   const { user: _user, isAuthenticated } = useAuthContext();
@@ -22,11 +17,11 @@ export function useUserRole() {
       return;
     }
 
-    // Priority order: super_admin > admin > trader > viewer
+    // Priority order: super_admin > admin > user > viewer
     const roleHierarchy: Record<string, UserRole> = {
       super_admin: "super_admin",
       admin: "admin",
-      trader: "trader",
+      user: "user",
       viewer: "viewer",
     };
 
@@ -44,12 +39,12 @@ export function useUserRole() {
         }
         if (mappedRole === "admin") {
           highestRole = "admin";
-        } else if (mappedRole === "trader") {
+        } else if (mappedRole === "user") {
           if (highestRole === "viewer") {
-            highestRole = "trader";
+            highestRole = "user";
           }
-        } else if (mappedRole === "viewer" && highestRole === "trader") {
-          // Keep trader role as it has higher priority than viewer
+        } else if (mappedRole === "viewer" && highestRole === "user") {
+          // Keep user role as it has higher priority than viewer
         }
       }
     }
@@ -60,7 +55,7 @@ export function useUserRole() {
   return {
     primaryRole,
     isLoading,
-    isTrader: primaryRole === "trader",
+    isUser: primaryRole === "user",
     isAdmin: ["admin", "super_admin"].includes(primaryRole),
     isSuperAdmin: primaryRole === "super_admin",
     isViewer: primaryRole === "viewer",

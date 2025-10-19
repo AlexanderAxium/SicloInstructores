@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Building2,
-  ExternalLink,
-  Settings,
-  Shield,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Building2, ExternalLink, Shield, Users } from "lucide-react";
 import Link from "next/link";
 
 interface AdminDashboardProps {
@@ -38,36 +31,12 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       href: "/dashboard/roles",
     },
     {
-      title: "Propfirms",
-      description: "Gestionar propfirms del sistema",
+      title: "Información de la Empresa",
+      description: "Gestionar datos de la empresa",
       icon: <Building2 className="h-5 w-5" />,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
-      href: "/dashboard/propfirms",
-    },
-    {
-      title: "Brokers",
-      description: "Gestionar brokers del sistema",
-      icon: <Building2 className="h-5 w-5" />,
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-50",
-      href: "/dashboard/brokers",
-    },
-    {
-      title: "Símbolos",
-      description: "Gestionar símbolos de trading",
-      icon: <TrendingUp className="h-5 w-5" />,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-      href: "/dashboard/symbols",
-    },
-    {
-      title: "Config. Símbolos",
-      description: "Configurar parámetros de símbolos",
-      icon: <Settings className="h-5 w-5" />,
-      color: "text-gray-600",
-      bgColor: "bg-gray-50",
-      href: "/dashboard/symbol-configs",
+      href: "/dashboard/company-info",
     },
   ];
 

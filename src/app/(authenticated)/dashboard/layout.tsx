@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = generateSEOMetadata({
   title: "Dashboard",
   description:
-    "Panel de control administrativo para gestionar usuarios, propfirms, brokers y configuraciones del sistema.",
+    "Panel de control administrativo para gestionar usuarios, roles y configuraciones del sistema.",
   keywords: [
     "dashboard",
     "admin",

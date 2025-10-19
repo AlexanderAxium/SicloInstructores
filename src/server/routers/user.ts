@@ -66,7 +66,6 @@ export const userRouter = router({
           image: true,
           phone: true,
           language: true,
-          defaultRiskPercentage: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -86,13 +85,8 @@ export const userRouter = router({
         image: true,
         phone: true,
         language: true,
-        defaultRiskPercentage: true,
         createdAt: true,
         updatedAt: true,
-        userSubscriptions: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
       },
     });
     if (!user) throw new Error("Usuario no encontrado");
@@ -108,7 +102,6 @@ export const userRouter = router({
         password: z.string().min(6).optional(),
         phone: z.string().optional(),
         language: z.enum(["ES", "EN", "PT"]).optional(),
-        defaultRiskPercentage: z.number().min(0.01).max(100).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -149,8 +142,6 @@ export const userRouter = router({
       if (input.email !== undefined) updateData.email = input.email;
       if (input.phone !== undefined) updateData.phone = input.phone;
       if (input.language !== undefined) updateData.language = input.language;
-      if (input.defaultRiskPercentage !== undefined)
-        updateData.defaultRiskPercentage = input.defaultRiskPercentage;
 
       // Handle password update if provided - passwords are stored in Account table
       if (input.password && input.password.trim() !== "") {
@@ -180,7 +171,6 @@ export const userRouter = router({
           image: true,
           phone: true,
           language: true,
-          defaultRiskPercentage: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -221,7 +211,6 @@ export const userRouter = router({
           .min(6, "Contraseña debe tener al menos 6 caracteres"),
         phone: z.string().optional(),
         language: z.enum(["ES", "EN", "PT"]).optional(),
-        defaultRiskPercentage: z.number().min(0.01).max(100).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -260,7 +249,6 @@ export const userRouter = router({
           name: input.name,
           phone: input.phone,
           language: input.language || "ES",
-          defaultRiskPercentage: input.defaultRiskPercentage || 1.0,
           emailVerified: false, // Admin-created users need to verify email
         },
         select: {
@@ -271,7 +259,6 @@ export const userRouter = router({
           image: true,
           phone: true,
           language: true,
-          defaultRiskPercentage: true,
           createdAt: true,
           updatedAt: true,
         },

@@ -36,11 +36,9 @@ Un sidebar simple y funcional que se adapta automáticamente según el rol del u
   ├── Usuarios
   └── Roles
 
-📈 Trading
-  ├── Propfirms
-  ├── Brokers
-  ├── Símbolos
-  └── Configuraciones
+⚙️ Configuración
+  ├── Configuraciones del Sistema
+  └── Información de la Empresa
 ```
 
 ### **Admin (TODO: Definir permisos específicos)**
@@ -52,15 +50,15 @@ Un sidebar simple y funcional que se adapta automáticamente según el rol del u
   └── Usuarios (limitado)
 ```
 
-### **Trader (TODO: Implementar rutas)**
+### **Usuario (TODO: Implementar rutas)**
 ```
 📊 Dashboard
   └── Inicio
 
-📈 Trading
-  ├── Mis Cuentas      → TODO: /dashboard/my-accounts
-  ├── Mis Trades       → TODO: /dashboard/my-trades  
-  └── Análisis         → TODO: /dashboard/analytics
+⚙️ Configuración
+  ├── Mi Perfil        → TODO: /dashboard/profile
+  ├── Configuraciones  → TODO: /dashboard/settings  
+  └── Actividad        → TODO: /dashboard/activity
 ```
 
 ### **Viewer (TODO: Implementar rutas)**
@@ -127,7 +125,7 @@ const isActive = (href: string) => {
 const getSidebarSections = (): SidebarSection[] => {
   if (isSuperAdmin) return superAdminRoutes;
   if (isAdmin) return adminRoutes;      // TODO: Definir
-  if (hasRole("trader")) return traderRoutes;   // TODO: Implementar
+  if (hasRole("user")) return userRoutes;   // TODO: Implementar
   if (hasRole("viewer")) return viewerRoutes;   // TODO: Implementar
   return defaultRoutes;
 };
@@ -142,7 +140,7 @@ const getSidebarSections = (): SidebarSection[] => {
 
 ### **Rutas por Implementar**
 1. **Admin específico**: Definir permisos granulares vs Super Admin
-2. **Trader rutas**: 
+2. **Usuario rutas**: 
    - `/dashboard/my-accounts` - Gestión de cuentas personales
    - `/dashboard/my-trades` - Historial de operaciones
    - `/dashboard/analytics` - Análisis de rendimiento

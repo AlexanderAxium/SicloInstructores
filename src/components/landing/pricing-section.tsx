@@ -10,17 +10,17 @@ export function PricingSection() {
 
   const pricingPlans = [
     {
-      name: "Inicial",
-      monthlyPrice: "$99",
-      annualPrice: "$79",
-      description: "Perfecto para traders individuales",
+      name: "Básico",
+      monthlyPrice: "$29",
+      annualPrice: "$19",
+      description: "Perfecto para usuarios individuales",
       features: [
-        "Hasta 3 cuentas de trading",
-        "2 Propfirms conectadas",
-        "Copy trading básico",
+        "Hasta 100 usuarios",
+        "2 integraciones básicas",
         "Dashboard estándar",
         "Soporte por email",
-        "Latencia < 100ms",
+        "Almacenamiento 1GB",
+        "API básica",
       ],
       buttonText: "Comenzar",
       buttonClass:
@@ -28,18 +28,18 @@ export function PricingSection() {
     },
     {
       name: "Profesional",
-      monthlyPrice: "$299",
-      annualPrice: "$239",
-      description: "Ideal para traders serios",
+      monthlyPrice: "$99",
+      annualPrice: "$79",
+      description: "Ideal para equipos pequeños",
       features: [
-        "Hasta 10 cuentas de trading",
-        "5 Propfirms conectadas",
-        "Copy trading avanzado",
-        "Análisis profesional",
+        "Hasta 1,000 usuarios",
+        "10 integraciones",
+        "Dashboard avanzado",
         "Soporte prioritario",
-        "Latencia < 50ms",
+        "Almacenamiento 10GB",
         "Sistema RBAC básico",
-        "Calculadora profesional",
+        "Analytics avanzado",
+        "API completa",
       ],
       buttonText: "Únete Ahora",
       buttonClass:
@@ -48,16 +48,15 @@ export function PricingSection() {
     },
     {
       name: "Empresarial",
-      monthlyPrice: "$799",
-      annualPrice: "$639",
-      description: "Para operaciones a gran escala",
+      monthlyPrice: "$299",
+      annualPrice: "$239",
+      description: "Para organizaciones grandes",
       features: [
-        "Cuentas ilimitadas",
-        "Propfirms ilimitadas",
-        "Copy trading empresarial",
-        "Análisis avanzado",
+        "Usuarios ilimitados",
+        "Integraciones ilimitadas",
+        "Dashboard personalizado",
         "Soporte 24/7",
-        "Latencia < 25ms",
+        "Almacenamiento ilimitado",
         "RBAC completo",
         "API personalizada",
         "White-label disponible",
@@ -82,10 +81,10 @@ export function PricingSection() {
           <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-4 md:mb-6 tracking-tight">
             Planes para Cada
             <br />
-            <span className="font-medium text-white">Tipo de Trader</span>
+            <span className="font-medium text-white">Tipo de Usuario</span>
           </h2>
           <p className="text-gray-300 text-base sm:text-lg md:text-xl leading-relaxed max-w-3xl mx-auto font-light">
-            Elige el plan que se adapte a tu operativa, desde traders
+            Elige el plan que se adapte a tus necesidades, desde usuarios
             individuales hasta organizaciones profesionales y equipos grandes.
           </p>
         </div>

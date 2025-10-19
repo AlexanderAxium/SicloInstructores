@@ -18,23 +18,6 @@ datasource db {
 // ENUMS
 // ================================
 
-enum SubscriptionPlan {
-  FREE
-  BASIC
-  PREMIUM
-  ENTERPRISE
-}
-
-enum SubscriptionStatus {
-  TRIALING
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  INCOMPLETE
-  INCOMPLETE_EXPIRED
-  UNPAID
-}
-
 enum Language {
   ES
   EN
@@ -45,49 +28,6 @@ enum Theme {
   LIGHT
   DARK
   AUTO
-}
-
-enum AccountType {
-  PROPFIRM
-  BROKER
-}
-
-enum TradeStatus {
-  OPEN
-  CLOSED
-  CANCELLED
-  PARTIALLY_CLOSED
-}
-
-enum EntryMethod {
-  MANUAL
-  API
-  COPY_TRADING
-}
-
-enum PaymentProvider {
-  STRIPE
-  PAYPAL
-  MERCADOPAGO
-  CULQI
-}
-
-enum PaymentStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  CANCELLED
-  REFUNDED
-  PARTIALLY_REFUNDED
-}
-
-enum SymbolCategory {
-  FOREX
-  INDICES
-  COMMODITIES
-  CRYPTO
-  STOCKS
 }
 
 enum PermissionAction {
@@ -102,12 +42,6 @@ enum PermissionResource {
   USER
   ROLE
   PERMISSION
-  TRADING_ACCOUNT
-  TRADE
-  PROPFIRM
-  BROKER
-  SYMBOL
-  SUBSCRIPTION
   DASHBOARD
   ADMIN
 }
@@ -129,16 +63,12 @@ model User {
   // Additional application fields
   phone                   String?
   language                Language  @default(ES)
-  defaultRiskPercentage   Decimal   @default(1.00) @db.Decimal(5, 2)
+  theme                   Theme     @default(AUTO)
 
   // Relations
   sessions Session[]
   accounts Account[]
-  userSubscriptions UserSubscription[]
-  userPayments      UserPayment[]
-  tradingAccounts   TradingAccount[]
-  accountLinks      AccountLink[] @relation("UserAccountLinks")
-  userRoles         UserRole[]
+  userRoles UserRole[]
 }
 
 model Session {
@@ -264,8 +194,8 @@ model RolePermission {
 
 model CompanyInfo {
   id          String    @id @default(uuid())
-  name        String    @default("Feniz")
-  displayName String    @default("Feniz Trading Platform")
+  name        String    @default("My App")
+  displayName String    @default("My Application")
   description String?
   email       String?
   phone       String?
@@ -303,289 +233,4 @@ model CompanyInfo {
   updatedAt   DateTime  @updatedAt
 
   @@map("company_info")
-}
-
-// ================================
-// USER MANAGEMENT
-// ================================
-
-model UserSubscription {
-  id                      String             @id @default(uuid())
-  userId                  String
-  user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan                    SubscriptionPlan   @default(FREE)
-  status                  SubscriptionStatus @default(TRIALING)
-  paymentProvider         PaymentProvider
-  providerCustomerId      String?
-  providerSubscriptionId  String?
-  currentPlanStart        DateTime?
-  currentPlanEnd          DateTime?
-  createdAt               DateTime           @default(now())
-  updatedAt               DateTime           @updatedAt
-
-  // Relations
-  payments                UserPayment[]
-
-  @@map("user_subscriptions")
-}
-
-model UserPayment {
-  id                      String             @id @default(uuid())
-  userId                  String
-  user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscriptionId          String
-  subscription            UserSubscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  paymentProvider         PaymentProvider
-  providerPaymentId       String?
-  amount                  Decimal            @db.Decimal(10, 2)
-  currency                String             @default("USD") @db.VarChar(3)
-  status                  PaymentStatus      @default(PENDING)
-  paymentMethod           String?            // "card", "bank_transfer", "paypal", etc.
-  description             String?            // "Monthly subscription", "Upgrade to Premium", etc.
-  metadata                Json?              // Additional payment provider data
-  paidAt                  DateTime?
-  failedAt                DateTime?
-  refundedAt              DateTime?
-  refundAmount            Decimal?           @db.Decimal(10, 2)
-  refundReason            String?
-  createdAt               DateTime           @default(now())
-  updatedAt               DateTime           @updatedAt
-
-  @@map("user_payments")
-}
-
-// ================================
-// PROPFIRM MANAGEMENT
-// ================================
-
-model Propfirm {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  displayName String
-  description String?
-  website     String?
-  logoUrl     String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  phases              PropfirmPhase[]
-  accountTypes        PropfirmAccountType[]
-  rulesConfigurations PropfirmRulesConfiguration[]
-  symbolConfigurations SymbolConfiguration[]
-  tradingAccounts     TradingAccount[]
-
-  @@map("propfirms")
-}
-
-model PropfirmPhase {
-  id          String    @id @default(uuid())
-  propfirmId  String
-  propfirm    Propfirm  @relation(fields: [propfirmId], references: [id], onDelete: Cascade)
-  phaseName   String
-  displayName String
-  displayOrder Int      @default(0)
-  isEvaluation Boolean  @default(true)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  rulesConfigurations PropfirmRulesConfiguration[]
-  tradingAccounts     TradingAccount[]
-
-  @@unique([propfirmId, phaseName])
-  @@map("propfirm_phases")
-}
-
-model PropfirmAccountType {
-  id            String    @id @default(uuid())
-  propfirmId    String
-  propfirm      Propfirm  @relation(fields: [propfirmId], references: [id], onDelete: Cascade)
-  typeName      String
-  displayName   String
-  initialBalance Decimal  @db.Decimal(15, 2)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relaciones
-  rulesConfigurations PropfirmRulesConfiguration[]
-  tradingAccounts     TradingAccount[]
-
-  @@unique([propfirmId, typeName])
-  @@map("propfirm_account_types")
-}
-
-model PropfirmRulesConfiguration {
-  id              String                @id @default(uuid())
-  propfirmId      String
-  propfirm        Propfirm              @relation(fields: [propfirmId], references: [id], onDelete: Cascade)
-  accountTypeId   String
-  accountType     PropfirmAccountType   @relation(fields: [accountTypeId], references: [id], onDelete: Cascade)
-  phaseId         String
-  phase           PropfirmPhase         @relation(fields: [phaseId], references: [id], onDelete: Cascade)
-  maxDrawdown     Decimal               @db.Decimal(5, 2)
-  dailyDrawdown   Decimal               @db.Decimal(5, 2)
-  profitTarget    Decimal?              @db.Decimal(5, 2)
-  isActive        Boolean               @default(true)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-
-  @@unique([propfirmId, accountTypeId, phaseId])
-  @@map("propfirm_rules_configuration")
-}
-
-// ================================
-// BROKER MANAGEMENT
-// ================================
-
-model Broker {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  displayName String
-  description String?
-  website     String?
-  logoUrl     String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relaciones
-  symbolConfigurations SymbolConfiguration[]
-  tradingAccounts     TradingAccount[]
-
-  @@map("brokers")
-}
-
-// ================================
-// SYMBOL MANAGEMENT
-// ================================
-
-model Symbol {
-  id                    String           @id @default(uuid())
-  symbol                String           @unique
-  displayName           String
-  category              SymbolCategory
-  baseCurrency          String           @db.VarChar(3)
-  quoteCurrency         String           @db.VarChar(3)
-  pipDecimalPosition    Int              @default(4)
-  isActive              Boolean          @default(true)
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
-
-  // Relaciones
-  symbolConfigurations SymbolConfiguration[]
-  trades               Trade[]
-
-  @@map("symbols")
-}
-
-model SymbolConfiguration {
-  id                String    @id @default(uuid())
-  propfirmId        String?
-  propfirm          Propfirm? @relation(fields: [propfirmId], references: [id], onDelete: Cascade)
-  brokerId          String?
-  broker            Broker?   @relation(fields: [brokerId], references: [id], onDelete: Cascade)
-  symbolId          String
-  symbol            Symbol    @relation(fields: [symbolId], references: [id], onDelete: Cascade)
-  commissionPerLot  Decimal?  @db.Decimal(10, 4)
-  pipValuePerLot    Decimal   @db.Decimal(10, 4)
-  pipTicks          Int       @default(1)
-  spreadTypical     Decimal?  @db.Decimal(8, 4)
-  spreadRecommended Decimal?  @db.Decimal(8, 4)
-  isAvailable       Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  @@unique([propfirmId, symbolId])
-  @@unique([brokerId, symbolId])
-  @@map("symbol_configurations")
-}
-
-// ================================
-// TRADING ACCOUNTS
-// ================================
-
-model TradingAccount {
-  id              String      @id @default(uuid())
-  userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountName     String
-  accountType     AccountType
-  accountNumber   String?
-  server          String?
-  propfirmId      String?
-  propfirm        Propfirm?   @relation(fields: [propfirmId], references: [id])
-  brokerId        String?
-  broker          Broker?     @relation(fields: [brokerId], references: [id])
-  accountTypeId   String?
-  accountTypeRef  PropfirmAccountType? @relation(fields: [accountTypeId], references: [id])
-  initialBalance  Decimal     @db.Decimal(15, 2)
-  currentBalance  Decimal     @default(0) @db.Decimal(15, 2)
-  equity          Decimal     @default(0) @db.Decimal(15, 2)
-  accountCost     Decimal?    @db.Decimal(10, 2) // Costo de la cuenta (opcional)
-  currentPhaseId  String?
-  currentPhase    PropfirmPhase? @relation(fields: [currentPhaseId], references: [id])
-  status          String      @default("active")
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  // Relaciones
-  trades          Trade[]
-  propfirmLinks   AccountLink[] @relation("PropfirmAccount")
-  brokerLinks     AccountLink[] @relation("BrokerAccount")
-
-  @@map("trading_accounts")
-}
-
-model AccountLink {
-  id                  String          @id @default(uuid())
-  userId              String
-  user                User            @relation("UserAccountLinks", fields: [userId], references: [id], onDelete: Cascade)
-  propfirmAccountId   String
-  propfirmAccount     TradingAccount  @relation("PropfirmAccount", fields: [propfirmAccountId], references: [id], onDelete: Cascade)
-  brokerAccountId     String
-  brokerAccount       TradingAccount  @relation("BrokerAccount", fields: [brokerAccountId], references: [id], onDelete: Cascade)
-  autoCopyEnabled     Boolean         @default(false)
-  maxRiskPerTrade     Decimal         @default(1.00) @db.Decimal(5, 2)
-  isActive            Boolean         @default(true)
-  lastCopyAt          DateTime?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-
-  @@map("account_links")
-}
-
-// ================================
-// TRADES
-// ================================
-
-model Trade {
-  id              String      @id @default(uuid())
-  externalTradeId String?
-  accountId       String
-  account         TradingAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  symbolId        String
-  symbol          Symbol      @relation(fields: [symbolId], references: [id], onDelete: Cascade)
-  direction       String      // 'buy' or 'sell'
-  entryPrice      Decimal     @db.Decimal(20, 8)
-  exitPrice       Decimal?    @db.Decimal(20, 8)
-  lotSize         Decimal     @db.Decimal(15, 4)
-  stopLoss        Decimal?    @db.Decimal(20, 8)
-  takeProfit      Decimal?    @db.Decimal(20, 8)
-  openTime        DateTime
-  closeTime       DateTime?
-  profitLoss      Decimal     @default(0) @db.Decimal(15, 2)
-  commission      Decimal     @default(0) @db.Decimal(15, 2)
-  swap            Decimal     @default(0) @db.Decimal(15, 2)
-  netProfit       Decimal     @default(0) @db.Decimal(15, 2)
-  status          TradeStatus @default(OPEN)
-  entryMethod     EntryMethod @default(MANUAL)
-  notes           String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  @@map("trades")
 }

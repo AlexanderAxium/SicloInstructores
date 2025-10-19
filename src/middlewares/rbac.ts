@@ -103,23 +103,6 @@ export function requireRoleManagement() {
 }
 
 /**
- * Require trading account management permissions
- */
-export function requireTradingAccountManagement() {
-  return requirePermission(
-    PermissionAction.MANAGE,
-    PermissionResource.TRADING_ACCOUNT
-  );
-}
-
-/**
- * Require trade management permissions
- */
-export function requireTradeManagement() {
-  return requirePermission(PermissionAction.MANAGE, PermissionResource.TRADE);
-}
-
-/**
  * Require dashboard access
  */
 export function requireDashboardAccess() {
