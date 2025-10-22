@@ -6,13 +6,19 @@ import { protectedProcedure, router } from "../trpc";
 
 export const companyInfoRouter = router({
   // Get company information (public)
-  get: protectedProcedure.query(async () => {
-    const companyInfo = await prisma.companyInfo.findFirst({
-      where: { isActive: true },
-      orderBy: { updatedAt: "desc" },
+  get: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user?.tenantId) {
+      throw new Error("User tenant not found");
+    }
+
+    const tenant = await prisma.tenant.findUnique({
+      where: {
+        id: ctx.user.tenantId,
+        isActive: true,
+      },
     });
 
-    return companyInfo;
+    return tenant;
   }),
 
   // Update company information (admin only)
@@ -51,11 +57,16 @@ export const companyInfoRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       // Check if user has permission to manage company info
       const canManage = await hasPermission(
         ctx.user.id,
         PermissionAction.UPDATE,
-        PermissionResource.ADMIN
+        PermissionResource.ADMIN,
+        ctx.user.tenantId
       );
 
       if (!canManage) {
@@ -64,39 +75,29 @@ export const companyInfoRouter = router({
         );
       }
 
-      // Get existing company info or create new one
-      const existingInfo = await prisma.companyInfo.findFirst({
-        where: { isActive: true },
-      });
-
-      if (existingInfo) {
-        // Update existing
-        const updatedInfo = await prisma.companyInfo.update({
-          where: { id: existingInfo.id },
-          data: {
-            ...input,
-            updatedAt: new Date(),
-          },
-        });
-        return updatedInfo;
-      }
-      // Create new
-      const newInfo = await prisma.companyInfo.create({
+      // Update tenant information
+      const updatedTenant = await prisma.tenant.update({
+        where: { id: ctx.user.tenantId },
         data: {
           ...input,
-          isActive: true,
+          updatedAt: new Date(),
         },
       });
-      return newInfo;
+      return updatedTenant;
     }),
 
   // Get company info for admin dashboard
   getForAdmin: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user?.tenantId) {
+      throw new Error("User tenant not found");
+    }
+
     // Check if user has permission to view admin data
     const canView = await hasPermission(
       ctx.user.id,
       PermissionAction.READ,
-      PermissionResource.ADMIN
+      PermissionResource.ADMIN,
+      ctx.user.tenantId
     );
 
     if (!canView) {
@@ -105,11 +106,13 @@ export const companyInfoRouter = router({
       );
     }
 
-    const companyInfo = await prisma.companyInfo.findFirst({
-      where: { isActive: true },
-      orderBy: { updatedAt: "desc" },
+    const tenant = await prisma.tenant.findUnique({
+      where: {
+        id: ctx.user.tenantId,
+        isActive: true,
+      },
     });
 
-    return companyInfo;
+    return tenant;
   }),
 });

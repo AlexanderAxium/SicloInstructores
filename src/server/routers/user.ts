@@ -16,7 +16,11 @@ import { protectedProcedure, router } from "../trpc";
 export const userRouter = router({
   getAll: protectedProcedure
     .input(paginationInputSchema.optional())
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       const {
         page = 1,
         limit = 100,
@@ -29,15 +33,22 @@ export const userRouter = router({
       const searchFilter = createSearchFilter(search, ["email", "name"]);
       const orderBy = createSortOrder(sortBy, sortOrder);
 
+      // Add tenant filter
+      const whereClause = {
+        ...searchFilter,
+        tenantId: ctx.user.tenantId,
+      };
+
       const [users, total] = await Promise.all([
         prisma.user.findMany({
-          where: searchFilter,
+          where: whereClause,
           select: {
             id: true,
             email: true,
             name: true,
             emailVerified: true,
             image: true,
+            tenantId: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -46,7 +57,7 @@ export const userRouter = router({
           take: limit,
         }),
         prisma.user.count({
-          where: searchFilter,
+          where: whereClause,
         }),
       ]);
 
@@ -55,9 +66,16 @@ export const userRouter = router({
 
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       const user = await prisma.user.findUnique({
-        where: { id: input.id },
+        where: {
+          id: input.id,
+          tenantId: ctx.user.tenantId,
+        },
         select: {
           id: true,
           email: true,
@@ -66,6 +84,7 @@ export const userRouter = router({
           image: true,
           phone: true,
           language: true,
+          tenantId: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -85,6 +104,7 @@ export const userRouter = router({
         image: true,
         phone: true,
         language: true,
+        tenantId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -105,6 +125,10 @@ export const userRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       const targetUserId = input.id || ctx.user.id;
 
       // Check permissions: users can edit themselves, admins can edit anyone
@@ -112,7 +136,8 @@ export const userRouter = router({
         const canManageUsers = await hasPermission(
           ctx.user.id,
           PermissionAction.MANAGE,
-          PermissionResource.USER
+          PermissionResource.USER,
+          ctx.user.tenantId
         );
 
         if (!canManageUsers) {
@@ -121,19 +146,26 @@ export const userRouter = router({
       }
 
       const user = await prisma.user.findUnique({
-        where: { id: targetUserId },
+        where: {
+          id: targetUserId,
+          tenantId: ctx.user.tenantId,
+        },
       });
       if (!user) throw new Error("Usuario no encontrado");
 
       if (input.email && !validateEmail(input.email))
         throw new Error("Email inválido");
 
-      // Check if email is already taken by another user
+      // Check if email is already taken by another user in the same tenant
       if (input.email && input.email !== user.email) {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: input.email },
+        const existingUser = await prisma.user.findFirst({
+          where: {
+            email: input.email,
+            tenantId: ctx.user.tenantId,
+            id: { not: targetUserId },
+          },
         });
-        if (existingUser) throw new Error("Email ya registrado");
+        if (existingUser) throw new Error("Email ya registrado en este tenant");
       }
 
       // Prepare update data (exclude password - it's handled separately in Account table)
@@ -181,12 +213,17 @@ export const userRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       // Check permissions: users can delete themselves, admins can delete anyone
       if (input.id !== ctx.user.id) {
         const canManageUsers = await hasPermission(
           ctx.user.id,
           PermissionAction.MANAGE,
-          PermissionResource.USER
+          PermissionResource.USER,
+          ctx.user.tenantId
         );
 
         if (!canManageUsers) {
@@ -194,7 +231,12 @@ export const userRouter = router({
         }
       }
 
-      const user = await prisma.user.findUnique({ where: { id: input.id } });
+      const user = await prisma.user.findUnique({
+        where: {
+          id: input.id,
+          tenantId: ctx.user.tenantId,
+        },
+      });
       if (!user) throw new Error("Usuario no encontrado");
 
       await prisma.user.delete({ where: { id: input.id } });
@@ -214,11 +256,16 @@ export const userRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       // Check permissions: only admins can create users
       const canManageUsers = await hasPermission(
         ctx.user.id,
         PermissionAction.MANAGE,
-        PermissionResource.USER
+        PermissionResource.USER,
+        ctx.user.tenantId
       );
 
       if (!canManageUsers) {
@@ -230,12 +277,15 @@ export const userRouter = router({
         throw new Error("Email inválido");
       }
 
-      // Check if email already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email: input.email },
+      // Check if email already exists in this tenant
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: input.email,
+          tenantId: ctx.user.tenantId,
+        },
       });
       if (existingUser) {
-        throw new Error("Email ya registrado");
+        throw new Error("Email ya registrado en este tenant");
       }
 
       // Hash password
@@ -250,6 +300,7 @@ export const userRouter = router({
           phone: input.phone,
           language: input.language || "ES",
           emailVerified: false, // Admin-created users need to verify email
+          tenantId: ctx.user.tenantId,
         },
         select: {
           id: true,
@@ -259,6 +310,7 @@ export const userRouter = router({
           image: true,
           phone: true,
           language: true,
+          tenantId: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -287,11 +339,16 @@ export const userRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       // Check permissions: only admins can assign roles
       const canManageUsers = await hasPermission(
         ctx.user.id,
         PermissionAction.MANAGE,
-        PermissionResource.USER
+        PermissionResource.USER,
+        ctx.user.tenantId
       );
 
       if (!canManageUsers) {
@@ -356,11 +413,16 @@ export const userRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       // Check permissions: only admins can remove roles
       const canManageUsers = await hasPermission(
         ctx.user.id,
         PermissionAction.MANAGE,
-        PermissionResource.USER
+        PermissionResource.USER,
+        ctx.user.tenantId
       );
 
       if (!canManageUsers) {
@@ -407,12 +469,17 @@ export const userRouter = router({
   getUserRoles: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
       // Users can see their own roles, admins can see any user's roles
       if (input.userId !== ctx.user.id) {
         const canManageUsers = await hasPermission(
           ctx.user.id,
           PermissionAction.MANAGE,
-          PermissionResource.USER
+          PermissionResource.USER,
+          ctx.user.tenantId
         );
 
         if (!canManageUsers) {

@@ -7,7 +7,6 @@ export interface User {
   image?: string | null;
   phone?: string | null;
   language: string;
-  defaultRiskPercentage: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,7 +20,6 @@ export interface AuthUser {
   image?: string | null;
   emailVerified: boolean;
   language: string;
-  defaultRiskPercentage: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -133,7 +133,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           image: session.user.image || null,
           emailVerified: session.user.emailVerified || false,
           language: "es",
-          defaultRiskPercentage: 2.0,
           createdAt: session.user.createdAt,
           updatedAt: session.user.updatedAt,
         }

@@ -4,13 +4,13 @@ import { useAuthContext } from "@/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import ViewerDashboard from "@/components/dashboard/ViewerDashboard";
-import { useRBAC } from "@/hooks/useRBAC";
+import { useUser } from "@/hooks/useUser";
 import type { AuthUser } from "@/types/user";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
-  const { user } = useAuthContext();
   const {
+    user,
     isSuperAdmin,
     isAdmin,
     hasRole,
@@ -18,9 +18,9 @@ export default function DashboardPage() {
     isLoading,
     userRoles,
     userPermissions,
-  } = useRBAC();
+  } = useUser();
 
-  // Mostrar loading mientras se cargan los permisos
+  // Mostrar loading mientras se cargan los permisos y perfil
   if (isLoading) {
     return (
       <ProtectedRoute>
@@ -146,15 +146,17 @@ export default function DashboardPage() {
     );
   }
 
-  // Adapter function to convert AuthUser to expected dashboard user format
-  const adaptUserForDashboard = (authUser: AuthUser | null) => {
-    if (!authUser) return null;
+  // Adapter function to convert user data to expected dashboard user format
+  const adaptUserForDashboard = (userData: unknown) => {
+    if (!userData || typeof userData !== "object") return null;
 
+    const user = userData as Record<string, unknown>;
     return {
-      id: authUser.id,
-      name: authUser.name,
-      email: authUser.email,
-      emailVerified: authUser.emailVerified,
+      id: user.id as string,
+      name: user.name as string,
+      email: user.email as string,
+      emailVerified: user.emailVerified as boolean,
+      tenantId: user.tenantId as string | undefined,
     };
   };
 

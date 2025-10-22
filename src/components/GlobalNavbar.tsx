@@ -17,27 +17,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { type UserRole, useUserRole } from "@/hooks/useUserRole";
+import { useUser } from "@/hooks/useUser";
 import { LayoutDashboard, LogOut, Menu, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function GlobalNavbar() {
-  const pathname = usePathname();
+  const _pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated, signOut } = useAuthContext();
-  const { primaryRole } = useUserRole();
+  const { primaryRole } = useUser();
   const router = useRouter();
-
-  // No mostrar navbar solo en páginas de registro y recuperación de contraseña
-  if (
-    pathname?.startsWith("/signup") ||
-    pathname?.startsWith("/forgot-password") ||
-    pathname?.startsWith("/reset-password")
-  ) {
-    return null;
-  }
 
   const handleSignOut = async () => {
     await signOut();

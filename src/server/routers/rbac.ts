@@ -36,15 +36,27 @@ import { adminProcedure, publicProcedure, router } from "../trpc";
 
 export const rbacRouter = router({
   // Get all roles (simple array without pagination)
-  getRoles: publicProcedure.query(async () => {
-    return await getAllRoles();
+  getRoles: publicProcedure.query(async ({ ctx }) => {
+    if (!ctx.user?.tenantId) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "User tenant not found",
+      });
+    }
+    return await getAllRoles(ctx.user.tenantId);
   }),
 
   // Get all roles (with pagination)
   getAllRoles: publicProcedure
     .input(paginationInputSchema.optional())
-    .query(async ({ input }) => {
-      const roles = await getAllRoles();
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      const roles = await getAllRoles(ctx.user.tenantId);
 
       if (!input) {
         // Si no hay paginación, devolver todos los roles en formato compatible
@@ -61,8 +73,14 @@ export const rbacRouter = router({
   // Get all permissions
   getAllPermissions: publicProcedure
     .input(paginationInputSchema.optional())
-    .query(async ({ input }) => {
-      const permissions = await getAllPermissions();
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      const permissions = await getAllPermissions(ctx.user.tenantId);
 
       if (!input) {
         return createPaginatedResponse(
@@ -88,22 +106,40 @@ export const rbacRouter = router({
   // Get permissions for a specific role
   getRolePermissions: publicProcedure
     .input(z.object({ roleId: z.string() }))
-    .query(async ({ input }) => {
-      return await getRolePermissions(input.roleId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await getRolePermissions(input.roleId, ctx.user.tenantId);
     }),
 
   // Get user roles
   getUserRoles: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await getUserRoles(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await getUserRoles(input.userId, ctx.user.tenantId);
     }),
 
   // Get user permissions
   getUserPermissions: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await getUserPermissions(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await getUserPermissions(input.userId, ctx.user.tenantId);
     }),
 
   // Check user permission
@@ -115,8 +151,19 @@ export const rbacRouter = router({
         resource: z.nativeEnum(PermissionResource),
       })
     )
-    .query(async ({ input }) => {
-      return await hasPermission(input.userId, input.action, input.resource);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await hasPermission(
+        input.userId,
+        input.action,
+        input.resource,
+        ctx.user.tenantId
+      );
     }),
 
   // Check user role
@@ -127,8 +174,14 @@ export const rbacRouter = router({
         roleName: z.string(),
       })
     )
-    .query(async ({ input }) => {
-      return await hasRole(input.userId, input.roleName);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await hasRole(input.userId, input.roleName, ctx.user.tenantId);
     }),
 
   // Create role
@@ -142,12 +195,20 @@ export const rbacRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to create roles
       if (ctx.user?.id) {
         const canCreateRole = await hasPermission(
           ctx.user.id,
           PermissionAction.CREATE,
-          PermissionResource.ROLE
+          PermissionResource.ROLE,
+          ctx.user.tenantId
         );
         if (!canCreateRole) {
           throw new TRPCError({
@@ -157,7 +218,7 @@ export const rbacRouter = router({
         }
       }
 
-      return await createRole(input);
+      return await createRole(input, ctx.user.tenantId);
     }),
 
   // Update role
@@ -172,12 +233,20 @@ export const rbacRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to update roles
       if (ctx.user?.id) {
         const canUpdateRole = await hasPermission(
           ctx.user.id,
           PermissionAction.UPDATE,
-          PermissionResource.ROLE
+          PermissionResource.ROLE,
+          ctx.user.tenantId
         );
         if (!canUpdateRole) {
           throw new TRPCError({
@@ -187,19 +256,27 @@ export const rbacRouter = router({
         }
       }
 
-      return await updateRole(input);
+      return await updateRole(input, ctx.user.tenantId);
     }),
 
   // Delete role
   deleteRole: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to delete roles
       if (ctx.user?.id) {
         const canDeleteRole = await hasPermission(
           ctx.user.id,
           PermissionAction.DELETE,
-          PermissionResource.ROLE
+          PermissionResource.ROLE,
+          ctx.user.tenantId
         );
         if (!canDeleteRole) {
           throw new TRPCError({
@@ -209,7 +286,7 @@ export const rbacRouter = router({
         }
       }
 
-      return await deleteRole(input.id);
+      return await deleteRole(input.id, ctx.user.tenantId);
     }),
 
   // Create permission
@@ -222,12 +299,20 @@ export const rbacRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to create permissions
       if (ctx.user?.id) {
         const canCreatePermission = await hasPermission(
           ctx.user.id,
           PermissionAction.CREATE,
-          PermissionResource.PERMISSION
+          PermissionResource.PERMISSION,
+          ctx.user.tenantId
         );
         if (!canCreatePermission) {
           throw new TRPCError({
@@ -237,7 +322,7 @@ export const rbacRouter = router({
         }
       }
 
-      return await createPermission(input);
+      return await createPermission(input, ctx.user.tenantId);
     }),
 
   // Assign role to user
@@ -251,12 +336,20 @@ export const rbacRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to assign roles
       if (ctx.user?.id) {
         const canAssignRole = await hasPermission(
           ctx.user.id,
           PermissionAction.UPDATE,
-          PermissionResource.ROLE
+          PermissionResource.ROLE,
+          ctx.user.tenantId
         );
         if (!canAssignRole) {
           throw new TRPCError({
@@ -270,7 +363,8 @@ export const rbacRouter = router({
         input.userId,
         input.roleId,
         input.assignedBy,
-        input.expiresAt
+        input.expiresAt,
+        ctx.user.tenantId
       );
     }),
 
@@ -283,12 +377,20 @@ export const rbacRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to remove roles
       if (ctx.user?.id) {
         const canRemoveRole = await hasPermission(
           ctx.user.id,
           PermissionAction.UPDATE,
-          PermissionResource.ROLE
+          PermissionResource.ROLE,
+          ctx.user.tenantId
         );
         if (!canRemoveRole) {
           throw new TRPCError({
@@ -298,7 +400,7 @@ export const rbacRouter = router({
         }
       }
 
-      await removeRole(input.userId, input.roleId);
+      await removeRole(input.userId, input.roleId, ctx.user.tenantId);
       return { success: true };
     }),
 
@@ -311,12 +413,20 @@ export const rbacRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to manage roles
       if (ctx.user?.id) {
         const canManageRole = await hasPermission(
           ctx.user.id,
           PermissionAction.UPDATE,
-          PermissionResource.ROLE
+          PermissionResource.ROLE,
+          ctx.user.tenantId
         );
         if (!canManageRole) {
           throw new TRPCError({
@@ -326,7 +436,11 @@ export const rbacRouter = router({
         }
       }
 
-      await assignPermissionToRole(input.roleId, input.permissionId);
+      await assignPermissionToRole(
+        input.roleId,
+        input.permissionId,
+        ctx.user.tenantId
+      );
       return { success: true };
     }),
 
@@ -339,12 +453,20 @@ export const rbacRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+
       // Check if user has permission to manage roles
       if (ctx.user?.id) {
         const canManageRole = await hasPermission(
           ctx.user.id,
           PermissionAction.UPDATE,
-          PermissionResource.ROLE
+          PermissionResource.ROLE,
+          ctx.user.tenantId
         );
         if (!canManageRole) {
           throw new TRPCError({
@@ -354,15 +476,25 @@ export const rbacRouter = router({
         }
       }
 
-      await removePermissionFromRole(input.roleId, input.permissionId);
+      await removePermissionFromRole(
+        input.roleId,
+        input.permissionId,
+        ctx.user.tenantId
+      );
       return { success: true };
     }),
 
   // Get role by name
   getRoleByName: publicProcedure
     .input(z.object({ name: z.string() }))
-    .query(async ({ input }) => {
-      return await getRoleByName(input.name);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await getRoleByName(input.name, ctx.user.tenantId);
     }),
 
   // Get permission by action and resource
@@ -373,59 +505,108 @@ export const rbacRouter = router({
         resource: z.nativeEnum(PermissionResource),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
       return await getPermissionByActionAndResource(
         input.action,
-        input.resource
+        input.resource,
+        ctx.user.tenantId
       );
     }),
 
   // Check if user is admin
   isAdmin: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await isAdmin(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await isAdmin(input.userId, ctx.user.tenantId);
     }),
 
   // Check if user is super admin
   isSuperAdmin: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await isSuperAdmin(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await isSuperAdmin(input.userId, ctx.user.tenantId);
     }),
 
   // Check if user can manage users
   canManageUsers: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await canManageUsers(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await canManageUsers(input.userId, ctx.user.tenantId);
     }),
 
   // Check if user can manage roles
   canManageRoles: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await canManageRoles(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await canManageRoles(input.userId, ctx.user.tenantId);
     }),
 
   // Check if user can access admin panel
   canAccessAdmin: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await canAccessAdmin(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await canAccessAdmin(input.userId, ctx.user.tenantId);
     }),
 
   // Check if user can view dashboard
   canViewDashboard: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await canViewDashboard(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await canViewDashboard(input.userId, ctx.user.tenantId);
     }),
 
   // Get RBAC context for user
   getRBACContext: publicProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
-      return await getRBACContext(input.userId);
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "User tenant not found",
+        });
+      }
+      return await getRBACContext(input.userId, ctx.user.tenantId);
     }),
 });

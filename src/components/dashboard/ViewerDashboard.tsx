@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import TenantInfo from "./TenantInfo";
 
 interface ViewerDashboardProps {
   user: {
@@ -20,6 +21,7 @@ interface ViewerDashboardProps {
     name: string;
     email: string;
     emailVerified: boolean;
+    tenantId?: string;
   } | null;
 }
 
@@ -151,16 +153,16 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
 
       {/* Viewer Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+        <div className="bg-card rounded-xl shadow-sm p-6 border border-border hover:shadow-md transition-shadow">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <Eye className="h-6 w-6 text-blue-600" />
+              <Eye className="h-5 w-5 text-blue-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">
                 Total Vistas
               </p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-xl font-bold text-foreground">
                 {viewerStats.totalViews}
               </p>
               <p className="text-xs text-blue-600">+12 esta semana</p>
@@ -168,16 +170,16 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+        <div className="bg-card rounded-xl shadow-sm p-6 border border-border hover:shadow-md transition-shadow">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
-              <FileText className="h-6 w-6 text-green-600" />
+              <FileText className="h-5 w-5 text-green-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">
                 Reportes Vistos
               </p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-xl font-bold text-foreground">
                 {viewerStats.reportsViewed}
               </p>
               <p className="text-xs text-green-600">Último: hace 1 hora</p>
@@ -185,16 +187,16 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+        <div className="bg-card rounded-xl shadow-sm p-6 border border-border hover:shadow-md transition-shadow">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
-              <BarChart3 className="h-6 w-6 text-purple-600" />
+              <BarChart3 className="h-5 w-5 text-purple-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">
                 Puntos de Datos
               </p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-xl font-bold text-foreground">
                 {viewerStats.dataPoints.toLocaleString()}
               </p>
               <p className="text-xs text-purple-600">
@@ -204,16 +206,16 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+        <div className="bg-card rounded-xl shadow-sm p-6 border border-border hover:shadow-md transition-shadow">
           <div className="flex items-center">
             <div className="p-2 bg-orange-100 rounded-lg">
-              <Clock className="h-6 w-6 text-orange-600" />
+              <Clock className="h-5 w-5 text-orange-600" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-muted-foreground">
                 Último Acceso
               </p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-xl font-bold text-foreground">
                 {viewerStats.lastLogin}
               </p>
               <p className="text-xs text-orange-600">Sesión activa</p>
@@ -222,11 +224,11 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Viewer Actions */}
-        <div className="lg:col-span-1">
-          <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+        <div className="xl:col-span-1 space-y-6">
+          <div className="bg-card rounded-xl shadow-sm p-6 border border-border">
+            <h3 className="text-base font-semibold text-foreground mb-4">
               Acciones Disponibles
             </h3>
             <div className="space-y-3">
@@ -235,18 +237,18 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
                   key={action.href}
                   type="button"
                   onClick={() => router.push(action.href)}
-                  className="w-full flex items-center p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="w-full flex items-center p-3 rounded-lg border border-border hover:bg-muted/50 hover:shadow-sm transition-all"
                 >
                   <div
-                    className={`p-2 ${action.color} rounded-lg text-white mr-3`}
+                    className={`p-2 ${action.color} rounded-lg text-white mr-3 flex-shrink-0`}
                   >
                     {action.icon}
                   </div>
-                  <div className="text-left">
-                    <p className="font-medium text-foreground">
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="font-medium text-foreground text-sm">
                       {action.title}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {action.description}
                     </p>
                   </div>
@@ -254,37 +256,42 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
               ))}
             </div>
           </div>
+
+          {/* Tenant Information */}
+          {user?.tenantId && <TenantInfo tenantId={user.tenantId} />}
         </div>
 
         {/* Available Reports */}
-        <div className="lg:col-span-2">
-          <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+        <div className="xl:col-span-3">
+          <div className="bg-card rounded-xl shadow-sm p-6 border border-border">
+            <h3 className="text-base font-semibold text-foreground mb-4">
               Reportes Disponibles
             </h3>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {availableReports.map((report) => (
                 <button
                   key={report.id}
                   type="button"
-                  className="w-full flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 cursor-pointer text-left"
+                  className="w-full flex items-start justify-between p-4 rounded-lg border border-border hover:bg-muted/50 hover:shadow-sm cursor-pointer text-left transition-all"
                   onClick={() => router.push(`/reports/${report.id}`)}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-muted rounded-lg">{report.icon}</div>
-                    <div>
-                      <p className="font-medium text-foreground">
+                  <div className="flex items-start space-x-3 min-w-0 flex-1">
+                    <div className="p-2 bg-muted rounded-lg flex-shrink-0">
+                      {report.icon}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground text-sm mb-1">
                         {report.title}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-2">
                         {report.description}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground">
                         Actualizado: {report.lastUpdated}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col items-end space-y-1 ml-2">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {report.type}
                     </span>
@@ -307,13 +314,16 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
 
       {/* Recent Activity */}
       <div>
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-          <h3 className="text-lg font-semibold text-foreground mb-4">
+        <div className="bg-card rounded-xl shadow-sm p-6 border border-border">
+          <h3 className="text-base font-semibold text-foreground mb-4">
             Actividad Reciente
           </h3>
           <div className="space-y-4">
             {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3">
+              <div
+                key={activity.id}
+                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/30 transition-colors"
+              >
                 <div className="flex-shrink-0 mt-1">{activity.icon}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground">{activity.message}</p>
@@ -337,14 +347,14 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
 
       {/* Account Status */}
       <div>
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+        <div className="bg-card rounded-xl shadow-sm p-6 border border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Info className="h-6 w-6 text-blue-600" />
+                <Info className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="text-base font-semibold text-foreground">
                   Estado de la Cuenta
                 </h3>
                 <p className="text-sm text-muted-foreground">

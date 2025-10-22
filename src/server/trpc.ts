@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { isAdmin, isSuperAdmin } from "../services/rbacService";
 import { t } from "./context";
 
 // Base router and procedure helpers
@@ -30,9 +31,7 @@ export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
     });
   }
 
-  // Import isAdmin here to avoid circular dependencies
-  const { isAdmin } = await import("../services/rbacService");
-  const adminCheck = await isAdmin(ctx.user.id);
+  const adminCheck = await isAdmin(ctx.user.id, ctx.user.tenantId ?? "");
 
   if (!adminCheck) {
     throw new TRPCError({
@@ -58,9 +57,10 @@ export const superAdminProcedure = t.procedure.use(async ({ ctx, next }) => {
     });
   }
 
-  // Import isSuperAdmin here to avoid circular dependencies
-  const { isSuperAdmin } = await import("../services/rbacService");
-  const superAdminCheck = await isSuperAdmin(ctx.user.id);
+  const superAdminCheck = await isSuperAdmin(
+    ctx.user.id,
+    ctx.user.tenantId ?? ""
+  );
 
   if (!superAdminCheck) {
     throw new TRPCError({

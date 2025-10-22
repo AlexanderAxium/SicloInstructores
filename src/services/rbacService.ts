@@ -52,13 +52,19 @@ type UserRole = {
 /**
  * Get all RBAC data for a user in a single optimized query
  */
-export async function getUserRBACData(userId: string): Promise<{
+export async function getUserRBACData(
+  userId: string,
+  tenantId: string
+): Promise<{
   roles: Role[];
   permissions: Permission[];
 }> {
   const userRoles = await prisma.userRole.findMany({
     where: {
       userId,
+      role: {
+        tenantId,
+      },
       OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     },
     include: {
@@ -94,8 +100,11 @@ export async function getUserRBACData(userId: string): Promise<{
 /**
  * Get all roles for a user
  */
-export async function getUserRoles(userId: string): Promise<Role[]> {
-  const { roles } = await getUserRBACData(userId);
+export async function getUserRoles(
+  userId: string,
+  tenantId: string
+): Promise<Role[]> {
+  const { roles } = await getUserRBACData(userId, tenantId);
   return roles;
 }
 
@@ -103,9 +112,10 @@ export async function getUserRoles(userId: string): Promise<Role[]> {
  * Get all permissions for a user (from their roles)
  */
 export async function getUserPermissions(
-  userId: string
+  userId: string,
+  tenantId: string
 ): Promise<Permission[]> {
-  const { permissions } = await getUserRBACData(userId);
+  const { permissions } = await getUserRBACData(userId, tenantId);
   return permissions;
 }
 
@@ -115,9 +125,10 @@ export async function getUserPermissions(
 export async function hasPermission(
   userId: string,
   action: PermissionAction,
-  resource: PermissionResource
+  resource: PermissionResource,
+  tenantId: string
 ): Promise<boolean> {
-  const permissions = await getUserPermissions(userId);
+  const permissions = await getUserPermissions(userId, tenantId);
 
   return permissions.some(
     (permission) =>
@@ -132,9 +143,10 @@ export async function hasPermission(
  */
 export async function hasAnyPermission(
   userId: string,
-  permissionChecks: PermissionCheck[]
+  permissionChecks: PermissionCheck[],
+  tenantId: string
 ): Promise<boolean> {
-  const permissions = await getUserPermissions(userId);
+  const permissions = await getUserPermissions(userId, tenantId);
 
   return permissionChecks.some((check) =>
     permissions.some(
@@ -151,9 +163,10 @@ export async function hasAnyPermission(
  */
 export async function hasAllPermissions(
   userId: string,
-  permissionChecks: PermissionCheck[]
+  permissionChecks: PermissionCheck[],
+  tenantId: string
 ): Promise<boolean> {
-  const permissions = await getUserPermissions(userId);
+  const permissions = await getUserPermissions(userId, tenantId);
 
   return permissionChecks.every((check) =>
     permissions.some(
@@ -170,9 +183,10 @@ export async function hasAllPermissions(
  */
 export async function hasRole(
   userId: string,
-  roleName: string
+  roleName: string,
+  tenantId: string
 ): Promise<boolean> {
-  const userRoles = await getUserRoles(userId);
+  const userRoles = await getUserRoles(userId, tenantId);
   return userRoles.some((role) => role.name === roleName && role.isActive);
 }
 
@@ -181,9 +195,10 @@ export async function hasRole(
  */
 export async function hasAnyRole(
   userId: string,
-  roleNames: string[]
+  roleNames: string[],
+  tenantId: string
 ): Promise<boolean> {
-  const userRoles = await getUserRoles(userId);
+  const userRoles = await getUserRoles(userId, tenantId);
   return userRoles.some(
     (role) => roleNames.includes(role.name) && role.isActive
   );
@@ -192,8 +207,11 @@ export async function hasAnyRole(
 /**
  * Get RBAC context for a user (optimized)
  */
-export async function getRBACContext(userId: string): Promise<RBACContext> {
-  const { roles, permissions } = await getUserRBACData(userId);
+export async function getRBACContext(
+  userId: string,
+  tenantId: string
+): Promise<RBACContext> {
+  const { roles, permissions } = await getUserRBACData(userId, tenantId);
 
   // Convert string enums to proper types
   const convertedPermissions = permissions.map((permission) => ({
@@ -216,7 +234,8 @@ export async function assignRole(
   userId: string,
   roleId: string,
   assignedBy?: string,
-  expiresAt?: Date
+  expiresAt?: Date,
+  _tenantId?: string
 ): Promise<UserRole> {
   return await prisma.userRole.create({
     data: {
@@ -236,7 +255,8 @@ export async function assignRole(
  */
 export async function removeRole(
   userId: string,
-  roleId: string
+  roleId: string,
+  _tenantId?: string
 ): Promise<void> {
   await prisma.userRole.deleteMany({
     where: {
@@ -249,26 +269,38 @@ export async function removeRole(
 /**
  * Create a new role
  */
-export async function createRole(data: {
-  name: string;
-  displayName: string;
-  description?: string;
-  isSystem?: boolean;
-}): Promise<Role> {
+export async function createRole(
+  data: {
+    name: string;
+    displayName: string;
+    description?: string;
+    isSystem?: boolean;
+  },
+  tenantId: string
+): Promise<Role> {
   return await prisma.role.create({
-    data,
+    data: {
+      ...data,
+      tenantId,
+    },
   });
 }
 
-export async function updateRole(data: {
-  id: string;
-  name?: string;
-  displayName?: string;
-  description?: string;
-  isSystem?: boolean;
-}): Promise<Role> {
+export async function updateRole(
+  data: {
+    id: string;
+    name?: string;
+    displayName?: string;
+    description?: string;
+    isSystem?: boolean;
+  },
+  tenantId: string
+): Promise<Role> {
   return await prisma.role.update({
-    where: { id: data.id },
+    where: {
+      id: data.id,
+      tenantId,
+    },
     data: {
       name: data.name,
       displayName: data.displayName,
@@ -278,9 +310,15 @@ export async function updateRole(data: {
   });
 }
 
-export async function deleteRole(id: string): Promise<boolean> {
+export async function deleteRole(
+  id: string,
+  tenantId: string
+): Promise<boolean> {
   await prisma.role.delete({
-    where: { id },
+    where: {
+      id,
+      tenantId,
+    },
   });
   return true;
 }
@@ -288,16 +326,20 @@ export async function deleteRole(id: string): Promise<boolean> {
 /**
  * Create a new permission
  */
-export async function createPermission(data: {
-  action: PermissionAction;
-  resource: PermissionResource;
-  description?: string;
-}): Promise<Permission> {
+export async function createPermission(
+  data: {
+    action: PermissionAction;
+    resource: PermissionResource;
+    description?: string;
+  },
+  tenantId: string
+): Promise<Permission> {
   return await prisma.permission.create({
     data: {
       action: data.action.toString() as PermissionAction,
       resource: data.resource.toString() as PermissionResource,
       description: data.description,
+      tenantId,
     },
   });
 }
@@ -307,7 +349,8 @@ export async function createPermission(data: {
  */
 export async function assignPermissionToRole(
   roleId: string,
-  permissionId: string
+  permissionId: string,
+  _tenantId?: string
 ): Promise<void> {
   await prisma.rolePermission.create({
     data: {
@@ -322,7 +365,8 @@ export async function assignPermissionToRole(
  */
 export async function removePermissionFromRole(
   roleId: string,
-  permissionId: string
+  permissionId: string,
+  _tenantId?: string
 ): Promise<void> {
   await prisma.rolePermission.deleteMany({
     where: {
@@ -335,9 +379,12 @@ export async function removePermissionFromRole(
 /**
  * Get all roles
  */
-export async function getAllRoles(): Promise<Role[]> {
+export async function getAllRoles(tenantId: string): Promise<Role[]> {
   return await prisma.role.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      tenantId,
+    },
     include: {
       rolePermissions: {
         include: {
@@ -352,9 +399,14 @@ export async function getAllRoles(): Promise<Role[]> {
 /**
  * Get all permissions
  */
-export async function getAllPermissions(): Promise<Permission[]> {
+export async function getAllPermissions(
+  tenantId: string
+): Promise<Permission[]> {
   return await prisma.permission.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      tenantId,
+    },
     orderBy: [{ resource: "asc" }, { action: "asc" }],
   });
 }
@@ -362,9 +414,14 @@ export async function getAllPermissions(): Promise<Permission[]> {
 /**
  * Get permissions for a specific role
  */
-export async function getRolePermissions(roleId: string) {
+export async function getRolePermissions(roleId: string, tenantId?: string) {
   return await prisma.rolePermission.findMany({
-    where: { roleId },
+    where: {
+      roleId,
+      role: {
+        tenantId,
+      },
+    },
     include: {
       permission: true,
     },
@@ -379,9 +436,17 @@ export async function getRolePermissions(roleId: string) {
 /**
  * Get role by name
  */
-export async function getRoleByName(name: string): Promise<Role | null> {
+export async function getRoleByName(
+  name: string,
+  tenantId: string
+): Promise<Role | null> {
   return await prisma.role.findUnique({
-    where: { name },
+    where: {
+      name_tenantId: {
+        name,
+        tenantId,
+      },
+    },
     include: {
       rolePermissions: {
         include: {
@@ -397,13 +462,15 @@ export async function getRoleByName(name: string): Promise<Role | null> {
  */
 export async function getPermissionByActionAndResource(
   action: PermissionAction,
-  resource: PermissionResource
+  resource: PermissionResource,
+  tenantId: string
 ): Promise<Permission | null> {
   return await prisma.permission.findUnique({
     where: {
-      action_resource: {
+      action_resource_tenantId: {
         action: action.toString() as PermissionAction,
         resource: resource.toString() as PermissionResource,
+        tenantId,
       },
     },
   });
@@ -412,60 +479,83 @@ export async function getPermissionByActionAndResource(
 /**
  * Check if user is super admin
  */
-export async function isSuperAdmin(userId: string): Promise<boolean> {
-  return await hasRole(userId, DEFAULT_ROLES.SUPER_ADMIN);
+export async function isSuperAdmin(
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
+  return await hasRole(userId, DEFAULT_ROLES.SUPER_ADMIN, tenantId);
 }
 
 /**
  * Check if user is admin
  */
-export async function isAdmin(userId: string): Promise<boolean> {
-  return await hasAnyRole(userId, [
-    DEFAULT_ROLES.SUPER_ADMIN,
-    DEFAULT_ROLES.ADMIN,
-  ]);
+export async function isAdmin(
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
+  return await hasAnyRole(
+    userId,
+    [DEFAULT_ROLES.SUPER_ADMIN, DEFAULT_ROLES.ADMIN],
+    tenantId
+  );
 }
 
 /**
  * Check if user can manage users
  */
-export async function canManageUsers(userId: string): Promise<boolean> {
+export async function canManageUsers(
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
   return await hasPermission(
     userId,
     PermissionAction.MANAGE,
-    PermissionResource.USER
+    PermissionResource.USER,
+    tenantId
   );
 }
 
 /**
  * Check if user can manage roles
  */
-export async function canManageRoles(userId: string): Promise<boolean> {
+export async function canManageRoles(
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
   return await hasPermission(
     userId,
     PermissionAction.MANAGE,
-    PermissionResource.ROLE
+    PermissionResource.ROLE,
+    tenantId
   );
 }
 
 /**
  * Check if user can access admin panel
  */
-export async function canAccessAdmin(userId: string): Promise<boolean> {
+export async function canAccessAdmin(
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
   return await hasPermission(
     userId,
     PermissionAction.MANAGE,
-    PermissionResource.ADMIN
+    PermissionResource.ADMIN,
+    tenantId
   );
 }
 
 /**
  * Check if user can view dashboard
  */
-export async function canViewDashboard(userId: string): Promise<boolean> {
+export async function canViewDashboard(
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
   return await hasPermission(
     userId,
     PermissionAction.READ,
-    PermissionResource.DASHBOARD
+    PermissionResource.DASHBOARD,
+    tenantId
   );
 }

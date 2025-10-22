@@ -52,7 +52,6 @@ const createUserSchema = z.object({
   password: z.string().min(6, "Contraseña debe tener al menos 6 caracteres"),
   phone: z.string().optional(),
   language: z.enum(["ES", "EN", "PT"]).optional(),
-  defaultRiskPercentage: z.number().min(0.01).max(100).optional(),
 });
 
 type UserFormData = z.infer<typeof updateUserSchema>;
@@ -147,7 +146,6 @@ function UserDialog({
       password: "",
       phone: "",
       language: "ES",
-      defaultRiskPercentage: 1.0,
     },
   });
 
@@ -160,7 +158,6 @@ function UserDialog({
         password: "",
         phone: "",
         language: "ES",
-        defaultRiskPercentage: 1.0,
       });
       setSelectedInitialRoles([]);
     }
@@ -285,31 +282,6 @@ function UserDialog({
                             <option value="EN">English</option>
                             <option value="PT">Português</option>
                           </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="defaultRiskPercentage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>% Riesgo por defecto</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            min="0.01"
-                            max="100"
-                            step="0.01"
-                            placeholder="1.00"
-                            onChange={(e) =>
-                              field.onChange(
-                                Number.parseFloat(e.target.value) || 0
-                              )
-                            }
-                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

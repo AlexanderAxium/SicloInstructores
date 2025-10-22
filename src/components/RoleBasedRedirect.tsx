@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useUser } from "@/hooks/useUser";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
@@ -12,7 +12,7 @@ interface RoleBasedRedirectProps {
 export function RoleBasedRedirect({ children }: RoleBasedRedirectProps) {
   const pathname = usePathname();
   const { isAuthenticated, loading: authLoading } = useAuthContext();
-  const { primaryRole, isLoading: roleLoading } = useUserRole();
+  const { primaryRole, isLoading: roleLoading } = useUser();
 
   useEffect(() => {
     // Temporarily disabled all redirections - allow free access to all routes

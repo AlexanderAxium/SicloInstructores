@@ -2,6 +2,7 @@
 
 import { Building2, ExternalLink, Shield, Users } from "lucide-react";
 import Link from "next/link";
+import TenantInfo from "./TenantInfo";
 
 interface AdminDashboardProps {
   user: {
@@ -9,6 +10,7 @@ interface AdminDashboardProps {
     name: string;
     email: string;
     emailVerified: boolean;
+    tenantId?: string;
   } | null;
 }
 
@@ -61,34 +63,52 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         </div>
       </div>
 
-      {/* Main Content - Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {adminSections.map((section) => (
-          <Link
-            key={section.href}
-            href={section.href}
-            className="group relative overflow-hidden rounded-lg border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-border/80"
-          >
-            <div className="flex items-start space-x-4">
-              <div
-                className={`flex-shrink-0 rounded-lg p-3 ${section.bgColor}`}
-              >
-                <div className={section.color}>{section.icon}</div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-medium text-foreground group-hover:text-foreground/80">
-                  {section.title}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {section.description}
-                </p>
-              </div>
-              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
-            </div>
+      {/* Main Content - Vertical Layout */}
+      <div className="space-y-6">
+        {/* Tenant Information - Full Width */}
+        {user?.tenantId && (
+          <div className="w-full">
+            <TenantInfo tenantId={user.tenantId} />
+          </div>
+        )}
 
-            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-border to-transparent group-hover:via-primary transition-all duration-300" />
-          </Link>
-        ))}
+        {/* Admin Sections - Grid below */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {adminSections.map((section) => (
+            <Link
+              key={section.href}
+              href={section.href}
+              className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-lg hover:border-border/80 hover:-translate-y-1"
+            >
+              <div className="flex flex-col h-full">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div
+                    className={`flex-shrink-0 rounded-xl p-3 ${section.bgColor}`}
+                  >
+                    <div className={section.color}>{section.icon}</div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-foreground group-hover:text-foreground/80 mb-1">
+                      {section.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {section.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-auto">
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <span>Gestionar</span>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+              </div>
+
+              <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-border to-transparent group-hover:via-primary transition-all duration-300" />
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

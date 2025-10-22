@@ -11,6 +11,40 @@ CREATE TYPE "public"."PermissionAction" AS ENUM ('CREATE', 'READ', 'UPDATE', 'DE
 CREATE TYPE "public"."PermissionResource" AS ENUM ('USER', 'ROLE', 'PERMISSION', 'DASHBOARD', 'ADMIN');
 
 -- CreateTable
+CREATE TABLE "public"."tenants" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL DEFAULT 'My App',
+    "displayName" TEXT NOT NULL DEFAULT 'My Application',
+    "description" TEXT,
+    "email" TEXT,
+    "phone" TEXT,
+    "address" TEXT,
+    "city" TEXT,
+    "country" TEXT,
+    "website" TEXT,
+    "facebookUrl" TEXT,
+    "twitterUrl" TEXT,
+    "instagramUrl" TEXT,
+    "linkedinUrl" TEXT,
+    "youtubeUrl" TEXT,
+    "foundedYear" INTEGER,
+    "logoUrl" TEXT,
+    "faviconUrl" TEXT,
+    "metaTitle" TEXT,
+    "metaDescription" TEXT,
+    "metaKeywords" TEXT,
+    "termsUrl" TEXT,
+    "privacyUrl" TEXT,
+    "cookiesUrl" TEXT,
+    "complaintsUrl" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "tenants_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."User" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -22,6 +56,7 @@ CREATE TABLE "public"."User" (
     "phone" TEXT,
     "language" "public"."Language" NOT NULL DEFAULT 'ES',
     "theme" "public"."Theme" NOT NULL DEFAULT 'AUTO',
+    "tenantId" TEXT NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -81,6 +116,7 @@ CREATE TABLE "public"."roles" (
     "isSystem" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "tenantId" TEXT NOT NULL,
 
     CONSTRAINT "roles_pkey" PRIMARY KEY ("id")
 );
@@ -94,6 +130,7 @@ CREATE TABLE "public"."permissions" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "tenantId" TEXT NOT NULL,
 
     CONSTRAINT "permissions_pkey" PRIMARY KEY ("id")
 );
@@ -120,42 +157,14 @@ CREATE TABLE "public"."role_permissions" (
     CONSTRAINT "role_permissions_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "public"."company_info" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL DEFAULT 'My App',
-    "displayName" TEXT NOT NULL DEFAULT 'My Application',
-    "description" TEXT,
-    "email" TEXT,
-    "phone" TEXT,
-    "address" TEXT,
-    "city" TEXT,
-    "country" TEXT,
-    "website" TEXT,
-    "facebookUrl" TEXT,
-    "twitterUrl" TEXT,
-    "instagramUrl" TEXT,
-    "linkedinUrl" TEXT,
-    "youtubeUrl" TEXT,
-    "foundedYear" INTEGER,
-    "logoUrl" TEXT,
-    "faviconUrl" TEXT,
-    "metaTitle" TEXT,
-    "metaDescription" TEXT,
-    "metaKeywords" TEXT,
-    "termsUrl" TEXT,
-    "privacyUrl" TEXT,
-    "cookiesUrl" TEXT,
-    "complaintsUrl" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "company_info_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
+
+-- CreateIndex
+CREATE INDEX "User_tenantId_idx" ON "public"."User"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "User_email_tenantId_idx" ON "public"."User"("email", "tenantId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Session_token_key" ON "public"."Session"("token");
@@ -167,10 +176,16 @@ CREATE UNIQUE INDEX "Account_providerId_accountId_key" ON "public"."Account"("pr
 CREATE UNIQUE INDEX "Verification_identifier_value_key" ON "public"."Verification"("identifier", "value");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "roles_name_key" ON "public"."roles"("name");
+CREATE INDEX "roles_tenantId_idx" ON "public"."roles"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "permissions_action_resource_key" ON "public"."permissions"("action", "resource");
+CREATE UNIQUE INDEX "roles_name_tenantId_key" ON "public"."roles"("name", "tenantId");
+
+-- CreateIndex
+CREATE INDEX "permissions_tenantId_idx" ON "public"."permissions"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "permissions_action_resource_tenantId_key" ON "public"."permissions"("action", "resource", "tenantId");
 
 -- CreateIndex
 CREATE INDEX "user_roles_userId_idx" ON "public"."user_roles"("userId");
@@ -194,10 +209,19 @@ CREATE INDEX "role_permissions_permissionId_idx" ON "public"."role_permissions"(
 CREATE UNIQUE INDEX "role_permissions_roleId_permissionId_key" ON "public"."role_permissions"("roleId", "permissionId");
 
 -- AddForeignKey
+ALTER TABLE "public"."User" ADD CONSTRAINT "User_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "public"."tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "public"."Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."roles" ADD CONSTRAINT "roles_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "public"."tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."permissions" ADD CONSTRAINT "permissions_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "public"."tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."user_roles" ADD CONSTRAINT "user_roles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

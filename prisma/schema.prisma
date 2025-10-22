@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -14,9 +8,171 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ================================
-// ENUMS
-// ================================
+model Tenant {
+  id              String       @id @default(uuid())
+  name            String       @default("My App")
+  displayName     String       @default("My Application")
+  description     String?
+  email           String?
+  phone           String?
+  address         String?
+  city            String?
+  country         String?
+  website         String?
+  facebookUrl     String?
+  twitterUrl      String?
+  instagramUrl    String?
+  linkedinUrl     String?
+  youtubeUrl      String?
+  foundedYear     Int?
+  logoUrl         String?
+  faviconUrl      String?
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  termsUrl        String?
+  privacyUrl      String?
+  cookiesUrl      String?
+  complaintsUrl   String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  users           User[]
+  permissions     Permission[]
+  roles           Role[]
+
+  @@map("tenants")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
+  emailVerified Boolean    @default(false)
+  image         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  phone         String?
+  language      Language   @default(ES)
+  theme         Theme      @default(AUTO)
+  tenantId      String?
+  accounts      Account[]
+  sessions      Session[]
+  tenant        Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles     UserRole[]
+
+  @@index([tenantId])
+  @@index([email, tenantId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+model Role {
+  id              String           @id @default(uuid())
+  name            String
+  displayName     String
+  description     String?
+  isActive        Boolean          @default(true)
+  isSystem        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tenantId        String
+  rolePermissions RolePermission[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles       UserRole[]
+
+  @@unique([name, tenantId])
+  @@index([tenantId])
+  @@map("roles")
+}
+
+model Permission {
+  id              String             @id @default(uuid())
+  action          PermissionAction
+  resource        PermissionResource
+  description     String?
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  tenantId        String
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rolePermissions RolePermission[]
+
+  @@unique([action, resource, tenantId])
+  @@index([tenantId])
+  @@map("permissions")
+}
+
+model UserRole {
+  id         String    @id @default(uuid())
+  userId     String
+  roleId     String
+  assignedAt DateTime  @default(now())
+  assignedBy String?
+  expiresAt  DateTime?
+  role       Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([expiresAt])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
 
 enum Language {
   ES
@@ -44,193 +200,4 @@ enum PermissionResource {
   PERMISSION
   DASHBOARD
   ADMIN
-}
-
-// ================================
-// AUTH MODELS (Better Auth)
-// ================================
-
-model User {
-  // Core Better Auth fields (required)
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Additional application fields
-  phone                   String?
-  language                Language  @default(ES)
-  theme                   Theme     @default(AUTO)
-
-  // Relations
-  sessions Session[]
-  accounts Account[]
-  userRoles UserRole[]
-}
-
-model Session {
-  // Core Better Auth fields (required)
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Account {
-  // Core Better Auth fields (required)
-  id                    String    @id @default(cuid())
-  userId                String
-  accountId             String
-  providerId            String
-  accessToken           String?
-  refreshToken          String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  idToken               String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  // Relations
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([providerId, accountId])
-}
-
-model Verification {
-  // Core Better Auth fields (required)
-  id         String   @id @default(cuid())
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@unique([identifier, value])
-}
-
-// ================================
-// RBAC SYSTEM
-// ================================
-
-model Role {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  displayName String
-  description String?
-  isActive    Boolean   @default(true)
-  isSystem    Boolean   @default(false) // System roles cannot be deleted
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  userRoles        UserRole[]
-  rolePermissions  RolePermission[]
-
-  @@map("roles")
-}
-
-model Permission {
-  id          String            @id @default(uuid())
-  action      PermissionAction
-  resource    PermissionResource
-  description String?
-  isActive    Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-
-  // Relations
-  rolePermissions RolePermission[]
-
-  @@unique([action, resource])
-  @@map("permissions")
-}
-
-model UserRole {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  roleId    String
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  assignedAt DateTime @default(now())
-  assignedBy String? // ID of the user who assigned this role
-  expiresAt  DateTime? // Optional expiration date for temporary roles
-
-  @@unique([userId, roleId])
-  @@index([userId])
-  @@index([roleId])
-  @@index([expiresAt])
-  @@map("user_roles")
-}
-
-model RolePermission {
-  id           String     @id @default(uuid())
-  roleId       String
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permissionId String
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  createdAt    DateTime   @default(now())
-
-  @@unique([roleId, permissionId])
-  @@index([roleId])
-  @@index([permissionId])
-  @@map("role_permissions")
-}
-
-// ================================
-// COMPANY INFORMATION
-// ================================
-
-model CompanyInfo {
-  id          String    @id @default(uuid())
-  name        String    @default("My App")
-  displayName String    @default("My Application")
-  description String?
-  email       String?
-  phone       String?
-  address     String?
-  city        String?
-  country     String?
-  website     String?
-  
-  // Social Media
-  facebookUrl  String?
-  twitterUrl   String?
-  instagramUrl String?
-  linkedinUrl  String?
-  youtubeUrl   String?
-  
-  // Additional Info
-  foundedYear  Int?
-  logoUrl      String?
-  faviconUrl   String?
-  
-  // SEO
-  metaTitle       String?
-  metaDescription String?
-  metaKeywords    String?
-  
-  // Legal
-  termsUrl      String?
-  privacyUrl    String?
-  cookiesUrl    String?
-  complaintsUrl String?
-  
-  // Status
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@map("company_info")
 }

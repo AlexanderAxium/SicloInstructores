@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { initTRPC } from "@trpc/server";
 
 export interface Context {
@@ -6,6 +7,12 @@ export interface Context {
     id: string;
     email: string;
     name: string;
+    tenantId: string | null;
+  };
+  tenant?: {
+    id: string;
+    name: string;
+    displayName: string;
   };
   rbac?: unknown;
 }
@@ -23,12 +30,38 @@ export const createContext = async (opts: {
       return {};
     }
 
+    // Get user with tenant information
+    const userWithTenant = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            displayName: true,
+          },
+        },
+      },
+    });
+
+    if (!userWithTenant) {
+      return {};
+    }
+
     return {
       user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
+        id: userWithTenant.id,
+        email: userWithTenant.email,
+        name: userWithTenant.name,
+        tenantId: userWithTenant.tenantId,
       },
+      tenant: userWithTenant.tenant
+        ? {
+            id: userWithTenant.tenant.id,
+            name: userWithTenant.tenant.name,
+            displayName: userWithTenant.tenant.displayName,
+          }
+        : undefined,
     };
   } catch (_error) {
     return {};

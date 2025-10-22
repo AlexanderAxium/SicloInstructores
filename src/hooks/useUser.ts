@@ -2,17 +2,34 @@
 
 import { useAuthContext } from "@/AuthContext";
 import { useRBAC } from "@/hooks/useRBAC";
+import { trpc } from "@/utils/trpc";
 import { useEffect, useState } from "react";
 
 export type UserRole = "admin" | "user" | "viewer" | "super_admin" | "unknown";
 
-export function useUserRole() {
-  const { user: _user, isAuthenticated } = useAuthContext();
-  const { userRoles, isLoading } = useRBAC();
+export function useUser() {
+  const { user: authUser, isAuthenticated } = useAuthContext();
+  const {
+    userRoles,
+    isLoading: rbacLoading,
+    userPermissions,
+    hasRole,
+    canViewDashboard,
+  } = useRBAC();
+
+  // Get user profile
+  const { data: userProfile, isLoading: profileLoading } =
+    trpc.user.getProfile.useQuery(undefined, {
+      enabled: !!authUser?.id,
+      staleTime: 5 * 60 * 1000, // 5 minutes cache
+      refetchOnWindowFocus: false,
+    });
+
   const [primaryRole, setPrimaryRole] = useState<UserRole>("unknown");
 
+  // Calculate primary role based on user roles
   useEffect(() => {
-    if (!isAuthenticated || isLoading || !userRoles?.length) {
+    if (!isAuthenticated || rbacLoading || !userRoles?.length) {
       setPrimaryRole("unknown");
       return;
     }
@@ -50,14 +67,33 @@ export function useUserRole() {
     }
 
     setPrimaryRole(highestRole);
-  }, [isAuthenticated, userRoles, isLoading]);
+  }, [isAuthenticated, userRoles, rbacLoading]);
+
+  const isLoading = rbacLoading || profileLoading;
 
   return {
+    // User data
+    user: userProfile || authUser,
+    userProfile,
+    authUser,
+
+    // Role information
     primaryRole,
-    isLoading,
+    userRoles,
+    userPermissions,
+
+    // Role utilities
     isUser: primaryRole === "user",
     isAdmin: ["admin", "super_admin"].includes(primaryRole),
     isSuperAdmin: primaryRole === "super_admin",
     isViewer: primaryRole === "viewer",
+
+    // RBAC utilities
+    hasRole,
+    canViewDashboard,
+
+    // Loading states
+    isLoading,
+    isAuthenticated,
   };
 }

@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 
 import "./globals.css";
 import { AuthProvider } from "@/AuthContext";
-import { Footer } from "@/components/Footer";
-import GlobalNavbar from "@/components/GlobalNavbar";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { RoleBasedRedirect } from "@/components/RoleBasedRedirect";
 import { StructuredData } from "@/components/StructuredData";
@@ -47,9 +45,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <TRPCProvider>
-              <GlobalNavbar />
               <RoleBasedRedirect>{children}</RoleBasedRedirect>
-              <Footer />
               <Toaster />
             </TRPCProvider>
           </AuthProvider>
