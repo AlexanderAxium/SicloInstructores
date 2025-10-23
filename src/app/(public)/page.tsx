@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
+import { InstructorList } from "@/components/instructor-list";
 import { AnimatedSection } from "@/components/landing/animated-section";
 import { BentoSection } from "@/components/landing/bento-section";
 import { CTASection } from "@/components/landing/cta-section";
@@ -51,6 +52,15 @@ export default function HomePage() {
           delay={0.2}
         >
           <PricingSection />
+        </AnimatedSection>
+        <AnimatedSection
+          id="instructors-section"
+          className="relative container mx-auto mt-20 md:mt-24 lg:mt-32"
+          delay={0.2}
+        >
+          <div className="px-4 sm:px-6 lg:px-8">
+            <InstructorList />
+          </div>
         </AnimatedSection>
         <AnimatedSection
           id="testimonials-section"

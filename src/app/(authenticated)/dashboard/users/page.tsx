@@ -476,7 +476,6 @@ function UserRolesManager({ userId }: { userId: string }) {
   });
 
   const handleAssignRole = (roleId: string) => {
-    console.log("Assigning role:", roleId, "to user:", userId);
     assignRole.mutate({
       userId,
       roleId,
@@ -495,14 +494,6 @@ function UserRolesManager({ userId }: { userId: string }) {
   }
 
   // Debug logs (temporary)
-  console.log("UserRolesManager Debug:", {
-    userId,
-    availableRoles: availableRoles?.length,
-    userRoles: userRoles?.length,
-    availableRolesData: availableRoles,
-    rolesLoading,
-    rolesError: rolesError?.message,
-  });
 
   return (
     <div className="space-y-4 max-h-[28rem] overflow-y-auto">
@@ -632,7 +623,6 @@ export default function UsersPage() {
 
   const updateUser = trpc.user.update.useMutation({
     onSuccess: () => {
-      console.log("User updated successfully, closing dialog");
       refetch();
       setIsDialogOpen(false);
       setDialogUser(null);

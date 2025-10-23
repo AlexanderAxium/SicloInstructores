@@ -37,9 +37,26 @@ model Tenant {
   isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  
+  // RBAC Relations
   users           User[]
   permissions     Permission[]
   roles           Role[]
+  
+  // Fitness/Gym Management Relations
+  instructors     Instructor[]
+  disciplines     Discipline[]
+  periods         Period[]
+  formulas        Formula[]
+  instructorCategories InstructorCategory[]
+  classes         Class[]
+  covers          Cover[]
+  penalties       Penalty[]
+  instructorPayments InstructorPayment[]
+  files           File[]
+  brandings       Branding[]
+  themeRides      ThemeRide[]
+  workshops       Workshop[]
 
   @@map("tenants")
 }
@@ -200,4 +217,401 @@ enum PermissionResource {
   PERMISSION
   DASHBOARD
   ADMIN
+  INSTRUCTOR
+  DISCIPLINA
+  PERIODO
+  FORMULA
+  CATEGORIA_INSTRUCTOR
+  CLASE
+  COVER
+  PENALIZACION
+  PAGO_INSTRUCTOR
+  ARCHIVO
+  BRANDEO
+  THEME_RIDE
+  WORKSHOP
+}
+
+// ================================
+// FITNESS/GYM MANAGEMENT MODELS
+// ================================
+
+model Instructor {
+  id             String   @id @default(cuid())
+  name           String
+  fullName       String?
+  active         Boolean  @default(true)
+  password       String?
+  extraInfo      Json?
+  lastBonus      Json?    // JSON field to store {disciplineId: periodId}
+  
+  // Optional contact and banking fields
+  contactPerson  String?
+  bankAccount    String?
+  CCI            String?
+  bank           String?
+  phone          String?
+  DNI            String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  tenantId       String
+  
+  // Relations
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes        Class[]
+  payments       InstructorPayment[]
+  disciplines    Discipline[]
+  categories     InstructorCategory[]
+  coversAsOriginal    Cover[]   @relation("InstructorOriginal")
+  coversAsReplacement Cover[]   @relation("InstructorReplacement")
+  penalties      Penalty[]
+  brandings      Branding[]
+  themeRides     ThemeRide[]
+  workshops      Workshop[]
+
+  @@index([tenantId])
+  @@unique([name, tenantId])
+  @@map("instructors")
+}
+
+model Discipline {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenantId    String
+
+  // Relations
+  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes       Class[]
+  formulas      Formula[]
+  instructors   Instructor[]
+  categories    InstructorCategory[]
+  penalties     Penalty[]
+  covers        Cover[]
+
+  @@index([tenantId])
+  @@unique([name, tenantId])
+  @@map("disciplines")
+}
+
+model Period {
+  id            String    @id @default(cuid())
+  number        Int
+  year          Int
+  startDate     DateTime
+  endDate       DateTime
+  paymentDate   DateTime
+  bonusCalculated Boolean?  @default(false)
+  discountRules Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tenantId      String
+
+  // Relations
+  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classes       Class[]
+  payments      InstructorPayment[]
+  formulas      Formula[]
+  categories    InstructorCategory[]
+  covers        Cover[]
+  penalties     Penalty[]
+  brandings     Branding[]
+  themeRides    ThemeRide[]
+  workshops     Workshop[]
+
+  @@index([tenantId])
+  @@unique([number, year, tenantId])
+  @@map("periods")
+}
+
+model Formula {
+  id           String   @id @default(cuid())
+  disciplineId String
+  periodId     String
+  
+  // Category requirements (occupation, classes, etc.)
+  categoryRequirements Json // Stores requirements for each category (Instructor, Junior Ambassador, etc.)
+  // Payment parameters per category
+  paymentParameters Json // Stores payment parameters for each category (guaranteed minimum, rates, maximum)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenantId     String
+
+  // Relations
+  discipline   Discipline @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  period       Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Uniqueness constraint to avoid duplicates in the same period and discipline
+  @@unique([disciplineId, periodId, tenantId])
+  @@index([tenantId])
+  @@map("formulas")
+}
+
+// Model to assign categories to instructors by discipline
+model InstructorCategory {
+  id           String   @id @default(cuid())
+  instructorId String
+  disciplineId String
+  periodId     String
+  category     String   // Values: "INSTRUCTOR", "JUNIOR_AMBASSADOR", "AMBASSADOR", "SENIOR_AMBASSADOR"
+  isManual     Boolean? @default(false)
+  // Current performance metrics (optional)
+  metrics      Json?    // Stores current instructor metrics (occupation, classes, etc.)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenantId     String
+
+  // Relations
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  discipline   Discipline @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  period       Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Uniqueness constraint to avoid duplicates
+  @@unique([instructorId, disciplineId, periodId, tenantId])
+  @@index([tenantId])
+  @@map("instructor_categories")
+}
+
+model Class {
+  id                    String    @id @default(cuid())
+  country               String
+  city                  String
+  disciplineId          String
+  week                  Int
+  studio                String
+  instructorId         String
+  periodId             String
+  room                  String
+  totalReservations     Int        @default(0)
+  waitingLists         Int        @default(0)
+  complimentary         Int        @default(0)
+  spots                 Int
+  paidReservations      Int        @default(0)
+  specialText           String?
+  date                  DateTime
+  replacementInstructorId String?    // ID of the instructor covering the class
+  penaltyType           String?    // Type of penalty if applicable
+  penaltyPoints          Int?
+  // New fields
+  isVersus              Boolean    @default(false)
+  versusNumber          Int?
+  
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  tenantId             String
+
+  // Relations
+  instructor           Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  discipline           Discipline @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  period               Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant               Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  covers                Cover[]   // A class can have multiple covers
+
+  @@index([tenantId])
+  @@index([date])
+  @@map("classes")
+}
+
+// Updated model to handle covers
+model Cover {
+  id                    String    @id @default(cuid())
+  
+  // Basic cover information
+  originalInstructorId  String    // Instructor who was supposed to teach the class
+  replacementInstructorId String   // Instructor doing the cover
+  disciplineId          String    // Class discipline
+  periodId             String    // Period it belongs to
+  date                 DateTime  // Class date
+  time                 String    // Class time (format "HH:mm")
+  
+  // Optional information for existing class
+  classId              String?   // ID of the class being covered (optional)
+  
+  // States and configurations (only modifiable by managers/admin)
+  justification        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  bonusPayment         Boolean   @default(false)
+  fullHousePayment     Boolean   @default(false)
+  comments             String?
+  nameChange           String?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  tenantId              String
+
+  // Relations
+  originalInstructor    Instructor @relation("InstructorOriginal", fields: [originalInstructorId], references: [id], onDelete: Cascade)
+  replacementInstructor Instructor @relation("InstructorReplacement", fields: [replacementInstructorId], references: [id], onDelete: Cascade)
+  discipline            Discipline @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  period               Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant                Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  class                 Class?     @relation(fields: [classId], references: [id])
+
+  @@index([tenantId])
+  @@index([date])
+  @@map("covers")
+}
+
+// New table for the penalty system
+model Penalty {
+  id           String    @id @default(cuid())
+  instructorId String    // Penalized instructor
+  disciplineId String?   // Related discipline (optional)
+  periodId     String    // Period it belongs to
+  
+  // Penalty types according to your image
+  type         String    // FIXED_CANCELLATION, OUT_OF_TIME_CANCELLATION, CANCEL_LESS_24HRS, COVER_OF_COVER, LATE_EXIT, CUSTOM
+  points       Int       // Penalty points
+  description  String?   // Additional description
+  
+  // Additional fields for flexibility
+  active       Boolean   @default(true)
+  appliedAt    DateTime  @default(now()) // Date when the penalty was applied
+  comments     String?   // Additional comments
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tenantId     String
+
+  // Relations
+  instructor   Instructor  @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  discipline   Discipline? @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  period       Period      @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([instructorId])
+  @@map("penalties")
+}
+
+model InstructorPayment {
+  id                  String    @id @default(cuid())
+  amount              Float
+  status              String    @default("PENDING")
+  instructorId        String
+  periodId           String
+  details             Json?
+  meetsGuidelines     Boolean?
+  doubleShifts        Int?
+  nonPrimeHours       Float?
+  eventParticipation  Boolean?
+
+  // Updated fields
+  retention           Float     @default(0.0) // Retained amount
+  adjustment          Float     @default(0.0) // Payment adjustment
+  penalty             Float     @default(0.0)
+  cover               Float     @default(0.0)
+  branding            Float     @default(0.0) // Branding bonus amount
+  themeRide           Float     @default(0.0) // Theme ride bonus amount
+  workshop            Float     @default(0.0) // Workshop bonus amount
+  versusBonus         Float     @default(0.0) // Versus bonus amount
+  adjustmentType      String    @default("FIXED") // Can be "FIXED" or "PERCENTAGE"
+  bonus               Float?    // Bonus amount
+  finalPayment        Float
+  comments            String?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  tenantId            String
+
+  // Relations
+  instructor          Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  period              Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant              Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Uniqueness constraint
+  @@unique([instructorId, periodId, tenantId])
+  @@index([tenantId])
+  @@map("instructor_payments")
+}
+
+model File {
+  id          String    @id @default(cuid())
+  name        String
+  type        String?
+  url         String
+  description String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tenantId    String
+
+  // Relations
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("files")
+}
+
+// New table for the branding system
+model Branding {
+  id           String    @id @default(cuid())
+  number       Int       // Branding number
+  instructorId String    // Instructor who did the branding
+  periodId     String    // Period it belongs to
+  comments     String?   // Additional comments
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tenantId     String
+
+  // Relations
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  period       Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("brandings")
+}
+
+// New table for the theme rides system
+model ThemeRide {
+  id           String    @id @default(cuid())
+  number       Int       // Number of theme rides
+  instructorId String    // Instructor who did the theme ride
+  periodId     String    // Period it belongs to
+  comments     String?   // Additional comments
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tenantId     String
+
+  // Relations
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  period       Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("theme_rides")
+}
+
+// New table for the workshops system
+model Workshop {
+  id           String    @id @default(cuid())
+  name         String    // Workshop name
+  instructorId String    // Instructor who gave the workshop
+  periodId     String    // Period it belongs to
+  date         DateTime  // Workshop date
+  comments     String?   // Additional comments
+  payment      Float     // Variable amount to pay the instructor
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  tenantId     String
+
+  // Relations
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  period       Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([date])
+  @@map("workshops")
 }

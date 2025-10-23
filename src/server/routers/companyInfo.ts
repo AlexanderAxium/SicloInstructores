@@ -2,19 +2,18 @@ import { z } from "zod";
 import { prisma } from "../../lib/db";
 import { hasPermission } from "../../services/rbacService";
 import { PermissionAction, PermissionResource } from "../../types/rbac";
-import { protectedProcedure, router } from "../trpc";
+import { protectedProcedure, publicProcedure, router } from "../trpc";
 
 export const companyInfoRouter = router({
   // Get company information (public)
-  get: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.user?.tenantId) {
-      throw new Error("User tenant not found");
-    }
-
-    const tenant = await prisma.tenant.findUnique({
+  get: publicProcedure.query(async () => {
+    // Get the first active tenant for public access
+    const tenant = await prisma.tenant.findFirst({
       where: {
-        id: ctx.user.tenantId,
         isActive: true,
+      },
+      orderBy: {
+        createdAt: "asc", // Get the oldest tenant (likely the default one)
       },
     });
 

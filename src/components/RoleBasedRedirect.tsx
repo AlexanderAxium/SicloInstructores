@@ -10,23 +10,16 @@ interface RoleBasedRedirectProps {
 }
 
 export function RoleBasedRedirect({ children }: RoleBasedRedirectProps) {
-  const pathname = usePathname();
-  const { isAuthenticated, loading: authLoading } = useAuthContext();
-  const { primaryRole, isLoading: roleLoading } = useUser();
+  const _pathname = usePathname();
+  const { isAuthenticated: _isAuthenticated, loading: authLoading } =
+    useAuthContext();
+  const { primaryRole: _primaryRole, isLoading: roleLoading } = useUser();
 
   useEffect(() => {
     // Temporarily disabled all redirections - allow free access to all routes
-    console.log("RoleBasedRedirect: All redirections disabled for debugging", {
-      primaryRole,
-      pathname,
-      isAuthenticated,
-      authLoading,
-      roleLoading,
-    });
-
     // No redirections - allow access to all routes
     return;
-  }, [primaryRole, pathname, isAuthenticated, authLoading, roleLoading]);
+  }, []);
 
   // Show loading state while determining role
   if (authLoading || roleLoading) {
