@@ -258,7 +258,7 @@ export default function ViewerDashboard({ user }: ViewerDashboardProps) {
           </div>
 
           {/* Tenant Information */}
-          {user?.tenantId && <TenantInfo tenantId={user.tenantId} />}
+          {user?.tenantId && <TenantInfo />}
         </div>
 
         {/* Available Reports */}

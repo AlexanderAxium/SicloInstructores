@@ -111,9 +111,13 @@ export const workshopsRouter = router({
         }>;
         instructorId?: string;
         periodId?: string;
-        active?: boolean;
+        name?: { contains: string; mode: "insensitive" };
+        date?: {
+          gte?: Date;
+          lte?: Date;
+        };
       } = {
-        tenantId: ctx.user?.tenantId,
+        tenantId: ctx.user?.tenantId || undefined,
       };
 
       if (input.search) {
@@ -129,7 +133,6 @@ export const workshopsRouter = router({
               fullName: { contains: input.search, mode: "insensitive" },
             },
           },
-          { comments: { contains: input.search, mode: "insensitive" } },
         ];
       }
 
@@ -303,7 +306,7 @@ export const workshopsRouter = router({
 
       // Handle date conversion
       if (updateData.date) {
-        updateData.date = new Date(updateData.date);
+        updateData.date = new Date(updateData.date) as any;
       }
 
       const workshop = await prisma.workshop.update({
@@ -389,7 +392,6 @@ export const workshopsRouter = router({
         stats: {
           payment: workshop.payment,
           date: workshop.date,
-          active: workshop.active,
         },
       };
     }),
@@ -424,7 +426,7 @@ export const workshopsRouter = router({
         (sum, workshop) => sum + workshop.payment,
         0
       );
-      const activeWorkshops = workshops.filter((w) => w.active);
+      const activeWorkshops = workshops; // All workshops are considered active
 
       return {
         workshops,

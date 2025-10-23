@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import {
   hasAllPermissions,
   hasAnyPermission,
@@ -29,7 +30,22 @@ export function createAuthMiddleware() {
         );
       }
 
-      return { user: session.user };
+      // Fetch user with tenantId from database
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          tenantId: true,
+        },
+      });
+
+      if (!user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      return { user };
     } catch (error) {
       console.error("Auth middleware error:", error);
       return NextResponse.json(
@@ -57,7 +73,19 @@ export function createPermissionMiddleware(
     const { user } = authResult;
 
     try {
-      const userHasPermission = await hasPermission(user.id, action, resource);
+      if (!user.tenantId) {
+        return NextResponse.json(
+          { error: "User tenant not found" },
+          { status: 400 }
+        );
+      }
+
+      const userHasPermission = await hasPermission(
+        user.id,
+        action,
+        resource,
+        user.tenantId
+      );
 
       if (!userHasPermission) {
         return NextResponse.json(
@@ -94,12 +122,27 @@ export function createMultiPermissionMiddleware(
     const { user } = authResult;
 
     try {
+      if (!user.tenantId) {
+        return NextResponse.json(
+          { error: "User tenant not found" },
+          { status: 400 }
+        );
+      }
+
       let hasPermission = false;
 
       if (requireAll) {
-        hasPermission = await hasAllPermissions(user.id, permissionChecks);
+        hasPermission = await hasAllPermissions(
+          user.id,
+          permissionChecks,
+          user.tenantId
+        );
       } else {
-        hasPermission = await hasAnyPermission(user.id, permissionChecks);
+        hasPermission = await hasAnyPermission(
+          user.id,
+          permissionChecks,
+          user.tenantId
+        );
       }
 
       if (!hasPermission) {
@@ -134,7 +177,14 @@ export function createRoleMiddleware(roleName: string) {
     const { user } = authResult;
 
     try {
-      const userHasRole = await hasRole(user.id, roleName);
+      if (!user.tenantId) {
+        return NextResponse.json(
+          { error: "User tenant not found" },
+          { status: 400 }
+        );
+      }
+
+      const userHasRole = await hasRole(user.id, roleName, user.tenantId);
 
       if (!userHasRole) {
         return NextResponse.json(

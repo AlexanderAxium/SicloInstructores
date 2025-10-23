@@ -121,17 +121,25 @@ export const periodsRouter = router({
           year?: { equals: number };
         }>;
         year?: number;
-        startDate?: { gte: Date };
+        number?: number;
+        startDate?: { gte?: Date; lte?: Date };
         endDate?: { lte: Date };
+        bonusCalculated?: boolean;
       } = {
         tenantId: ctx.user?.tenantId || undefined,
       };
 
       if (input.search) {
-        where.OR = [
-          { number: { equals: Number.parseInt(input.search) || undefined } },
-          { year: { equals: Number.parseInt(input.search) || undefined } },
-        ];
+        const searchNumber = Number.parseInt(input.search);
+        const searchYear = Number.parseInt(input.search);
+
+        where.OR = [];
+        if (!Number.isNaN(searchNumber)) {
+          where.OR.push({ number: { equals: searchNumber } });
+        }
+        if (!Number.isNaN(searchYear)) {
+          where.OR.push({ year: { equals: searchYear } });
+        }
       }
 
       if (input.year !== undefined) {
@@ -148,7 +156,7 @@ export const periodsRouter = router({
           where.startDate.gte = new Date(input.startDate);
         }
         if (input.endDate) {
-          where.startDate.lte = new Date(input.endDate);
+          where.endDate = { lte: new Date(input.endDate) };
         }
       }
 
@@ -318,14 +326,15 @@ export const periodsRouter = router({
       }
 
       // Convert date strings to Date objects
+      const processedUpdateData: any = { ...updateData };
       if (updateData.startDate) {
-        updateData.startDate = new Date(updateData.startDate);
+        processedUpdateData.startDate = new Date(updateData.startDate);
       }
       if (updateData.endDate) {
-        updateData.endDate = new Date(updateData.endDate);
+        processedUpdateData.endDate = new Date(updateData.endDate);
       }
       if (updateData.paymentDate) {
-        updateData.paymentDate = new Date(updateData.paymentDate);
+        processedUpdateData.paymentDate = new Date(updateData.paymentDate);
       }
 
       const period = await prisma.period.update({
@@ -333,7 +342,7 @@ export const periodsRouter = router({
           id,
           tenantId: ctx.user.tenantId,
         },
-        data: updateData,
+        data: processedUpdateData,
       });
 
       return period;

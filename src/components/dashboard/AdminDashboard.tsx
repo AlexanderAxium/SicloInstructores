@@ -68,7 +68,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
         {/* Tenant Information - Full Width */}
         {user?.tenantId && (
           <div className="w-full">
-            <TenantInfo tenantId={user.tenantId} />
+            <TenantInfo />
           </div>
         )}
 

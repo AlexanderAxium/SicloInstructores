@@ -57,7 +57,14 @@ export function requireAnyRole(roleNames: string[]) {
     const { user } = authResult;
 
     try {
-      const hasRole = await hasAnyRole(user.id, roleNames);
+      if (!user.tenantId) {
+        return NextResponse.json(
+          { error: "User tenant not found" },
+          { status: 400 }
+        );
+      }
+
+      const hasRole = await hasAnyRole(user.id, roleNames, user.tenantId);
 
       if (!hasRole) {
         return NextResponse.json(

@@ -5,7 +5,6 @@
 
 // Re-export existing type files
 export type * from "./auth";
-export type * from "./connection";
 // Export all enums and types
 export * from "./enums";
 export type * from "./rbac";
