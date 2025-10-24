@@ -1,0 +1,632 @@
+"use client";
+
+import { useAuthContext } from "@/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import type {
+  TableAction,
+  TableColumn,
+} from "@/components/ui/scrollable-table";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePagination } from "@/hooks/usePagination";
+import { useRBAC } from "@/hooks/useRBAC";
+import { trpc } from "@/utils/trpc";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  Eye,
+  Filter,
+  GraduationCap,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+const updateInstructorSchema = z.object({
+  name: z.string().min(2, "Nombre debe tener al menos 2 caracteres"),
+  fullName: z.string().optional(),
+  phone: z.string().optional(),
+  DNI: z.string().optional(),
+  active: z.boolean().optional(),
+});
+
+const createInstructorSchema = z.object({
+  name: z.string().min(2, "Nombre debe tener al menos 2 caracteres"),
+  fullName: z.string().optional(),
+  phone: z.string().optional(),
+  DNI: z.string().optional(),
+  password: z.string().optional(),
+});
+
+type Instructor = {
+  id: string;
+  name: string;
+  fullName?: string | null;
+  active: boolean;
+  phone?: string | null;
+  DNI?: string | null;
+  createdAt: string;
+  disciplines?: Array<{
+    name: string;
+    color: string | null;
+  }>;
+  _count?: {
+    classes: number;
+    payments: number;
+  };
+};
+
+interface InstructorDialogProps {
+  instructor: Instructor | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (
+    data:
+      | z.infer<typeof updateInstructorSchema>
+      | z.infer<typeof createInstructorSchema>
+  ) => void;
+  isLoading: boolean;
+}
+
+function InstructorDialog({
+  instructor,
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+}: InstructorDialogProps) {
+  const isEdit = !!instructor;
+  const schema = isEdit ? updateInstructorSchema : createInstructorSchema;
+
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: instructor?.name || "",
+      fullName: instructor?.fullName || "",
+      phone: instructor?.phone || "",
+      DNI: instructor?.DNI || "",
+      active: instructor?.active ?? true,
+    },
+  });
+
+  React.useEffect(() => {
+    if (instructor) {
+      form.reset({
+        name: instructor.name,
+        fullName: instructor.fullName || "",
+        phone: instructor.phone || "",
+        DNI: instructor.DNI || "",
+        active: instructor.active,
+      });
+    } else {
+      form.reset({
+        name: "",
+        fullName: "",
+        phone: "",
+        DNI: "",
+        active: true,
+      });
+    }
+  }, [instructor, form]);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>
+            {isEdit ? "Editar Instructor" : "Nuevo Instructor"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Modifica la información del instructor."
+              : "Agrega un nuevo instructor al sistema."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nombre del instructor" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre Completo</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nombre completo del instructor"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Teléfono</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Número de teléfono" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="DNI"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>DNI</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Número de DNI" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end space-x-2 pt-6 border-t border-border">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading
+                  ? isEdit
+                    ? "Actualizando..."
+                    : "Creando..."
+                  : isEdit
+                    ? "Actualizar"
+                    : "Crear"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export default function InstructoresPage() {
+  const { canManageUsers } = useRBAC();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogInstructor, setDialogInstructor] = useState<Instructor | null>(
+    null
+  );
+
+  // Estados para filtros
+  const [searchText, setSearchText] = useState("");
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
+
+  // Paginación
+  const pagination = usePagination({
+    defaultLimit: 10,
+    defaultPage: 1,
+  });
+
+  // Obtener datos para filtros
+  const { data: disciplines } = trpc.disciplines.getAll.useQuery();
+
+  // Obtener instructores con filtros usando tRPC
+  const { data: instructorsData, isLoading } =
+    trpc.instructor.getWithFilters.useQuery({
+      limit: pagination.limit,
+      offset: (pagination.page - 1) * pagination.limit,
+      search: searchText,
+      discipline: selectedDiscipline !== "all" ? selectedDiscipline : undefined,
+      active:
+        selectedStatus === "active"
+          ? true
+          : selectedStatus === "inactive"
+            ? false
+            : undefined,
+    });
+
+  const instructors = instructorsData?.instructors || [];
+  const totalInstructors = instructorsData?.total || 0;
+
+  // Mutaciones tRPC
+  const createInstructor = trpc.instructor.create.useMutation({
+    onSuccess: () => {
+      // Refrescar la lista de instructores
+      trpc.useUtils().instructor.getWithFilters.invalidate();
+      handleDialogClose();
+    },
+  });
+
+  const updateInstructor = trpc.instructor.update.useMutation({
+    onSuccess: () => {
+      // Refrescar la lista de instructores
+      trpc.useUtils().instructor.getWithFilters.invalidate();
+      handleDialogClose();
+    },
+  });
+
+  const deleteInstructor = trpc.instructor.delete.useMutation({
+    onSuccess: () => {
+      // Refrescar la lista de instructores
+      trpc.useUtils().instructor.getWithFilters.invalidate();
+    },
+  });
+
+  // Handlers
+  const handleCreate = () => {
+    setDialogInstructor(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (instructor: Instructor) => {
+    setDialogInstructor(instructor);
+    setIsDialogOpen(true);
+  };
+
+  const handleView = (instructor: Instructor) => {
+    // Navegar a la página de detalle del instructor
+    window.location.href = `/dashboard/instructores/${instructor.id}`;
+  };
+
+  const handleDelete = (instructor: Instructor) => {
+    if (
+      confirm(`¿Estás seguro de que quieres eliminar a ${instructor.name}?`)
+    ) {
+      deleteInstructor.mutate({ id: instructor.id });
+    }
+  };
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false);
+    setDialogInstructor(null);
+  };
+
+  const handleDialogSubmit = (
+    data:
+      | z.infer<typeof updateInstructorSchema>
+      | z.infer<typeof createInstructorSchema>
+  ) => {
+    if (dialogInstructor) {
+      // Actualizar instructor existente
+      updateInstructor.mutate({
+        id: dialogInstructor.id,
+        ...data,
+      });
+    } else {
+      // Crear nuevo instructor
+      createInstructor.mutate(data);
+    }
+  };
+
+  // Limpiar filtros
+  const clearFilters = () => {
+    setSearchText("");
+    setSelectedDiscipline("all");
+    setSelectedStatus("all");
+  };
+
+  // Toggle para expandir/contraer filtros
+  const toggleFilters = () => {
+    setFiltersExpanded(!filtersExpanded);
+  };
+
+  // Definir columnas de la tabla
+  const columns: TableColumn<Instructor>[] = [
+    {
+      key: "name",
+      title: "Instructor",
+      render: (_, record) => (
+        <div className="flex items-center">
+          <Avatar className="h-8 w-8 mr-3">
+            <AvatarImage src={undefined} alt={record.name || "Instructor"} />
+            <AvatarFallback className="bg-blue-100 text-blue-600">
+              {record.name?.charAt(0)?.toUpperCase() || "I"}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="text-sm font-medium text-foreground">
+              {record.name}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {record.fullName ||
+                record.phone ||
+                record.DNI ||
+                "Sin información adicional"}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "disciplines",
+      title: "Disciplinas",
+      render: (_, record) => (
+        <div className="flex flex-wrap gap-1">
+          {record.disciplines?.map((discipline, index) => (
+            <Badge
+              key={`${discipline.name}-${index}`}
+              variant="outline"
+              className="text-xs font-medium"
+              style={{
+                borderColor: discipline.color || "#6b7280",
+                color: discipline.color || "#6b7280",
+                backgroundColor: `${discipline.color || "#6b7280"}1a`,
+              }}
+            >
+              {discipline.name}
+            </Badge>
+          )) || (
+            <span className="text-sm text-muted-foreground">
+              Sin disciplinas
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "_count",
+      title: "Estadísticas",
+      render: (_, record) => (
+        <div className="text-sm text-muted-foreground">
+          <div>Clases: {record._count?.classes || 0}</div>
+          <div>Pagos: {record._count?.payments || 0}</div>
+        </div>
+      ),
+    },
+    {
+      key: "active",
+      title: "Estado",
+      render: (value) => (
+        <Badge
+          variant="secondary"
+          className={`text-xs font-medium ${
+            value
+              ? "bg-green-100 text-green-800 hover:bg-green-200"
+              : "bg-red-100 text-red-800 hover:bg-red-200"
+          }`}
+        >
+          {value ? "Activo" : "Inactivo"}
+        </Badge>
+      ),
+    },
+    {
+      key: "createdAt",
+      title: "Creado",
+      render: (value) => new Date(value as string).toLocaleDateString(),
+      className: "text-sm text-muted-foreground",
+    },
+  ];
+
+  // Definir acciones de la tabla
+  const actions: TableAction<Instructor>[] = [
+    {
+      label: "Ver Detalles",
+      icon: <Eye className="h-4 w-4" />,
+      onClick: handleView,
+      variant: "edit-secondary",
+    },
+    {
+      label: "Editar",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEdit,
+      variant: "edit",
+      // Solo mostrar si puede gestionar usuarios
+      hidden: (_instructor: Instructor) => !canManageUsers,
+    },
+    {
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDelete,
+      variant: "destructive",
+      separator: true,
+      // Solo mostrar si puede gestionar usuarios
+      hidden: (_instructor: Instructor) => !canManageUsers,
+    },
+  ];
+
+  // Información de paginación
+  const paginationInfo = {
+    page: pagination.page,
+    limit: pagination.limit,
+    total: totalInstructors,
+    totalPages: Math.ceil(totalInstructors / pagination.limit),
+    hasNext: pagination.page < Math.ceil(totalInstructors / pagination.limit),
+    hasPrev: pagination.page > 1,
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Instructores</h1>
+          <p className="text-sm text-muted-foreground mt-0.5 mr-8">
+            Administra instructores del sistema y sus especialidades
+          </p>
+        </div>
+        {canManageUsers && (
+          <Button size="sm" variant="edit" onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            <span>Nuevo Instructor</span>
+          </Button>
+        )}
+      </div>
+
+      {/* Filtros Compactos */}
+      <div className="bg-card border border-border rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          {/* Búsqueda principal */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Buscar por nombre, teléfono, DNI..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Botón para expandir filtros */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleFilters}
+            className="flex items-center gap-2 border-border"
+          >
+            <Filter className="h-4 w-4" />
+            {filtersExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                <span>Ocultar filtros</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                <span>Filtros</span>
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Filtros expandibles */}
+        {filtersExpanded && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Filtro por disciplina */}
+              <div className="space-y-1">
+                <label
+                  htmlFor="discipline-select"
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  Disciplina
+                </label>
+                <Select
+                  value={selectedDiscipline}
+                  onValueChange={setSelectedDiscipline}
+                >
+                  <SelectTrigger id="discipline-select" className="h-8 text-xs">
+                    <SelectValue placeholder="Todas las disciplinas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las disciplinas</SelectItem>
+                    {disciplines?.disciplines?.map((discipline) => (
+                      <SelectItem key={discipline.id} value={discipline.id}>
+                        {discipline.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filtro por estado */}
+              <div className="space-y-1">
+                <label
+                  htmlFor="status-select"
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  Estado
+                </label>
+                <Select
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
+                >
+                  <SelectTrigger id="status-select" className="h-8 text-xs">
+                    <SelectValue placeholder="Todos los estados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="active">Activos</SelectItem>
+                    <SelectItem value="inactive">Inactivos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Botón para limpiar filtros */}
+            <div className="flex justify-end mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="text-muted-foreground border-border h-7 px-3 text-xs"
+              >
+                Limpiar filtros
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Tabla con ScrollableTable */}
+      <ScrollableTable<Instructor>
+        data={instructors}
+        columns={columns}
+        loading={isLoading}
+        error={null}
+        pagination={paginationInfo}
+        onPageChange={pagination.setPage}
+        onPageSizeChange={pagination.setLimit}
+        actions={actions}
+        emptyMessage="No se encontraron instructores"
+        emptyIcon={
+          <GraduationCap className="h-12 w-12 text-muted-foreground" />
+        }
+      />
+
+      {/* Dialog para crear/editar instructor */}
+      <InstructorDialog
+        instructor={dialogInstructor}
+        isOpen={isDialogOpen}
+        onClose={handleDialogClose}
+        onSubmit={handleDialogSubmit}
+        isLoading={createInstructor.isPending || updateInstructor.isPending}
+      />
+    </div>
+  );
+}

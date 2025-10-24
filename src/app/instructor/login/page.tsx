@@ -148,13 +148,28 @@ export default function InstructorLoginPage() {
           </h3>
           <div className="text-xs text-blue-700 space-y-1">
             <p>
-              <strong>María González</strong> / mariagonzalez123
+              <strong>Ana García</strong> / anagarcía123
             </p>
             <p>
-              <strong>Carlos Rodríguez</strong> / carlosrodriguez123
+              <strong>Carlos López</strong> / carloslópez123
             </p>
             <p>
-              <strong>Laura Fernández</strong> / laurafernandez123
+              <strong>Sofia Martín</strong> / sofiamartín123
+            </p>
+            <p>
+              <strong>Diego Ruiz</strong> / diegoruiz123
+            </p>
+            <p>
+              <strong>María Elena</strong> / maríaelena123
+            </p>
+            <p>
+              <strong>Roberto Silva</strong> / robertosilva123
+            </p>
+            <p>
+              <strong>Lucía Fernández</strong> / lucíafernández123
+            </p>
+            <p>
+              <strong>Andrés Morales</strong> / andrésmorales123
             </p>
           </div>
         </div>

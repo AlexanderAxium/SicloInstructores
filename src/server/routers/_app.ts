@@ -1,4 +1,5 @@
 import { router } from "../trpc";
+import { brandingsRouter } from "./brandings";
 import { classesRouter } from "./classes";
 import { companyInfoRouter } from "./companyInfo";
 import { coversRouter } from "./covers";
@@ -28,6 +29,7 @@ export const appRouter = router({
   themeRides: themeRidesRouter,
   covers: coversRouter,
   formulas: formulasRouter,
+  brandings: brandingsRouter,
   statistics: statisticsRouter,
 });
 

@@ -41,7 +41,7 @@ export interface TableAction<T = Record<string, unknown>> {
   label: string | ((record: T) => string);
   icon?: ReactNode | ((record: T) => ReactNode);
   onClick: (record: T) => void;
-  variant?: "default" | "destructive";
+  variant?: "default" | "destructive" | "edit" | "edit-secondary";
   disabled?: (record: T) => boolean;
   hidden?: (record: T) => boolean;
   separator?: boolean;
@@ -191,43 +191,57 @@ export function ScrollableTable<T = Record<string, unknown>>({
       {/* Table Container */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         {/* Horizontal Scroll Container */}
-        <div className="table-scroll-container">
+        <div className="table-scroll-container min-w-0">
           {/* Loading State */}
           {loading && (
             <div className="space-y-0">
               {/* Header skeleton */}
-              <div className="px-6 py-2.5 border-b border-border bg-muted/30">
+              <div className="px-6 py-3 border-b border-border/50 bg-gradient-to-r from-muted/10 to-muted/5">
                 <div className="flex space-x-6">
-                  {selectable && <Skeleton className="h-4 w-4 rounded" />}
+                  {selectable && (
+                    <Skeleton className="h-4 w-4 rounded-full bg-muted/40 animate-pulse" />
+                  )}
                   {columns.map((column, index) => (
                     <Skeleton
                       key={`header-${column.key || index}`}
-                      className="h-4 flex-1 max-w-[120px]"
+                      className="h-4 flex-1 max-w-[120px] bg-muted/30 animate-pulse rounded-md"
                     />
                   ))}
-                  {hasActions && <Skeleton className="h-4 w-16" />}
+                  {hasActions && (
+                    <Skeleton className="h-4 w-16 rounded-full bg-muted/30 animate-pulse" />
+                  )}
                 </div>
               </div>
 
               {/* Rows skeleton */}
               {Array.from({ length: 5 }).map((_, rowIndex) => (
                 <div
-                  key={`skeleton-row-${Math.random()}-${rowIndex}`}
-                  className="px-6 py-3 border-b border-border last:border-b-0"
+                  key={`skeleton-row-${rowIndex}`}
+                  className="px-6 py-4 border-b border-border/30 last:border-b-0 hover:bg-muted/10 transition-colors duration-200"
                 >
                   <div className="flex space-x-6 items-center">
-                    {selectable && <Skeleton className="h-4 w-4 rounded" />}
-                    {columns.map((column, colIndex) => (
-                      <Skeleton
-                        key={`skeleton-cell-${rowIndex}-${column.key || colIndex}`}
-                        className="h-4 flex-1"
-                        style={{
-                          maxWidth: column.width || "120px",
-                          minWidth: "80px",
-                        }}
-                      />
-                    ))}
-                    {hasActions && <Skeleton className="h-8 w-8 rounded" />}
+                    {selectable && (
+                      <Skeleton className="h-4 w-4 rounded-full bg-muted/25 animate-pulse" />
+                    )}
+                    {columns.map((column, colIndex) => {
+                      // Diferentes anchos para simular contenido realista
+                      const widths = ["w-32", "w-24", "w-20", "w-28", "w-16"];
+                      const randomWidth = widths[colIndex % widths.length];
+
+                      return (
+                        <Skeleton
+                          key={`skeleton-cell-${rowIndex}-${column.key || colIndex}`}
+                          className={`h-4 flex-1 ${randomWidth} bg-muted/20 animate-pulse rounded-md`}
+                          style={{
+                            maxWidth: column.width || "120px",
+                            minWidth: "60px",
+                          }}
+                        />
+                      );
+                    })}
+                    {hasActions && (
+                      <Skeleton className="h-8 w-8 rounded-md bg-muted/25 animate-pulse" />
+                    )}
                   </div>
                 </div>
               ))}

@@ -709,7 +709,7 @@ async function main() {
     createdPeriods.push(createdPeriod);
   }
 
-  // Create disciplines
+  // Create disciplines (only 4 as requested)
   console.log("🏃 Creating disciplines...");
   const disciplines = [
     {
@@ -734,19 +734,6 @@ async function main() {
       name: "Ejercito",
       description: "Entrenamiento de alta intensidad tipo militar",
       color: "#8033FF",
-      active: true,
-    },
-    {
-      name: "Pilates",
-      description:
-        "Método de ejercicio que fortalece el core y mejora la postura",
-      color: "#FF33A1",
-      active: true,
-    },
-    {
-      name: "CrossFit",
-      description: "Entrenamiento funcional de alta intensidad",
-      color: "#FF8C33",
       active: true,
     },
   ];
@@ -853,6 +840,138 @@ async function main() {
       CCI: "33445566773344556677",
       contactPerson: "Rosa Morales",
     },
+    {
+      name: "Carmen Vega",
+      fullName: "Carmen Vega Herrera",
+      active: true,
+      phone: "+51 987 654 329",
+      DNI: "11223399",
+      bank: "Banco Pichincha",
+      bankAccount: "1122339900",
+      CCI: "11223399001122339900",
+      contactPerson: "Miguel Vega",
+    },
+    {
+      name: "Fernando Castro",
+      fullName: "Fernando Castro Mendoza",
+      active: true,
+      phone: "+51 987 654 330",
+      DNI: "99887755",
+      bank: "Banco Continental",
+      bankAccount: "9988775500",
+      CCI: "99887755009988775500",
+      contactPerson: "Patricia Castro",
+    },
+    {
+      name: "Isabel Torres",
+      fullName: "Isabel Torres Ramos",
+      active: true,
+      phone: "+51 987 654 331",
+      DNI: "55667744",
+      bank: "Banco Santander",
+      bankAccount: "5566774400",
+      CCI: "55667744005566774400",
+      contactPerson: "Luis Torres",
+    },
+    {
+      name: "Miguel Herrera",
+      fullName: "Miguel Herrera Flores",
+      active: true,
+      phone: "+51 987 654 332",
+      DNI: "33445577",
+      bank: "Banco BCP",
+      bankAccount: "3344557700",
+      CCI: "33445577003344557700",
+      contactPerson: "Rosa Herrera",
+    },
+    {
+      name: "Patricia Ramos",
+      fullName: "Patricia Ramos Gutiérrez",
+      active: true,
+      phone: "+51 987 654 333",
+      DNI: "77665533",
+      bank: "Banco Falabella",
+      bankAccount: "7766553300",
+      CCI: "77665533007766553300",
+      contactPerson: "Carlos Ramos",
+    },
+    {
+      name: "Ricardo Flores",
+      fullName: "Ricardo Flores Salinas",
+      active: true,
+      phone: "+51 987 654 334",
+      DNI: "11223388",
+      bank: "Banco Ripley",
+      bankAccount: "1122338800",
+      CCI: "11223388001122338800",
+      contactPerson: "Ana Flores",
+    },
+    {
+      name: "Valeria Gutiérrez",
+      fullName: "Valeria Gutiérrez Paredes",
+      active: true,
+      phone: "+51 987 654 335",
+      DNI: "99887744",
+      bank: "Banco Interbank",
+      bankAccount: "9988774400",
+      CCI: "99887744009988774400",
+      contactPerson: "Roberto Gutiérrez",
+    },
+    {
+      name: "Alejandro Salinas",
+      fullName: "Alejandro Salinas Quispe",
+      active: true,
+      phone: "+51 987 654 336",
+      DNI: "55667733",
+      bank: "Banco Nacional",
+      bankAccount: "5566773300",
+      CCI: "55667733005566773300",
+      contactPerson: "María Salinas",
+    },
+    {
+      name: "Gabriela Paredes",
+      fullName: "Gabriela Paredes Huamán",
+      active: true,
+      phone: "+51 987 654 337",
+      DNI: "33445588",
+      bank: "Banco BBVA",
+      bankAccount: "3344558800",
+      CCI: "33445588003344558800",
+      contactPerson: "José Paredes",
+    },
+    {
+      name: "Héctor Quispe",
+      fullName: "Héctor Quispe Mamani",
+      active: true,
+      phone: "+51 987 654 338",
+      DNI: "77665522",
+      bank: "Banco Scotiabank",
+      bankAccount: "7766552200",
+      CCI: "77665522007766552200",
+      contactPerson: "Elena Quispe",
+    },
+    {
+      name: "Natalia Huamán",
+      fullName: "Natalia Huamán Cáceres",
+      active: true,
+      phone: "+51 987 654 339",
+      DNI: "11223377",
+      bank: "Banco de Crédito",
+      bankAccount: "1122337700",
+      CCI: "11223377001122337700",
+      contactPerson: "Pedro Huamán",
+    },
+    {
+      name: "Oscar Mamani",
+      fullName: "Oscar Mamani Condori",
+      active: true,
+      phone: "+51 987 654 340",
+      DNI: "99887733",
+      bank: "Banco Pichincha",
+      bankAccount: "9988773300",
+      CCI: "99887733009988773300",
+      contactPerson: "Carmen Mamani",
+    },
   ];
 
   const createdInstructors = [];
@@ -864,6 +983,70 @@ async function main() {
       },
     });
     createdInstructors.push(createdInstructor);
+  }
+
+  // Associate instructors with disciplines (some instructors can teach multiple disciplines)
+  console.log("🔗 Associating instructors with disciplines...");
+  const instructorDisciplineAssociations = [
+    // Ana García - Síclo, Barre
+    { instructorIndex: 0, disciplineIndices: [0, 1] },
+    // Carlos López - Síclo, Ejercito
+    { instructorIndex: 1, disciplineIndices: [0, 3] },
+    // Sofia Martín - Barre, Yoga
+    { instructorIndex: 2, disciplineIndices: [1, 2] },
+    // Diego Ruiz - Síclo, Barre, Yoga
+    { instructorIndex: 3, disciplineIndices: [0, 1, 2] },
+    // María Elena - Yoga, Ejercito
+    { instructorIndex: 4, disciplineIndices: [2, 3] },
+    // Roberto Silva - Síclo, Barre, Yoga, Ejercito
+    { instructorIndex: 5, disciplineIndices: [0, 1, 2, 3] },
+    // Lucía Fernández - Barre, Yoga
+    { instructorIndex: 6, disciplineIndices: [1, 2] },
+    // Andrés Morales - Síclo, Ejercito
+    { instructorIndex: 7, disciplineIndices: [0, 3] },
+    // Carmen Vega - Barre, Yoga
+    { instructorIndex: 8, disciplineIndices: [1, 2] },
+    // Fernando Castro - Síclo, Barre
+    { instructorIndex: 9, disciplineIndices: [0, 1] },
+    // Isabel Torres - Yoga, Ejercito
+    { instructorIndex: 10, disciplineIndices: [2, 3] },
+    // Miguel Herrera - Síclo, Barre, Yoga
+    { instructorIndex: 11, disciplineIndices: [0, 1, 2] },
+    // Patricia Ramos - Barre, Yoga
+    { instructorIndex: 12, disciplineIndices: [1, 2] },
+    // Ricardo Flores - Síclo, Ejercito
+    { instructorIndex: 13, disciplineIndices: [0, 3] },
+    // Valeria Gutiérrez - Barre, Yoga, Ejercito
+    { instructorIndex: 14, disciplineIndices: [1, 2, 3] },
+    // Alejandro Salinas - Síclo, Barre
+    { instructorIndex: 15, disciplineIndices: [0, 1] },
+    // Gabriela Paredes - Yoga, Ejercito
+    { instructorIndex: 16, disciplineIndices: [2, 3] },
+    // Héctor Quispe - Síclo, Barre, Yoga
+    { instructorIndex: 17, disciplineIndices: [0, 1, 2] },
+    // Natalia Huamán - Barre, Yoga
+    { instructorIndex: 18, disciplineIndices: [1, 2] },
+    // Oscar Mamani - Síclo, Ejercito
+    { instructorIndex: 19, disciplineIndices: [0, 3] },
+  ];
+
+  for (const association of instructorDisciplineAssociations) {
+    const instructor = createdInstructors[association.instructorIndex];
+    if (instructor) {
+      for (const disciplineIndex of association.disciplineIndices) {
+        const discipline = createdDisciplines[disciplineIndex];
+        if (discipline) {
+          await prisma.instructor.update({
+            where: { id: instructor.id },
+            data: {
+              disciplines: {
+                connect: { id: discipline.id },
+              },
+            },
+          });
+        }
+      }
+    }
   }
 
   // Create formulas for each discipline and period
@@ -930,16 +1113,33 @@ async function main() {
 
   // Create sample classes
   console.log("🏋️‍♀️ Creating sample classes...");
+
+  // Verificar que tenemos las disciplinas e instructores necesarios
+  if (createdDisciplines.length < 4) {
+    console.error("❌ No hay suficientes disciplinas creadas");
+    return;
+  }
+
+  if (createdInstructors.length < 8) {
+    console.error("❌ No hay suficientes instructores creados");
+    return;
+  }
+
+  if (createdPeriods.length < 4) {
+    console.error("❌ No hay suficientes períodos creados");
+    return;
+  }
+
   const sampleClasses = [
     // Síclo classes
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[0]?.id || "", // Síclo
+      disciplineId: createdDisciplines[0]!.id, // Síclo
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[0]?.id || "", // Ana García
-      periodId: createdPeriods[3]?.id || "", // Period 4
+      instructorId: createdInstructors[0]!.id, // Ana García
+      periodId: createdPeriods[3]!.id, // Period 4
       room: "Sala A",
       totalReservations: 25,
       waitingLists: 5,
@@ -953,11 +1153,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[0]?.id || "", // Síclo
+      disciplineId: createdDisciplines[0]!.id, // Síclo
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[1]?.id || "", // Carlos López
-      periodId: createdPeriods[3]?.id || "", // Period 4
+      instructorId: createdInstructors[1]!.id, // Carlos López
+      periodId: createdPeriods[3]!.id, // Period 4
       room: "Sala A",
       totalReservations: 28,
       waitingLists: 3,
@@ -973,11 +1173,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[1]?.id || "", // Barre
+      disciplineId: createdDisciplines[1]!.id, // Barre
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[2]?.id || "", // Sofia Martín
-      periodId: createdPeriods[3]?.id || "", // Period 4
+      instructorId: createdInstructors[2]!.id, // Sofia Martín
+      periodId: createdPeriods[3]!.id, // Period 4
       room: "Sala B",
       totalReservations: 20,
       waitingLists: 3,
@@ -991,11 +1191,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[1]?.id || "", // Barre
+      disciplineId: createdDisciplines[1]!.id, // Barre
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[3]?.id || "", // Diego Ruiz
-      periodId: createdPeriods[3]?.id || "", // Period 4
+      instructorId: createdInstructors[3]!.id, // Diego Ruiz
+      periodId: createdPeriods[3]!.id, // Period 4
       room: "Sala B",
       totalReservations: 18,
       waitingLists: 2,
@@ -1010,11 +1210,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[2]?.id || "", // Yoga
+      disciplineId: createdDisciplines[2]!.id, // Yoga
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[4]?.id || "", // María Elena
-      periodId: createdPeriods[3]?.id || "", // Period 4
+      instructorId: createdInstructors[4]!.id, // María Elena
+      periodId: createdPeriods[3]!.id, // Period 4
       room: "Sala C",
       totalReservations: 15,
       waitingLists: 2,
@@ -1028,11 +1228,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[2]?.id || "", // Yoga
+      disciplineId: createdDisciplines[2]!.id, // Yoga
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[5]?.id || "", // Roberto Silva
-      periodId: createdPeriods[3]?.id || "", // Period 4
+      instructorId: createdInstructors[5]!.id, // Roberto Silva
+      periodId: createdPeriods[3]!.id, // Period 4
       room: "Sala C",
       totalReservations: 12,
       waitingLists: 1,
@@ -1047,11 +1247,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[3]?.id || "", // Ejercito
+      disciplineId: createdDisciplines[3]!.id, // Ejercito
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[6]?.id || "", // Lucía Fernández
-      periodId: createdPeriods[3]?.id || "", // Period 4
+      instructorId: createdInstructors[6]!.id, // Lucía Fernández
+      periodId: createdPeriods[3]!.id, // Period 4
       room: "Sala D",
       totalReservations: 22,
       waitingLists: 4,
@@ -1062,42 +1262,42 @@ async function main() {
       date: new Date("2025-04-15T21:00:00Z"),
       isVersus: false,
     },
-    // Pilates classes
+    // Síclo classes adicionales
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[4]?.id || "", // Pilates
+      disciplineId: createdDisciplines[0]!.id, // Síclo
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[7]?.id || "", // Andrés Morales
-      periodId: createdPeriods[3]?.id || "", // Period 4
-      room: "Sala E",
-      totalReservations: 16,
+      instructorId: createdInstructors[7]!.id, // Andrés Morales
+      periodId: createdPeriods[3]!.id, // Period 4
+      room: "Sala A",
+      totalReservations: 20,
       waitingLists: 2,
       complimentary: 0,
-      spots: 20,
-      paidReservations: 16,
-      specialText: "Pilates mat para todos los niveles",
-      date: new Date("2025-04-16T20:00:00Z"),
+      spots: 30,
+      paidReservations: 20,
+      specialText: "Síclo HIIT",
+      date: new Date("2025-04-16T18:00:00Z"),
       isVersus: false,
     },
-    // CrossFit classes
+    // Barre classes adicionales
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[5]?.id || "", // CrossFit
+      disciplineId: createdDisciplines[1]!.id, // Barre
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[0]?.id || "", // Ana García
-      periodId: createdPeriods[3]?.id || "", // Period 4
-      room: "Sala F",
-      totalReservations: 18,
-      waitingLists: 3,
-      complimentary: 1,
-      spots: 20,
-      paidReservations: 17,
-      specialText: "WOD del día",
-      date: new Date("2025-04-16T21:00:00Z"),
+      instructorId: createdInstructors[8]!.id, // Carmen Vega
+      periodId: createdPeriods[3]!.id, // Period 4
+      room: "Sala B",
+      totalReservations: 16,
+      waitingLists: 1,
+      complimentary: 0,
+      spots: 25,
+      paidReservations: 16,
+      specialText: "Barre clásico",
+      date: new Date("2025-04-16T20:00:00Z"),
       isVersus: false,
     },
   ];
@@ -1361,8 +1561,8 @@ async function main() {
 - Roles: 5 per tenant (super_admin, admin, moderator, user, viewer)
 - Permissions: ${createdPermissions.length} permissions (${createdPermissions.length / 2} per tenant)
 - Periods: ${createdPeriods.length} periods for 2025
-- Disciplines: ${createdDisciplines.length} fitness disciplines
-- Instructors: ${createdInstructors.length} instructors
+- Disciplines: ${createdDisciplines.length} fitness disciplines (Síclo, Barre, Yoga, Ejercito)
+- Instructors: ${createdInstructors.length} instructors with discipline associations
 - Classes: ${createdClasses.length} sample classes
 - Payments: ${createdInstructors.length * 4} instructor payments
 - Covers: 5 instructor covers
@@ -1386,8 +1586,11 @@ async function main() {
 - User: user@democorp.com / DemoUser123!@#
 
 🏋️ Fitness Data Created:
-- Disciplines: Síclo, Barre, Yoga, Ejercito, Pilates, CrossFit
-- Instructors: Ana García, Carlos López, Sofia Martín, Diego Ruiz, María Elena, Roberto Silva, Lucía Fernández, Andrés Morales
+- Disciplines: Síclo, Barre, Yoga, Ejercito (4 disciplines total)
+- Instructors: 20 instructors with diverse discipline associations:
+  * Some teach 1 discipline (specialists)
+  * Some teach 2-3 disciplines (versatile)
+  * Roberto Silva teaches all 4 disciplines (master instructor)
 - Periods: 13 periods for 2025 (complete year)
 - Classes: 9 sample classes with reservations, waiting lists, and metrics
 - Payments: Comprehensive payment calculations with bonuses, penalties, and adjustments

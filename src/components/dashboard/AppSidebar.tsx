@@ -16,11 +16,19 @@ import {
 } from "@/components/ui/sidebar";
 import { useRBAC } from "@/hooks/useRBAC";
 import {
+  Bike,
+  BookOpen,
   Building2,
+  Calculator,
+  Calendar,
+  Clock,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Settings,
   Shield,
+  Star,
+  UserCog,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -57,23 +65,52 @@ export function AppSidebar() {
       return [
         ...baseItems,
         {
-          title: "Usuarios",
-          href: "/dashboard/users",
-          icon: Users,
-          description: "Gestionar usuarios del sistema",
+          title: "Instructores",
+          href: "/dashboard/instructores",
+          icon: GraduationCap,
+          description: "Gestionar instructores del sistema",
         },
         {
-          title: "Roles y Permisos",
-          href: "/dashboard/roles",
-          icon: Shield,
-          description: "Configurar sistema RBAC",
+          title: "Disciplinas",
+          href: "/dashboard/disciplinas",
+          icon: BookOpen,
+          description: "Gestionar disciplinas del sistema",
         },
         {
-          title: "Configuraciones",
-          href: "/dashboard/settings",
-          icon: Settings,
-          description:
-            "Configuraciones del sistema e información de la empresa",
+          title: "Clases",
+          href: "/dashboard/clases",
+          icon: Calendar,
+          description: "Gestionar clases del sistema",
+        },
+        {
+          title: "Fórmulas",
+          href: "/dashboard/formulas",
+          icon: Calculator,
+          description: "Gestionar fórmulas de cálculo",
+        },
+        {
+          title: "Workshops",
+          href: "/dashboard/workshops",
+          icon: GraduationCap,
+          description: "Gestionar workshops de instructores",
+        },
+        {
+          title: "Períodos",
+          href: "/dashboard/periodos",
+          icon: Clock,
+          description: "Gestionar períodos del sistema",
+        },
+        {
+          title: "Theme Rides",
+          href: "/dashboard/theme-rides",
+          icon: Bike,
+          description: "Gestionar theme rides de instructores",
+        },
+        {
+          title: "Brandeos",
+          href: "/dashboard/brandeos",
+          icon: Star,
+          description: "Gestionar brandeos de instructores",
         },
       ];
     }
@@ -83,17 +120,52 @@ export function AppSidebar() {
       return [
         ...baseItems,
         {
-          title: "Usuarios",
-          href: "/dashboard/users",
-          icon: Users,
-          description: "Ver usuarios del sistema",
+          title: "Instructores",
+          href: "/dashboard/instructores",
+          icon: GraduationCap,
+          description: "Ver instructores del sistema",
         },
         {
-          title: "Configuraciones",
-          href: "/dashboard/settings",
-          icon: Settings,
-          description:
-            "Ver configuraciones del sistema e información de la empresa",
+          title: "Disciplinas",
+          href: "/dashboard/disciplinas",
+          icon: BookOpen,
+          description: "Ver disciplinas del sistema",
+        },
+        {
+          title: "Clases",
+          href: "/dashboard/clases",
+          icon: Calendar,
+          description: "Ver clases del sistema",
+        },
+        {
+          title: "Fórmulas",
+          href: "/dashboard/formulas",
+          icon: Calculator,
+          description: "Ver fórmulas de cálculo",
+        },
+        {
+          title: "Workshops",
+          href: "/dashboard/workshops",
+          icon: GraduationCap,
+          description: "Ver workshops de instructores",
+        },
+        {
+          title: "Períodos",
+          href: "/dashboard/periodos",
+          icon: Clock,
+          description: "Ver períodos del sistema",
+        },
+        {
+          title: "Theme Rides",
+          href: "/dashboard/theme-rides",
+          icon: Bike,
+          description: "Ver theme rides de instructores",
+        },
+        {
+          title: "Brandeos",
+          href: "/dashboard/brandeos",
+          icon: Star,
+          description: "Ver brandeos de instructores",
         },
       ];
     }
@@ -102,7 +174,36 @@ export function AppSidebar() {
     return baseItems;
   };
 
+  // Configuración de navegación para gestión (solo para admins)
+  const getManagementItems = (): NavItem[] => {
+    if (!isSuperAdmin && !isAdmin) {
+      return [];
+    }
+
+    return [
+      {
+        title: "Usuarios",
+        href: "/dashboard/users",
+        icon: Users,
+        description: "Gestionar usuarios del sistema",
+      },
+      {
+        title: "Roles y Permisos",
+        href: "/dashboard/roles",
+        icon: Shield,
+        description: "Configurar sistema RBAC",
+      },
+      {
+        title: "Configuraciones",
+        href: "/dashboard/settings",
+        icon: Settings,
+        description: "Configuraciones del sistema e información de la empresa",
+      },
+    ];
+  };
+
   const navItems = getNavItems();
+  const managementItems = getManagementItems();
 
   return (
     <Sidebar collapsible="icon">
@@ -124,7 +225,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto overflow-x-hidden">
         <SidebarGroup>
           <SidebarGroupLabel>Navegación</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -138,9 +239,12 @@ export function AppSidebar() {
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.title}</span>
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-2 min-w-0"
+                      >
+                        <item.icon className="flex-shrink-0" />
+                        <span className="truncate">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -149,14 +253,50 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {managementItems.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Gestión del Sistema</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {managementItems.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== "/dashboard" &&
+                        pathname.startsWith(item.href));
+
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link
+                            href={item.href}
+                            className="flex items-center gap-2 min-w-0"
+                          >
+                            <item.icon className="flex-shrink-0" />
+                            <span className="truncate">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="flex-shrink-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => signOut()}>
-              <LogOut />
-              <span>Cerrar Sesión</span>
+            <SidebarMenuButton
+              onClick={() => signOut()}
+              className="flex items-center gap-2 min-w-0"
+            >
+              <LogOut className="flex-shrink-0" />
+              <span className="truncate">Cerrar Sesión</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

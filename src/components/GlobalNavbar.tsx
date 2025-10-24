@@ -87,23 +87,16 @@ export default function GlobalNavbar() {
                           className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
                         >
                           <Avatar className="h-8 w-8">
-                            {user?.image ? (
-                              <AvatarImage
-                                src={user.image}
-                                alt={user?.name || "Usuario"}
-                              />
-                            ) : (
-                              <AvatarFallback className="bg-primary text-primary-foreground">
-                                {user?.name
-                                  ? user.name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")
-                                      .toUpperCase()
-                                      .slice(0, 2)
-                                  : "U"}
-                              </AvatarFallback>
-                            )}
+                            <AvatarFallback className="bg-gray-600 text-gray-200">
+                              {user?.name
+                                ? user.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase()
+                                    .slice(0, 2)
+                                : "U"}
+                            </AvatarFallback>
                           </Avatar>
                         </button>
                       </DropdownMenuTrigger>
@@ -190,23 +183,16 @@ export default function GlobalNavbar() {
                         {/* User Info */}
                         <div className="flex items-center space-x-3 px-3 py-2">
                           <Avatar>
-                            {user?.image ? (
-                              <AvatarImage
-                                src={user.image}
-                                alt={user?.name || "Usuario"}
-                              />
-                            ) : (
-                              <AvatarFallback className="bg-primary text-primary-foreground">
-                                {user?.name
-                                  ? user.name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")
-                                      .toUpperCase()
-                                      .slice(0, 2)
-                                  : "U"}
-                              </AvatarFallback>
-                            )}
+                            <AvatarFallback className="bg-gray-600 text-gray-200">
+                              {user?.name
+                                ? user.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase()
+                                    .slice(0, 2)
+                                : "U"}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
                             <span className="text-sm font-medium text-white">

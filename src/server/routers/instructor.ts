@@ -330,11 +330,19 @@ export const instructorRouter = router({
         contactPerson: z.string().optional(),
         extraInfo: z.any().optional(),
         disciplineIds: z.array(z.string()).optional(),
+        password: z.string().optional(), // Add password field
       })
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user?.tenantId) {
         throw new Error("User tenant not found");
+      }
+
+      // Hash password if provided
+      let hashedPassword: string | undefined;
+      if (input.password) {
+        const bcrypt = await import("bcryptjs");
+        hashedPassword = await bcrypt.hash(input.password, 10);
       }
 
       const instructor = await prisma.instructor.create({
@@ -348,6 +356,7 @@ export const instructorRouter = router({
           CCI: input.CCI,
           contactPerson: input.contactPerson,
           extraInfo: input.extraInfo,
+          password: hashedPassword, // Store hashed password
           tenantId: ctx.user.tenantId,
           disciplines: input.disciplineIds
             ? {
@@ -385,6 +394,7 @@ export const instructorRouter = router({
         extraInfo: z.any().optional(),
         active: z.boolean().optional(),
         disciplineIds: z.array(z.string()).optional(),
+        password: z.string().optional(), // Add password field
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -392,7 +402,14 @@ export const instructorRouter = router({
         throw new Error("User tenant not found");
       }
 
-      const { id, disciplineIds, ...updateData } = input;
+      const { id, disciplineIds, password, ...updateData } = input;
+
+      // Hash password if provided
+      let hashedPassword: string | undefined;
+      if (password) {
+        const bcrypt = await import("bcryptjs");
+        hashedPassword = await bcrypt.hash(password, 10);
+      }
 
       const instructor = await prisma.instructor.update({
         where: {
@@ -401,6 +418,7 @@ export const instructorRouter = router({
         },
         data: {
           ...updateData,
+          ...(hashedPassword && { password: hashedPassword }), // Only update password if provided
           disciplines: disciplineIds
             ? {
                 set: disciplineIds.map((disciplineId) => ({
@@ -542,6 +560,7 @@ export const instructorRouter = router({
           phone: true,
           DNI: true,
           active: true,
+          password: true, // Include password for verification
         },
       });
 
@@ -553,12 +572,25 @@ export const instructorRouter = router({
         throw new Error("Instructor account is inactive");
       }
 
-      // Simple password validation (in production, use proper hashing)
-      // For demo purposes, we'll use a simple pattern
-      const expectedPassword = `${instructor.name.toLowerCase().replace(/\s+/g, "")}123`;
+      // Check if instructor has a password set
+      if (!instructor.password) {
+        // For instructors without a password, use the demo pattern
+        const expectedPassword = `${instructor.name.toLowerCase().replace(/\s+/g, "")}123`;
 
-      if (input.password !== expectedPassword) {
-        throw new Error("Invalid password");
+        if (input.password !== expectedPassword) {
+          throw new Error("Invalid password");
+        }
+      } else {
+        // Use bcrypt to compare hashed password
+        const bcrypt = await import("bcryptjs");
+        const passwordMatch = await bcrypt.compare(
+          input.password,
+          instructor.password
+        );
+
+        if (!passwordMatch) {
+          throw new Error("Invalid password");
+        }
       }
 
       // Generate a simple token (in production, use JWT)
@@ -566,9 +598,12 @@ export const instructorRouter = router({
         "base64"
       );
 
+      // Remove password from response
+      const { password, ...instructorData } = instructor;
+
       return {
         token,
-        instructor,
+        instructor: instructorData,
       };
     }),
 });

@@ -1,7 +1,15 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,14 +19,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 import { useUser } from "@/hooks/useUser";
-import { Bell, LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export function DashboardNavbar() {
   const { user, signOut } = useAuthContext();
   const { primaryRole } = useUser();
   const router = useRouter();
+  const breadcrumbs = useBreadcrumb();
 
   const handleSignOut = async () => {
     await signOut();
@@ -26,49 +38,75 @@ export function DashboardNavbar() {
 
   return (
     <div className="flex flex-1 items-center justify-between">
-      {/* Title */}
-      <div className="hidden sm:block">
-        <h1 className="text-xl font-semibold text-foreground">
-          Panel de Control
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Bienvenido de vuelta, {user?.name || "Usuario"}
-        </p>
+      {/* Mobile Title & Menu Button */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <SidebarTrigger className="h-8 w-8 p-0" />
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbs.map((item, index) => (
+              <div key={index} className="flex items-center">
+                {index > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  {index === breadcrumbs.length - 1 ? (
+                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link href={item.href || "#"}>{item.label}</Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </div>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
 
-      {/* Right side - Notifications and User Menu */}
-      <div className="flex items-center space-x-4">
-        {/* Notifications */}
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full text-xs text-destructive-foreground flex items-center justify-center">
-            3
-          </span>
-        </Button>
+      {/* Desktop Breadcrumb */}
+      <div className="hidden sm:block">
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbs.map((item, index) => (
+              <div key={index} className="flex items-center">
+                {index > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  {index === breadcrumbs.length - 1 ? (
+                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link href={item.href || "#"}>{item.label}</Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </div>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
+      {/* Right side - User Menu */}
+      <div className="flex items-center">
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                {user?.image ? (
-                  <AvatarImage src={user.image} alt={user?.name || "Usuario"} />
-                ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {user?.name
-                      ? user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()
-                          .slice(0, 2)
-                      : "U"}
-                  </AvatarFallback>
-                )}
+            <Button
+              variant="ghost"
+              className="relative h-8 w-8 rounded-full p-0 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Avatar className="h-8 w-8 border border-border">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                  {user?.name
+                    ? user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : "U"}
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
+          <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">

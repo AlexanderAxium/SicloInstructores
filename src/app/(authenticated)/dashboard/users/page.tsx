@@ -796,13 +796,13 @@ export default function UsersPage() {
       label: "Ver Detalles",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleViewUser,
-      variant: "default",
+      variant: "edit",
     },
     {
       label: "Editar",
       icon: <Edit className="h-4 w-4" />,
       onClick: handleEdit,
-      variant: "default",
+      variant: "edit-secondary",
       // Solo mostrar si es administrador o si es el usuario actual
       hidden: (user: User) => !(canManageUsers || user.id === currentUser?.id),
     },
@@ -829,11 +829,7 @@ export default function UsersPage() {
             Administra usuarios del sistema y asigna roles y permisos
           </p>
         </div>
-        <Button
-          size="sm"
-          className="bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white border-0"
-          onClick={handleCreate}
-        >
+        <Button size="sm" variant="edit-secondary" onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-1.5" />
           <span>Nuevo Usuario</span>
         </Button>

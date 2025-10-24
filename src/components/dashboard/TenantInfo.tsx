@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/utils/trpc";
 import { Building2, Calendar, Globe, Mail, MapPin, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -85,13 +86,13 @@ export default function TenantInfo() {
             </p>
           </div>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="edit"
+          size="sm"
           onClick={() => router.push("/dashboard/settings")}
-          className="text-sm text-primary hover:text-primary/80 font-medium bg-primary/10 hover:bg-primary/20 px-3 py-2 rounded-md transition-colors"
         >
           Editar
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

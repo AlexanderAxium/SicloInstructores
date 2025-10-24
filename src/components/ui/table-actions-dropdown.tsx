@@ -15,7 +15,7 @@ export interface TableActionItem {
   label: string;
   icon?: ReactNode;
   onClick: () => void;
-  variant?: "default" | "destructive";
+  variant?: "default" | "destructive" | "edit" | "edit-secondary";
   disabled?: boolean;
   hidden?: boolean;
   separator?: boolean;
@@ -68,7 +68,11 @@ export function TableActionsDropdown({
             <DropdownMenuItem
               onClick={item.onClick}
               disabled={item.disabled}
-              variant={item.variant}
+              variant={
+                item.variant === "edit" || item.variant === "edit-secondary"
+                  ? "default"
+                  : item.variant
+              }
               className="cursor-pointer"
             >
               {item.icon && (
