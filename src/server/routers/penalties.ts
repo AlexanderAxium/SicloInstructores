@@ -365,16 +365,18 @@ export const penaltiesRouter = router({
       const { id, ...updateData } = input;
 
       // Convert date string to Date object if provided
-      if (updateData.appliedAt) {
-        updateData.appliedAt = new Date(updateData.appliedAt) as any;
-      }
+      const { appliedAt, ...restData } = updateData;
+      const dataToUpdate = {
+        ...restData,
+        ...(appliedAt && { appliedAt: new Date(appliedAt) }),
+      };
 
       const penalty = await prisma.penalty.update({
         where: {
           id,
           tenantId: ctx.user.tenantId,
         },
-        data: updateData,
+        data: dataToUpdate,
         include: {
           instructor: {
             select: {

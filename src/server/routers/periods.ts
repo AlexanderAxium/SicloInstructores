@@ -326,16 +326,13 @@ export const periodsRouter = router({
       }
 
       // Convert date strings to Date objects
-      const processedUpdateData: any = { ...updateData };
-      if (updateData.startDate) {
-        processedUpdateData.startDate = new Date(updateData.startDate);
-      }
-      if (updateData.endDate) {
-        processedUpdateData.endDate = new Date(updateData.endDate);
-      }
-      if (updateData.paymentDate) {
-        processedUpdateData.paymentDate = new Date(updateData.paymentDate);
-      }
+      const { startDate, endDate, paymentDate, ...restData } = updateData;
+      const processedUpdateData = {
+        ...restData,
+        ...(startDate && { startDate: new Date(startDate) }),
+        ...(endDate && { endDate: new Date(endDate) }),
+        ...(paymentDate && { paymentDate: new Date(paymentDate) }),
+      };
 
       const period = await prisma.period.update({
         where: {

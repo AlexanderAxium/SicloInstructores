@@ -192,7 +192,7 @@ export const classesRouter = router({
       }
 
       if (input.date) {
-        where.date = new Date(input.date) as any;
+        where.date = new Date(input.date);
       }
 
       if (input.studio) {
@@ -406,16 +406,18 @@ export const classesRouter = router({
       }
 
       // Handle date conversion
-      if (updateData.date) {
-        updateData.date = new Date(updateData.date) as any;
-      }
+      const { date, ...restData } = updateData;
+      const dataToUpdate = {
+        ...restData,
+        ...(date && { date: new Date(date) }),
+      };
 
       const classItem = await prisma.class.update({
         where: {
           id,
           tenantId: ctx.user.tenantId,
         },
-        data: updateData,
+        data: dataToUpdate,
         include: {
           instructor: {
             select: {

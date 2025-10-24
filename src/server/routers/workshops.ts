@@ -305,16 +305,18 @@ export const workshopsRouter = router({
       }
 
       // Handle date conversion
-      if (updateData.date) {
-        updateData.date = new Date(updateData.date) as any;
-      }
+      const { date, ...restData } = updateData;
+      const dataToUpdate = {
+        ...restData,
+        ...(date && { date: new Date(date) }),
+      };
 
       const workshop = await prisma.workshop.update({
         where: {
           id,
           tenantId: ctx.user.tenantId,
         },
-        data: updateData,
+        data: dataToUpdate,
         include: {
           instructor: {
             select: {

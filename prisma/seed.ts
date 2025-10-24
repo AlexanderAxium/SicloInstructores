@@ -1135,11 +1135,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[0]!.id, // Síclo
+      disciplineId: createdDisciplines[0]?.id, // Síclo
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[0]!.id, // Ana García
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[0]?.id, // Ana García
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala A",
       totalReservations: 25,
       waitingLists: 5,
@@ -1153,11 +1153,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[0]!.id, // Síclo
+      disciplineId: createdDisciplines[0]?.id, // Síclo
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[1]!.id, // Carlos López
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[1]?.id, // Carlos López
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala A",
       totalReservations: 28,
       waitingLists: 3,
@@ -1173,11 +1173,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[1]!.id, // Barre
+      disciplineId: createdDisciplines[1]?.id, // Barre
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[2]!.id, // Sofia Martín
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[2]?.id, // Sofia Martín
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala B",
       totalReservations: 20,
       waitingLists: 3,
@@ -1191,11 +1191,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[1]!.id, // Barre
+      disciplineId: createdDisciplines[1]?.id, // Barre
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[3]!.id, // Diego Ruiz
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[3]?.id, // Diego Ruiz
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala B",
       totalReservations: 18,
       waitingLists: 2,
@@ -1210,11 +1210,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[2]!.id, // Yoga
+      disciplineId: createdDisciplines[2]?.id, // Yoga
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[4]!.id, // María Elena
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[4]?.id, // María Elena
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala C",
       totalReservations: 15,
       waitingLists: 2,
@@ -1228,11 +1228,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[2]!.id, // Yoga
+      disciplineId: createdDisciplines[2]?.id, // Yoga
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[5]!.id, // Roberto Silva
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[5]?.id, // Roberto Silva
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala C",
       totalReservations: 12,
       waitingLists: 1,
@@ -1247,11 +1247,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[3]!.id, // Ejercito
+      disciplineId: createdDisciplines[3]?.id, // Ejercito
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[6]!.id, // Lucía Fernández
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[6]?.id, // Lucía Fernández
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala D",
       totalReservations: 22,
       waitingLists: 4,
@@ -1266,11 +1266,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[0]!.id, // Síclo
+      disciplineId: createdDisciplines[0]?.id, // Síclo
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[7]!.id, // Andrés Morales
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[7]?.id, // Andrés Morales
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala A",
       totalReservations: 20,
       waitingLists: 2,
@@ -1285,11 +1285,11 @@ async function main() {
     {
       country: "Perú",
       city: "Lima",
-      disciplineId: createdDisciplines[1]!.id, // Barre
+      disciplineId: createdDisciplines[1]?.id, // Barre
       week: 1,
       studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[8]!.id, // Carmen Vega
-      periodId: createdPeriods[3]!.id, // Period 4
+      instructorId: createdInstructors[8]?.id, // Carmen Vega
+      periodId: createdPeriods[3]?.id, // Period 4
       room: "Sala B",
       totalReservations: 16,
       waitingLists: 1,
@@ -1304,11 +1304,40 @@ async function main() {
 
   const createdClasses = [];
   for (const classData of sampleClasses) {
+    // Skip classes with undefined required fields
+    if (
+      !classData.disciplineId ||
+      !classData.instructorId ||
+      !classData.periodId
+    ) {
+      console.warn("Skipping class with missing required fields:", classData);
+      continue;
+    }
+
+    // Create a properly typed data object
+    const classCreateData = {
+      country: classData.country,
+      city: classData.city,
+      disciplineId: classData.disciplineId,
+      week: classData.week,
+      studio: classData.studio,
+      instructorId: classData.instructorId,
+      periodId: classData.periodId,
+      room: classData.room,
+      totalReservations: classData.totalReservations,
+      waitingLists: classData.waitingLists,
+      complimentary: classData.complimentary,
+      spots: classData.spots,
+      paidReservations: classData.paidReservations,
+      specialText: classData.specialText,
+      date: classData.date,
+      isVersus: classData.isVersus,
+      versusNumber: classData.versusNumber,
+      tenantId: sicloTenant.id,
+    };
+
     const createdClass = await prisma.class.create({
-      data: {
-        ...classData,
-        tenantId: sicloTenant.id,
-      },
+      data: classCreateData,
     });
     createdClasses.push(createdClass);
   }
@@ -1323,13 +1352,19 @@ async function main() {
   ];
   for (const instructor of createdInstructors) {
     for (const discipline of createdDisciplines) {
+      // Skip if period doesn't exist
+      if (!createdPeriods[3]?.id) {
+        console.warn("Skipping instructor category - period not found");
+        continue;
+      }
+
       const randomCategory =
         categories[Math.floor(Math.random() * categories.length)];
       await prisma.instructorCategory.create({
         data: {
           instructorId: instructor.id,
           disciplineId: discipline.id,
-          periodId: createdPeriods[3]?.id || "", // Period 4
+          periodId: createdPeriods[3].id, // Period 4
           category: randomCategory || "INSTRUCTOR",
           isManual: Math.random() > 0.7, // 30% manual assignments
           metrics: {

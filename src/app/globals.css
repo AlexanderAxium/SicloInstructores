@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+:root {
   --font-family-sans: "Raleway", "sans-serif";
 
   /* Colors for light mode */
