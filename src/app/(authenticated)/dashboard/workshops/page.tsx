@@ -32,8 +32,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
+import type { Workshop as WorkshopType } from "@/types";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -42,6 +44,7 @@ import {
   ChevronUp,
   Edit,
   Eye,
+  FileSpreadsheet,
   Filter,
   GraduationCap,
   Plus,
@@ -50,6 +53,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const updateWorkshopSchema = z.object({
@@ -70,16 +74,15 @@ const createWorkshopSchema = z.object({
   comments: z.string().optional(),
 });
 
-type Workshop = {
-  id: string;
-  name: string;
-  instructorId: string;
-  periodId: string;
+// Extended Workshop type for UI
+type Workshop = Omit<
+  WorkshopType,
+  "createdAt" | "updatedAt" | "tenantId" | "date"
+> & {
   date: string;
-  payment: number;
-  comments?: string | null;
   createdAt: string;
   updatedAt: string;
+  tenantId?: string;
   instructor: {
     id: string;
     name: string;
@@ -352,6 +355,9 @@ export default function WorkshopsPage() {
     defaultPage: 1,
   });
 
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
+
   // Obtener datos para filtros
   const { data: instructorsData } = trpc.instructor.getAll.useQuery();
   const { data: periodsData } = trpc.periods.getAll.useQuery();
@@ -558,6 +564,49 @@ export default function WorkshopsPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handler
+  const handleExportExcel = async () => {
+    if (selectedPeriod === "all") {
+      toast.error("Por favor selecciona un período específico para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los datos del período sin paginación
+    const allWorkshopsData = await utils.workshops.getWithFilters.fetch({
+      limit: 1000,
+      offset: 0,
+      search: searchText,
+      instructorId:
+        selectedInstructor !== "all" ? selectedInstructor : undefined,
+      periodId: selectedPeriod,
+    });
+
+    const allWorkshops = allWorkshopsData?.workshops || [];
+
+    if (allWorkshops.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const exportData = allWorkshops.map((workshop) => ({
+      Nombre: workshop.name,
+      Instructor: workshop.instructor.name,
+      Período: `P${workshop.period.number} - ${workshop.period.year}`,
+      Fecha: new Date(workshop.date).toLocaleDateString("es-PE"),
+      Pago: workshop.payment.toFixed(2),
+      Comentarios: workshop.comments || "",
+      "Fecha Creación": new Date(workshop.createdAt).toLocaleDateString(
+        "es-PE"
+      ),
+    }));
+
+    exportToExcel(exportData, "Workshops", "Workshops", {
+      columnWidths: [30, 20, 15, 12, 12, 40, 15],
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -568,12 +617,23 @@ export default function WorkshopsPage() {
             Administra los workshops del sistema
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nuevo Workshop</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={selectedPeriod === "all"}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+            Exportar Excel
           </Button>
-        )}
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nuevo Workshop</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filtros Compactos */}

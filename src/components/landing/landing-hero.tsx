@@ -26,6 +26,8 @@ export function LandingHero() {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="xMidYMid slice"
+          role="img"
+          aria-label="Decorative background pattern"
         >
           <g clipPath="url(#clip0_186_1134)">
             <mask
@@ -48,7 +50,7 @@ export function LandingHero() {
             <g mask="url(#mask0_186_1134)">
               {/* Grid Rectangles */}
               {[...Array(35)].map((_, i) => (
-                <React.Fragment key={`row1-${i}`}>
+                <React.Fragment key={`grid-rect-${i}`}>
                   <rect
                     x={-20.0891 + i * 36}
                     y="9.2"
@@ -579,7 +581,13 @@ export function LandingHero() {
           <span className="text-white text-sm font-medium">Excellent</span>
           <div className="flex gap-1">
             {[...Array(5)].map((_, i) => (
-              <svg key={i} className="w-4 h-4 fill-primary" viewBox="0 0 20 20">
+              <svg
+                key={`star-icon-${i}`}
+                className="w-4 h-4 fill-primary"
+                viewBox="0 0 20 20"
+                role="img"
+                aria-label="Star rating"
+              >
                 <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
               </svg>
             ))}

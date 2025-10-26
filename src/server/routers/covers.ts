@@ -8,7 +8,7 @@ export const coversRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(20),
           offset: z.number().min(0).default(0),
         })
         .optional()
@@ -141,7 +141,7 @@ export const coversRouter = router({
         classId: z.string().optional(),
         periodId: z.string().optional(),
         justification: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(1000).default(20),
         offset: z.number().min(0).default(0),
       })
     )

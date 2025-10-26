@@ -1,23 +1,9 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
+import { FormulaDialog } from "@/components/formulas/formula-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type {
   TableAction,
@@ -31,44 +17,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
+import type {
+  CategoryRequirements,
+  Formula,
+  FormulaFromAPI,
+  PaymentParameters,
+} from "@/types/schema";
 import { trpc } from "@/utils/trpc";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Calculator,
   ChevronDown,
   ChevronUp,
   Edit,
   Eye,
+  FileSpreadsheet,
   Filter,
+  Info,
   Plus,
   Search,
   Trash2,
+  X,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
-const _updateFormulaSchema = z.object({
-  categoryRequirements: z.record(z.unknown()),
-  paymentParameters: z.record(z.unknown()),
-});
-
-const createFormulaSchema = z.object({
-  disciplineId: z.string().min(1, "Disciplina es requerida"),
-  periodId: z.string().min(1, "Período es requerido"),
-  categoryRequirements: z.record(z.unknown()),
-  paymentParameters: z.record(z.unknown()),
-});
-
-type Formula = {
+// Type for table data that matches what we actually receive from the API
+interface FormulaTableData {
   id: string;
   disciplineId: string;
   periodId: string;
-  categoryRequirements: Record<string, unknown> | null;
-  paymentParameters: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
   tenantId: string;
@@ -82,223 +64,76 @@ type Formula = {
     number: number;
     year: number;
   };
+  categoryRequirements?: unknown;
+  paymentParameters?: unknown;
+}
+
+// Helper function to safely serialize unknown data
+const safeStringify = (data: unknown): string => {
+  try {
+    return JSON.stringify(data);
+  } catch {
+    return "{}";
+  }
 };
 
-interface FormulaDialogProps {
-  formulaData: Formula | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: z.infer<typeof createFormulaSchema>) => void;
-  isLoading: boolean;
-}
-
-function FormulaDialog({
-  formulaData,
-  isOpen,
-  onClose,
-  onSubmit,
-  isLoading,
-}: FormulaDialogProps) {
-  const isEdit = !!formulaData;
-
-  // Obtener datos para los selectores
-  const { data: disciplinesData } = trpc.disciplines.getAll.useQuery();
-  const { data: periodsData } = trpc.periods.getAll.useQuery();
-
-  const disciplines = disciplinesData?.disciplines || [];
-  const periods = periodsData?.periods || [];
-
-  const form = useForm<z.infer<typeof createFormulaSchema>>({
-    resolver: zodResolver(createFormulaSchema),
-    defaultValues: {
-      disciplineId: "",
-      periodId: "",
-      categoryRequirements: {},
-      paymentParameters: {},
-    },
-  });
-
-  // Resetear el formulario cuando cambie la fórmula
-  useEffect(() => {
-    if (formulaData) {
-      form.reset({
-        disciplineId: formulaData.disciplineId,
-        periodId: formulaData.periodId,
-        categoryRequirements: formulaData.categoryRequirements || {},
-        paymentParameters: formulaData.paymentParameters || {},
-      });
-    } else {
-      form.reset({
-        disciplineId: "",
-        periodId: "",
-        categoryRequirements: {},
-        paymentParameters: {},
-      });
-    }
-  }, [formulaData, form]);
-
-  const handleSubmit = (data: z.infer<typeof createFormulaSchema>) => {
-    onSubmit(data);
+// Helper function to safely convert FormulaFromAPI for export
+const _convertFormulaForExport = (formula: FormulaFromAPI) => {
+  return {
+    Disciplina: formula.discipline?.name || "N/A",
+    Período: `P${formula.period?.number || 0} - ${formula.period?.year || 0}`,
+    "Parámetros de Pago": safeStringify(formula.paymentParameters),
+    "Requisitos de Categoría": safeStringify(formula.categoryRequirements),
+    "Fecha Creación": new Date(formula.createdAt || "").toLocaleDateString(
+      "es-PE"
+    ),
+    "Última Actualización": new Date(
+      formula.updatedAt || ""
+    ).toLocaleDateString("es-PE"),
   };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Editar Fórmula" : "Nueva Fórmula"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Modifica los datos de la fórmula."
-              : "Agrega una nueva fórmula al sistema."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="disciplineId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Disciplina *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar disciplina" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {disciplines?.map((discipline) => (
-                          <SelectItem key={discipline.id} value={discipline.id}>
-                            {discipline.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="periodId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Período *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar período" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {periods?.map(
-                          (period: {
-                            id: string;
-                            number: number;
-                            year: number;
-                          }) => (
-                            <SelectItem key={period.id} value={period.id}>
-                              {period.number} - {period.year}
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="categoryRequirements"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Requisitos de Categoría *</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="JSON: Requisitos para cada categoría de instructor"
-                      {...field}
-                      value={
-                        typeof field.value === "object"
-                          ? JSON.stringify(field.value, null, 2)
-                          : field.value
-                      }
-                      onChange={(e) => {
-                        try {
-                          const parsed = JSON.parse(e.target.value);
-                          field.onChange(parsed);
-                        } catch {
-                          field.onChange(e.target.value);
-                        }
-                      }}
-                      className="font-mono"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="paymentParameters"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Parámetros de Pago *</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="JSON: Parámetros de pago para cada categoría"
-                      {...field}
-                      value={
-                        typeof field.value === "object"
-                          ? JSON.stringify(field.value, null, 2)
-                          : field.value
-                      }
-                      onChange={(e) => {
-                        try {
-                          const parsed = JSON.parse(e.target.value);
-                          field.onChange(parsed);
-                        } catch {
-                          field.onChange(e.target.value);
-                        }
-                      }}
-                      className="font-mono"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Guardando..." : isEdit ? "Actualizar" : "Crear"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+};
+type FormulaDialogData = {
+  disciplineId: string;
+  periodId: string;
+  categoryRequirements: Record<
+    string,
+    {
+      ocupacion: number;
+      clases: number;
+      localesEnLima: number;
+      dobleteos: number;
+      horariosNoPrime: number;
+      participacionEventos: boolean;
+      antiguedadMinima?: number;
+      evaluacionPromedio?: number;
+      capacitacionesCompletadas?: number;
+      lineamientos: boolean;
+    }
+  >;
+  paymentParameters: Record<
+    string,
+    {
+      cuotaFija: number;
+      minimoGarantizado: number;
+      tarifas: Array<{
+        tarifa: number;
+        numeroReservas: number;
+      }>;
+      tarifaFullHouse: number;
+      maximo: number;
+      bono: number;
+      retencionPorcentaje?: number;
+      ajustePorDobleteo?: number;
+    }
+  >;
+};
 
 export default function FormulasPage() {
   const { canManageUsers } = useRBAC();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogFormula, setDialogFormula] = useState<Formula | null>(null);
+  const [dialogFormula, setDialogFormula] = useState<FormulaTableData | null>(
+    null
+  );
 
   // Estados para filtros
   const [searchText, setSearchText] = useState("");
@@ -311,6 +146,9 @@ export default function FormulasPage() {
     defaultLimit: 10,
     defaultPage: 1,
   });
+
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
 
   // Obtener datos para filtros
   const { data: disciplinesData } = trpc.disciplines.getAll.useQuery();
@@ -330,8 +168,8 @@ export default function FormulasPage() {
       periodId: selectedPeriod !== "all" ? selectedPeriod : undefined,
     });
 
-  const _formulas = formulasData?.formulas || [];
-  const totalFormulas = formulasData?.total || 0;
+  const formulas = formulasData?.formulas || [];
+  const totalFormulas: number = formulasData?.total || 0;
 
   // Obtener utils de tRPC
   const utils = trpc.useUtils();
@@ -363,18 +201,18 @@ export default function FormulasPage() {
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (formulaData: Formula) => {
+  const handleEdit = (formulaData: FormulaTableData) => {
     setDialogFormula(formulaData);
     setIsDialogOpen(true);
   };
 
-  const handleView = (formulaData: Formula) => {
+  const handleView = (formulaData: FormulaTableData) => {
     // Abrir diálogo de vista
     setDialogFormula(formulaData);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (formulaData: Formula) => {
+  const handleDelete = (formulaData: FormulaTableData) => {
     if (
       confirm(
         `¿Estás seguro de eliminar la fórmula para ${formulaData.discipline.name} - Período ${formulaData.period.number}?`
@@ -389,7 +227,7 @@ export default function FormulasPage() {
     setDialogFormula(null);
   };
 
-  const handleDialogSubmit = (data: z.infer<typeof createFormulaSchema>) => {
+  const handleDialogSubmit = (data: FormulaDialogData) => {
     if (dialogFormula) {
       // Editar fórmula existente
       updateFormula.mutate({
@@ -415,7 +253,7 @@ export default function FormulasPage() {
   };
 
   // Configuración de columnas para la tabla
-  const columns: TableColumn<Formula>[] = [
+  const columns: TableColumn<FormulaTableData>[] = [
     {
       key: "discipline",
       title: "Disciplina",
@@ -479,7 +317,7 @@ export default function FormulasPage() {
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<Formula>[] = [
+  const actions: TableAction<FormulaTableData>[] = [
     {
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
@@ -513,6 +351,58 @@ export default function FormulasPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handler
+  const handleExportExcel = async () => {
+    if (formulas.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODAS las fórmulas sin paginación
+    const allFormulasData = await utils.formulas.getWithFilters.fetch({
+      limit: 1000,
+      offset: 0,
+      search: searchText,
+      disciplineId:
+        selectedDiscipline !== "all" ? selectedDiscipline : undefined,
+      periodId: selectedPeriod !== "all" ? selectedPeriod : undefined,
+    });
+
+    const allFormulas = allFormulasData?.formulas || [];
+
+    if (allFormulas.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    // Convert FormulaFromAPI to export format using direct approach
+    const exportData: Array<Record<string, string>> = [];
+
+    for (let i = 0; i < allFormulas.length; i++) {
+      const formula = allFormulas[i];
+      if (!formula) continue;
+
+      exportData.push({
+        Disciplina: formula.discipline?.name || "N/A",
+        Período: `P${formula.period?.number || 0} - ${formula.period?.year || 0}`,
+        "Parámetros de Pago": "Ver detalles en la aplicación",
+        "Requisitos de Categoría": "Ver detalles en la aplicación",
+        "Fecha Creación": new Date(formula.createdAt || "").toLocaleDateString(
+          "es-PE"
+        ),
+        "Última Actualización": new Date(
+          formula.updatedAt || ""
+        ).toLocaleDateString("es-PE"),
+      });
+    }
+
+    exportToExcel(exportData, "Formulas", "Fórmulas", {
+      columnWidths: [20, 20, 50, 50, 15, 18],
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -523,12 +413,23 @@ export default function FormulasPage() {
             Administra las fórmulas de cálculo del sistema
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nueva Fórmula</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={formulas.length === 0}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+            Exportar Excel
           </Button>
-        )}
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nueva Fórmula</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filtros Compactos */}
@@ -647,7 +548,7 @@ export default function FormulasPage() {
 
       {/* Tabla con ScrollableTable */}
       <ScrollableTable
-        data={[]}
+        data={formulas}
         columns={columns}
         loading={isLoading}
         error={null}

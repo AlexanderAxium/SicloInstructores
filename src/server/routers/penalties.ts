@@ -8,7 +8,7 @@ export const penaltiesRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(20),
           offset: z.number().min(0).default(0),
         })
         .optional()
@@ -121,7 +121,7 @@ export const penaltiesRouter = router({
         active: z.boolean().optional(),
         appliedFrom: z.string().optional(),
         appliedTo: z.string().optional(),
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(1000).default(20),
         offset: z.number().min(0).default(0),
       })
     )

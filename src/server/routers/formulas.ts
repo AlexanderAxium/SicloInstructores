@@ -1,6 +1,42 @@
 import { z } from "zod";
 import { prisma } from "../../lib/db";
+import type {
+  CategoryRequirements,
+  InstructorCategory,
+  PaymentParameters,
+} from "../../types/schema";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
+
+// Schema for category requirements (matching old system)
+const categoryRequirementsSchema = z.object({
+  ocupacion: z.number(),
+  clases: z.number(),
+  localesEnLima: z.number(),
+  dobleteos: z.number(),
+  horariosNoPrime: z.number(),
+  participacionEventos: z.boolean(),
+  antiguedadMinima: z.number().optional(),
+  evaluacionPromedio: z.number().optional(),
+  capacitacionesCompletadas: z.number().optional(),
+  lineamientos: z.boolean(),
+});
+
+// Schema for payment parameters (matching old system)
+const paymentParametersSchema = z.object({
+  cuotaFija: z.number(),
+  minimoGarantizado: z.number(),
+  tarifas: z.array(
+    z.object({
+      tarifa: z.number(),
+      numeroReservas: z.number(),
+    })
+  ),
+  tarifaFullHouse: z.number(),
+  maximo: z.number(),
+  bono: z.number(),
+  retencionPorcentaje: z.number().optional(),
+  ajustePorDobleteo: z.number().optional(),
+});
 
 export const formulasRouter = router({
   // Get all formulas (public)
@@ -8,13 +44,13 @@ export const formulasRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(1000),
           offset: z.number().min(0).default(0),
         })
         .optional()
     )
     .query(async ({ input }) => {
-      const limit = input?.limit ?? 20;
+      const limit = input?.limit ?? 1000;
       const offset = input?.offset ?? 0;
 
       const [formulas, total] = await Promise.all([
@@ -148,8 +184,8 @@ export const formulasRouter = router({
       z.object({
         disciplineId: z.string(),
         periodId: z.string(),
-        categoryRequirements: z.any(),
-        paymentParameters: z.any(),
+        categoryRequirements: z.record(categoryRequirementsSchema),
+        paymentParameters: z.record(paymentParametersSchema),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -222,8 +258,10 @@ export const formulasRouter = router({
     .input(
       z.object({
         id: z.string(),
-        categoryRequirements: z.any().optional(),
-        paymentParameters: z.any().optional(),
+        disciplineId: z.string().optional(),
+        periodId: z.string().optional(),
+        categoryRequirements: z.record(categoryRequirementsSchema).optional(),
+        paymentParameters: z.record(paymentParametersSchema).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {

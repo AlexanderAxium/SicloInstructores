@@ -24,8 +24,10 @@ import type {
   TableColumn,
 } from "@/components/ui/scrollable-table";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
+import type { PeriodFromAPI } from "@/types/instructor";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -34,6 +36,7 @@ import {
   ChevronUp,
   Edit,
   Eye,
+  FileSpreadsheet,
   Filter,
   Plus,
   Search,
@@ -41,6 +44,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const _updatePeriodSchema = z.object({
@@ -58,19 +62,20 @@ const createPeriodSchema = z.object({
   paymentDate: z.string().min(1, "Fecha de pago es requerida"),
 });
 
-type Period = {
-  id: string;
-  number: number;
-  year: number;
-  startDate: string;
-  endDate: string;
-  paymentDate: string;
-  createdAt: string;
-  updatedAt: string;
-};
+// Period type is now imported from @/types
+// API response type for periods (dates come as strings from API)
+// type PeriodFromAPI is now imported from @/types/instructor
+
+// API response type for periods with counts
+// type PeriodWithCounts = PeriodFromAPI & {
+//   _count: {
+//     classes: number;
+//     payments: number;
+//   };
+// };
 
 interface PeriodDialogProps {
-  periodData: Period | null;
+  periodData: PeriodFromAPI | null;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: z.infer<typeof createPeriodSchema>) => void;
@@ -267,7 +272,7 @@ function PeriodDialog({
 export default function PeriodosPage() {
   const { canManageUsers } = useRBAC();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogPeriod, setDialogPeriod] = useState<Period | null>(null);
+  const [dialogPeriod, setDialogPeriod] = useState<PeriodFromAPI | null>(null);
 
   // Estados para filtros
   const [searchText, setSearchText] = useState("");
@@ -280,6 +285,9 @@ export default function PeriodosPage() {
     defaultPage: 1,
   });
 
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
+
   // Obtener períodos con filtros usando tRPC
   const { data: periodsData, isLoading } = trpc.periods.getWithFilters.useQuery(
     {
@@ -290,7 +298,7 @@ export default function PeriodosPage() {
     }
   );
 
-  const periods: Period[] = periodsData?.periods || [];
+  const periods: PeriodFromAPI[] = periodsData?.periods || [];
   const totalPeriods = periodsData?.total || 0;
 
   // Obtener años únicos para el filtro
@@ -328,18 +336,18 @@ export default function PeriodosPage() {
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (periodData: Period) => {
+  const handleEdit = (periodData: PeriodFromAPI) => {
     setDialogPeriod(periodData);
     setIsDialogOpen(true);
   };
 
-  const handleView = (periodData: Period) => {
+  const handleView = (periodData: PeriodFromAPI) => {
     // Abrir diálogo de vista
     setDialogPeriod(periodData);
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (periodData: Period) => {
+  const handleDelete = (periodData: PeriodFromAPI) => {
     if (
       confirm(
         `¿Estás seguro de eliminar el período P${periodData.number} - ${periodData.year}?`
@@ -379,7 +387,7 @@ export default function PeriodosPage() {
   };
 
   // Configuración de columnas para la tabla
-  const columns: TableColumn<Period>[] = [
+  const columns: TableColumn<PeriodFromAPI>[] = [
     {
       key: "period",
       title: "Período",
@@ -419,7 +427,7 @@ export default function PeriodosPage() {
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<Period>[] = [
+  const actions: TableAction<PeriodFromAPI>[] = [
     {
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
@@ -453,6 +461,44 @@ export default function PeriodosPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handler
+  const handleExportExcel = async () => {
+    if (periods.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los períodos sin paginación
+    const allPeriodsData = await utils.periods.getAll.fetch({
+      limit: 1000,
+      offset: 0,
+    });
+
+    const allPeriods: PeriodFromAPI[] = allPeriodsData?.periods || [];
+
+    if (allPeriods.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const exportData = allPeriods.map((period) => ({
+      Período: `P${period.number}`,
+      Año: period.year,
+      "Fecha Inicio": new Date(period.startDate).toLocaleDateString("es-PE"),
+      "Fecha Fin": new Date(period.endDate).toLocaleDateString("es-PE"),
+      "Fecha Pago": period.paymentDate
+        ? new Date(period.paymentDate).toLocaleDateString("es-PE")
+        : "",
+      "Fecha Creación": new Date(period.createdAt).toLocaleDateString("es-PE"),
+    }));
+
+    exportToExcel(exportData, "Periodos", "Períodos", {
+      columnWidths: [12, 10, 15, 15, 15, 15, 15, 15],
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -463,12 +509,23 @@ export default function PeriodosPage() {
             Administra los períodos del sistema
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nuevo Período</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={periods.length === 0}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+            Exportar Excel
           </Button>
-        )}
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nuevo Período</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filtros Compactos */}

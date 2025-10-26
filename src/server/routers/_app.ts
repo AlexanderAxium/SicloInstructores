@@ -5,6 +5,7 @@ import { companyInfoRouter } from "./companyInfo";
 import { coversRouter } from "./covers";
 import { disciplinesRouter } from "./disciplines";
 import { formulasRouter } from "./formulas";
+import { importRouter } from "./imports";
 import { instructorRouter } from "./instructor";
 import { paymentsRouter } from "./payments";
 import { penaltiesRouter } from "./penalties";
@@ -31,6 +32,7 @@ export const appRouter = router({
   formulas: formulasRouter,
   brandings: brandingsRouter,
   statistics: statisticsRouter,
+  import: importRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -30,8 +30,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Navigation items skeleton */}
               <div className="space-y-2">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex items-center space-x-3">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div
+                    key={`nav-skeleton-${i}`}
+                    className="flex items-center space-x-3"
+                  >
                     <div className="h-4 w-4 bg-white/20 rounded animate-pulse" />
                     <div className="h-4 bg-white/20 rounded animate-pulse flex-1" />
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
+import { ClassesListPDF } from "@/components/classes/pdf/classes-list-pdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -31,7 +38,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useExcelExport } from "@/hooks/useExcelExport";
+import { usePDFExport } from "@/hooks/usePDFExport";
 import { usePagination } from "@/hooks/usePagination";
+import { usePeriodFilter } from "@/hooks/usePeriodFilter";
 import { useRBAC } from "@/hooks/useRBAC";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +51,8 @@ import {
   ChevronUp,
   Edit,
   Eye,
+  FileSpreadsheet,
+  FileText,
   Filter,
   Plus,
   Search,
@@ -48,6 +60,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const updateClassSchema = z.object({
@@ -128,6 +141,12 @@ type Class = {
     id: string;
     name: string;
   } | null;
+};
+
+type Period = {
+  id: string;
+  number: number;
+  year: number;
 };
 
 interface ClassDialogProps {
@@ -602,11 +621,13 @@ export default function ClasesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogClass, setDialogClass] = useState<Class | null>(null);
 
+  // Hook para filtro de periodo compartido
+  const { selectedPeriod, setSelectedPeriod } = usePeriodFilter();
+
   // Estados para filtros
   const [searchText, setSearchText] = useState("");
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>("all");
   const [selectedInstructor, setSelectedInstructor] = useState<string>("all");
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("all");
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [selectedCity, setSelectedCity] = useState<string>("all");
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -616,6 +637,10 @@ export default function ClasesPage() {
     defaultLimit: 10,
     defaultPage: 1,
   });
+
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
+  const { exportToPDF } = usePDFExport();
 
   // Obtener datos para filtros
   const { data: disciplinesData } = trpc.disciplines.getAll.useQuery();
@@ -680,8 +705,34 @@ export default function ClasesPage() {
   };
 
   const handleView = (classData: Class) => {
-    // Navegar a la página de detalle de la clase
-    window.location.href = `/dashboard/clases/${classData.id}`;
+    // Mostrar información completa de la clase en un modal
+    const classInfo = `
+📅 INFORMACIÓN DE LA CLASE
+
+🏃 Disciplina: ${classData.discipline.name}
+👨‍🏫 Instructor: ${classData.instructor.name}
+📅 Fecha: ${new Date(classData.date).toLocaleDateString("es-PE")}
+🕐 Hora: ${new Date(classData.date).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
+📍 Ubicación: ${classData.studio} - ${classData.room}
+🌍 País: ${classData.country}
+🏙️ Ciudad: ${classData.city}
+📊 Semana: ${classData.week}
+
+📈 MÉTRICAS DE RESERVAS
+• Capacidad Total: ${classData.spots}
+• Reservas Totales: ${classData.totalReservations}
+• Reservas Pagadas: ${classData.paidReservations}
+• Lista de Espera: ${classData.waitingLists}
+• Cortesías: ${classData.complimentary}
+• Ocupación: ${classData.spots > 0 ? Math.round((classData.totalReservations / classData.spots) * 100) : 0}%
+
+${classData.isVersus ? `🏆 CLASE VERSUS #${classData.versusNumber || "N/A"}` : ""}
+${classData.specialText ? `📝 Texto Especial: ${classData.specialText}` : ""}
+${classData.penaltyType ? `⚠️ Penalización: ${classData.penaltyType} (${classData.penaltyPoints} puntos)` : ""}
+${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData.replacementInstructor?.name || "N/A"}` : ""}
+    `.trim();
+
+    alert(classInfo);
   };
 
   const handleDelete = (classData: Class) => {
@@ -849,6 +900,119 @@ export default function ClasesPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handlers
+  const handleExportExcel = async () => {
+    if (selectedPeriod === "all") {
+      toast.error("Por favor selecciona un período específico para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los datos del período sin paginación
+    const allClassesData = await utils.classes.getWithFilters.fetch({
+      limit: 1000, // Límite máximo permitido
+      offset: 0,
+      search: searchText,
+      disciplineId:
+        selectedDiscipline !== "all" ? selectedDiscipline : undefined,
+      instructorId:
+        selectedInstructor !== "all" ? selectedInstructor : undefined,
+      periodId: selectedPeriod,
+      studio: selectedCountry !== "all" ? selectedCountry : undefined,
+    });
+
+    const allClasses = allClassesData?.classes || [];
+
+    if (allClasses.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const exportData = allClasses.map((clase) => ({
+      Fecha: new Date(clase.date).toLocaleDateString("es-PE"),
+      Hora: new Date(clase.date).toLocaleTimeString("es-PE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      Instructor: clase.instructor.name,
+      Disciplina: clase.discipline.name,
+      País: clase.country,
+      Ciudad: clase.city,
+      Estudio: clase.studio,
+      Sala: clase.room,
+      Semana: clase.week,
+      "Capacidad Total": clase.spots,
+      "Reservas Totales": clase.totalReservations,
+      "Reservas Pagadas": clase.paidReservations,
+      Cortesías: clase.complimentary,
+      "Lista de Espera": clase.waitingLists,
+      "Ocupación %":
+        clase.spots > 0
+          ? Math.round((clase.totalReservations / clase.spots) * 100)
+          : 0,
+      "Es Versus": clase.isVersus ? "Sí" : "No",
+      "Número Versus": clase.versusNumber || "",
+      "Texto Especial": clase.specialText || "",
+      "Tipo Penalización": clase.penaltyType || "",
+      "Puntos Penalización": clase.penaltyPoints || 0,
+    }));
+
+    exportToExcel(exportData, "Clases", "Clases", {
+      columnWidths: [
+        12, 10, 20, 15, 12, 12, 15, 12, 8, 12, 12, 12, 10, 12, 10, 10, 12, 20,
+        15, 15,
+      ],
+    });
+  };
+
+  const handleExportPDF = async () => {
+    if (selectedPeriod === "all") {
+      toast.error("Por favor selecciona un período específico para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los datos del período sin paginación
+    const allClassesData = await utils.classes.getWithFilters.fetch({
+      limit: 10000,
+      offset: 0,
+      search: searchText,
+      disciplineId:
+        selectedDiscipline !== "all" ? selectedDiscipline : undefined,
+      instructorId:
+        selectedInstructor !== "all" ? selectedInstructor : undefined,
+      periodId: selectedPeriod,
+      studio: selectedCountry !== "all" ? selectedCountry : undefined,
+    });
+
+    const allClasses = allClassesData?.classes || [];
+
+    if (allClasses.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const currentPeriod = (periods as Period[]).find(
+      (p) => p.id === selectedPeriod
+    );
+    const periodLabel = currentPeriod
+      ? `P${currentPeriod.number} - ${currentPeriod.year}`
+      : undefined;
+
+    await exportToPDF(
+      <ClassesListPDF
+        classes={allClasses}
+        totalCount={allClasses.length}
+        filters={{
+          period: periodLabel,
+        }}
+      />,
+      "Listado_Clases"
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -859,12 +1023,37 @@ export default function ClasesPage() {
             Administra las clases del sistema
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nueva Clase</span>
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={selectedPeriod === "all"}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                Exportar
+                <ChevronDown className="h-4 w-4 ml-1.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Exportar a Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <FileText className="mr-2 h-4 w-4" />
+                Exportar a PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nueva Clase</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filtros Compactos */}
@@ -872,31 +1061,50 @@ export default function ClasesPage() {
         <div className="flex items-center gap-3">
           {/* Búsqueda principal */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
             <Input
               placeholder="Buscar por instructor, disciplina, estudio..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-8 text-xs"
             />
+          </div>
+
+          {/* Selector de período - siempre visible */}
+          <div className="w-[200px]">
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="h-8 text-xs">
+                <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los períodos</SelectItem>
+                {periods?.map(
+                  (period: { id: string; number: number; year: number }) => (
+                    <SelectItem key={period.id} value={period.id}>
+                      {period.number} - {period.year}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Botón para expandir filtros */}
           <Button
             variant="outline"
-            size="sm"
             onClick={toggleFilters}
-            className="flex items-center gap-2 border-border"
+            className="flex items-center gap-2 border-border h-8 text-xs hover:bg-muted hover:text-foreground"
           >
-            <Filter className="h-4 w-4" />
+            <Filter className="h-3.5 w-3.5" />
             {filtersExpanded ? (
               <>
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-3.5 w-3.5" />
                 <span>Ocultar filtros</span>
               </>
             ) : (
               <>
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-3.5 w-3.5" />
                 <span>Filtros</span>
               </>
             )}
@@ -906,7 +1114,7 @@ export default function ClasesPage() {
         {/* Filtros expandibles */}
         {filtersExpanded && (
           <div className="mt-3 pt-3 border-t border-border">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Filtro por disciplina */}
               <div className="space-y-1">
                 <label
@@ -955,38 +1163,6 @@ export default function ClasesPage() {
                         {instructor.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Filtro por período */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="period-select"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Período
-                </label>
-                <Select
-                  value={selectedPeriod}
-                  onValueChange={setSelectedPeriod}
-                >
-                  <SelectTrigger id="period-select" className="h-8 text-xs">
-                    <SelectValue placeholder="Todos los períodos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los períodos</SelectItem>
-                    {periods?.map(
-                      (period: {
-                        id: string;
-                        number: number;
-                        year: number;
-                      }) => (
-                        <SelectItem key={period.id} value={period.id}>
-                          {period.number} - {period.year}
-                        </SelectItem>
-                      )
-                    )}
                   </SelectContent>
                 </Select>
               </div>

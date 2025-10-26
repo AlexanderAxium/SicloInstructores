@@ -1,3 +1,4 @@
+import { calculateInstructorPaymentData } from "@/lib/payment-calculator";
 import { z } from "zod";
 import { prisma } from "../../lib/db";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
@@ -8,7 +9,7 @@ export const paymentsRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(20),
           offset: z.number().min(0).default(0),
         })
         .optional()
@@ -35,7 +36,12 @@ export const paymentsRouter = router({
               },
             },
           },
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          orderBy: [
+            { period: { number: "desc" } },
+            { period: { year: "desc" } },
+            { createdAt: "desc" },
+            { id: "desc" },
+          ],
           take: limit,
           skip: offset,
         }),
@@ -97,7 +103,7 @@ export const paymentsRouter = router({
         studio: z.string().optional(),
         classId: z.string().optional(),
         active: z.boolean().optional(),
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(1000).default(20),
         offset: z.number().min(0).default(0),
       })
     )
@@ -189,7 +195,12 @@ export const paymentsRouter = router({
               },
             },
           },
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          orderBy: [
+            { period: { number: "desc" } },
+            { period: { year: "desc" } },
+            { createdAt: "desc" },
+            { id: "desc" },
+          ],
           take: input.limit,
           skip: input.offset,
         }),
@@ -223,7 +234,7 @@ export const paymentsRouter = router({
         versusBonus: z.number().default(0),
         bonus: z.number().default(0),
         adjustmentType: z.enum(["FIXED", "PERCENTAGE"]).default("FIXED"),
-        details: z.any().optional(),
+        details: z.record(z.unknown()).optional(),
         comments: z.string().optional(),
         finalPayment: z.number().optional(),
       })
@@ -317,7 +328,7 @@ export const paymentsRouter = router({
         versusBonus: z.number().optional(),
         bonus: z.number().optional(),
         adjustmentType: z.enum(["FIXED", "PERCENTAGE"]).optional(),
-        details: z.any().optional(),
+        details: z.record(z.unknown()).optional(),
         comments: z.string().optional(),
         finalPayment: z.number().optional(),
         active: z.boolean().optional(),
@@ -482,20 +493,281 @@ export const paymentsRouter = router({
       };
     }),
 
-  // Calculate payments for period (protected)
-  calculateForPeriod: protectedProcedure
-    .input(z.object({ periodId: z.string() }))
+  // Calculate payment for a single instructor (protected)
+  calculateInstructorPayment: protectedProcedure
+    .input(
+      z.object({
+        instructorId: z.string(),
+        periodId: z.string(),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user?.tenantId) {
         throw new Error("User tenant not found");
       }
 
-      // This would typically involve complex calculation logic
-      // For now, we'll return a placeholder response
-      return {
-        message: "Payment calculation initiated",
-        periodId: input.periodId,
-        status: "PENDING",
-      };
+      const logs: string[] = [];
+
+      try {
+        logs.push(
+          `🚀 Iniciando cálculo para instructor ID: ${input.instructorId}, Período ID: ${input.periodId}`
+        );
+
+        // Check existing payment
+        const existingPayment = await prisma.instructorPayment.findUnique({
+          where: {
+            instructorId_periodId_tenantId: {
+              instructorId: input.instructorId,
+              periodId: input.periodId,
+              tenantId: ctx.user.tenantId,
+            },
+          },
+        });
+
+        if (existingPayment) {
+          logs.push(
+            `📋 Pago existente encontrado: ID ${existingPayment.id}, Estado: ${existingPayment.status}`
+          );
+
+          // If payment is approved, don't touch it
+          if (existingPayment.status === "APPROVED") {
+            logs.push("✅ Pago ya está aprobado, no se modificará");
+            return {
+              success: true,
+              message: "Pago ya está aprobado, no se modificó",
+              paymentId: existingPayment.id,
+              logs,
+            };
+          }
+
+          // If payment is not approved, delete it to recalculate
+          if (existingPayment.status !== "APPROVED") {
+            await prisma.instructorPayment.delete({
+              where: { id: existingPayment.id },
+            });
+            logs.push("🗑️ Pago no aprobado eliminado para recalcular");
+          }
+        } else {
+          logs.push(
+            "📋 No se encontró pago existente para este instructor y período"
+          );
+        }
+
+        // Calculate payment data
+        const calculationData = await calculateInstructorPaymentData(
+          input.instructorId,
+          input.periodId,
+          ctx.user.tenantId,
+          logs
+        );
+
+        // Create or update payment
+        const paymentData = {
+          amount: calculationData.baseAmount,
+          status: "PENDING",
+          instructorId: input.instructorId,
+          periodId: input.periodId,
+          details: JSON.parse(
+            JSON.stringify({
+              classCalculations: calculationData.classCalculations,
+              bonuses: calculationData.bonuses,
+              penalties: calculationData.penalties,
+              retention: calculationData.retention,
+            })
+          ),
+          meetsGuidelines: true, // TODO: Calculate based on metrics
+          doubleShifts: 0, // TODO: Calculate based on classes
+          nonPrimeHours: 0, // TODO: Calculate based on classes
+          eventParticipation: false, // TODO: Calculate based on events
+          retention: calculationData.retention,
+          adjustment: 0,
+          penalty: calculationData.penalties,
+          cover: calculationData.bonuses.cover,
+          branding: calculationData.bonuses.branding,
+          themeRide: calculationData.bonuses.themeRide,
+          workshop: calculationData.bonuses.workshop,
+          versusBonus: calculationData.bonuses.versus,
+          adjustmentType: "FIXED",
+          bonus: calculationData.bonuses.total,
+          finalPayment: calculationData.finalPayment,
+          comments: `Cálculo automático - ${new Date().toLocaleString()}`,
+        };
+
+        // Create new payment (existing non-approved payment was already deleted)
+        const payment = await prisma.instructorPayment.create({
+          data: {
+            ...paymentData,
+            tenantId: ctx.user.tenantId,
+          },
+        });
+        logs.push(`✅ Nuevo pago creado: ID ${payment.id}`);
+
+        return {
+          success: true,
+          message: "Pago calculado exitosamente",
+          paymentId: payment.id,
+          logs,
+        };
+      } catch (error) {
+        logs.push(
+          `❌ Error en cálculo: ${error instanceof Error ? error.message : "Error desconocido"}`
+        );
+        return {
+          success: false,
+          message: "Error al calcular el pago",
+          logs,
+          error: error instanceof Error ? error.message : "Error desconocido",
+        };
+      }
+    }),
+
+  // Calculate all payments for a period (protected)
+  calculateAllPeriodPayments: protectedProcedure
+    .input(
+      z.object({
+        periodId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
+      const logs: string[] = [];
+
+      try {
+        logs.push(
+          `🚀 Iniciando cálculo de pagos para período: ${input.periodId}`
+        );
+
+        // Get all active instructors
+        const instructors = await prisma.instructor.findMany({
+          where: {
+            active: true,
+            tenantId: ctx.user.tenantId,
+          },
+          include: {
+            classes: {
+              where: { periodId: input.periodId },
+              include: { discipline: true },
+            },
+          },
+        });
+
+        logs.push(`👥 Instructores activos encontrados: ${instructors.length}`);
+
+        // Delete existing non-approved payments for this period
+        const deletedPayments = await prisma.instructorPayment.deleteMany({
+          where: {
+            periodId: input.periodId,
+            status: { not: "APPROVED" },
+            tenantId: ctx.user.tenantId,
+          },
+        });
+        logs.push(`🗑️ Eliminados ${deletedPayments.count} pagos no aprobados`);
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        // Calculate payment for each instructor
+        for (const instructor of instructors) {
+          if (instructor.classes.length === 0) {
+            logs.push(
+              `⚠️ Instructor ${instructor.name} no tiene clases en este período, saltando...`
+            );
+            continue;
+          }
+
+          // Check if instructor already has an approved payment
+          const existingApprovedPayment =
+            await prisma.instructorPayment.findFirst({
+              where: {
+                instructorId: instructor.id,
+                periodId: input.periodId,
+                status: "APPROVED",
+                tenantId: ctx.user.tenantId,
+              },
+            });
+
+          if (existingApprovedPayment) {
+            logs.push(
+              `✅ Instructor ${instructor.name} ya tiene pago aprobado, saltando...`
+            );
+            continue;
+          }
+
+          try {
+            const result = await calculateInstructorPaymentData(
+              instructor.id,
+              input.periodId,
+              ctx.user.tenantId,
+              logs
+            );
+
+            // Create payment
+            await prisma.instructorPayment.create({
+              data: {
+                amount: result.baseAmount,
+                status: "PENDING",
+                instructorId: instructor.id,
+                periodId: input.periodId,
+                tenantId: ctx.user.tenantId,
+                details: JSON.parse(
+                  JSON.stringify({
+                    classCalculations: result.classCalculations,
+                    bonuses: result.bonuses,
+                    penalties: result.penalties,
+                    retention: result.retention,
+                  })
+                ),
+                meetsGuidelines: true,
+                doubleShifts: 0,
+                nonPrimeHours: 0,
+                eventParticipation: false,
+                retention: result.retention,
+                adjustment: 0,
+                penalty: result.penalties,
+                cover: result.bonuses.cover,
+                branding: result.bonuses.branding,
+                themeRide: result.bonuses.themeRide,
+                workshop: result.bonuses.workshop,
+                versusBonus: result.bonuses.versus,
+                adjustmentType: "FIXED",
+                bonus: result.bonuses.total,
+                finalPayment: result.finalPayment,
+                comments: `Cálculo automático - ${new Date().toLocaleString()}`,
+              },
+            });
+
+            successCount++;
+            logs.push(`✅ Pago calculado para ${instructor.name}`);
+          } catch (error) {
+            errorCount++;
+            logs.push(
+              `❌ Error al calcular pago para ${instructor.name}: ${error instanceof Error ? error.message : "Error desconocido"}`
+            );
+          }
+        }
+
+        logs.push(
+          `📊 Resumen: ${successCount} exitosos, ${errorCount} errores`
+        );
+
+        return {
+          success: true,
+          message: `Cálculo completado: ${successCount} exitosos, ${errorCount} errores`,
+          logs,
+        };
+      } catch (error) {
+        logs.push(
+          `❌ Error en cálculo masivo: ${error instanceof Error ? error.message : "Error desconocido"}`
+        );
+        return {
+          success: false,
+          message: "Error al calcular los pagos",
+          logs,
+          error: error instanceof Error ? error.message : "Error desconocido",
+        };
+      }
     }),
 });

@@ -64,7 +64,7 @@ export function SimpleFeatures() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <div
-              key={index}
+              key={`feature-${feature.title}-${index}`}
               className="bg-card rounded-lg p-6 hover:shadow-lg transition-shadow border border-border"
             >
               <div className="flex items-center mb-4">

@@ -24,11 +24,20 @@ import type {
   TableColumn,
 } from "@/components/ui/scrollable-table";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, Edit, Eye, Palette, Plus, Trash2 } from "lucide-react";
+import {
+  BookOpen,
+  Edit,
+  Eye,
+  FileSpreadsheet,
+  Palette,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -244,6 +253,9 @@ export default function DisciplinasPage() {
     defaultPage: 1,
   });
 
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
+
   // Obtener disciplinas con filtros usando tRPC
   const { data: disciplinesData, isLoading } =
     trpc.disciplines.getWithFilters.useQuery({
@@ -423,6 +435,47 @@ export default function DisciplinasPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handler
+  const handleExportExcel = async () => {
+    if (disciplines.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODAS las disciplinas sin paginación
+    const allDisciplinesData = await utils.disciplines.getAll.fetch({
+      limit: 1000,
+      offset: 0,
+      search: searchText,
+      status: selectedStatus !== "all" ? selectedStatus : undefined,
+    });
+
+    const allDisciplines = allDisciplinesData?.disciplines || [];
+
+    if (allDisciplines.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const exportData = allDisciplines.map((discipline) => ({
+      Nombre: discipline.name,
+      Descripción: discipline.description || "",
+      Color: discipline.color || "",
+      "Total Instructores": discipline._count?.instructors || 0,
+      "Total Clases": discipline._count?.classes || 0,
+      Estado: discipline.active ? "Activa" : "Inactiva",
+      "Fecha Creación": new Date(discipline.createdAt).toLocaleDateString(
+        "es-PE"
+      ),
+    }));
+
+    exportToExcel(exportData, "Disciplinas", "Disciplinas", {
+      columnWidths: [25, 40, 12, 15, 15, 10, 15],
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -433,12 +486,23 @@ export default function DisciplinasPage() {
             Administra las disciplinas disponibles en el sistema
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nueva Disciplina</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={disciplines.length === 0}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+            Exportar Excel
           </Button>
-        )}
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nueva Disciplina</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Tabla con ScrollableTable */}

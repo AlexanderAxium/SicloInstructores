@@ -8,7 +8,7 @@ export const instructorRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(1000),
           offset: z.number().min(0).default(0),
         })
         .optional()
@@ -22,7 +22,7 @@ export const instructorRouter = router({
         throw new Error("Instructor model is not available in Prisma client");
       }
 
-      const limit = input?.limit ?? 20;
+      const limit = input?.limit ?? 1000;
       const offset = input?.offset ?? 0;
 
       const [instructors, total] = await Promise.all([
@@ -328,7 +328,7 @@ export const instructorRouter = router({
         bankAccount: z.string().optional(),
         CCI: z.string().optional(),
         contactPerson: z.string().optional(),
-        extraInfo: z.any().optional(),
+        extraInfo: z.record(z.any()).optional(),
         disciplineIds: z.array(z.string()).optional(),
         password: z.string().optional(), // Add password field
       })
@@ -391,7 +391,7 @@ export const instructorRouter = router({
         bankAccount: z.string().optional(),
         CCI: z.string().optional(),
         contactPerson: z.string().optional(),
-        extraInfo: z.any().optional(),
+        extraInfo: z.record(z.any()).optional(),
         active: z.boolean().optional(),
         disciplineIds: z.array(z.string()).optional(),
         password: z.string().optional(), // Add password field

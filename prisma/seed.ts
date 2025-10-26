@@ -749,351 +749,102 @@ async function main() {
     createdDisciplines.push(createdDiscipline);
   }
 
-  // Create instructors
-  console.log("👨‍🏫 Creating instructors...");
-  const instructors = [
-    {
-      name: "Ana García",
-      fullName: "Ana García Rodríguez",
-      active: true,
-      phone: "+51 987 654 321",
-      DNI: "12345678",
-      bank: "Banco Nacional",
-      bankAccount: "1234567890",
-      CCI: "12345678901234567890",
-      contactPerson: "Carlos García",
-    },
-    {
-      name: "Carlos López",
-      fullName: "Carlos López Martínez",
-      active: true,
-      phone: "+51 987 654 322",
-      DNI: "87654321",
-      bank: "Banco Internacional",
-      bankAccount: "0987654321",
-      CCI: "09876543210987654321",
-      contactPerson: "María López",
-    },
-    {
-      name: "Sofia Martín",
-      fullName: "Sofia Martín Pérez",
-      active: true,
-      phone: "+51 987 654 323",
-      DNI: "11223344",
-      bank: "Banco Popular",
-      bankAccount: "1122334455",
-      CCI: "11223344551122334455",
-      contactPerson: "Roberto Martín",
-    },
-    {
-      name: "Diego Ruiz",
-      fullName: "Diego Ruiz Sánchez",
-      active: true,
-      phone: "+51 987 654 324",
-      DNI: "55667788",
-      bank: "Banco Central",
-      bankAccount: "5566778899",
-      CCI: "55667788995566778899",
-      contactPerson: "Elena Ruiz",
-    },
-    {
-      name: "María Elena",
-      fullName: "María Elena Vargas",
-      active: true,
-      phone: "+51 987 654 325",
-      DNI: "99887766",
-      bank: "Banco de Crédito",
-      bankAccount: "9988776655",
-      CCI: "99887766559988776655",
-      contactPerson: "José Vargas",
-    },
-    {
-      name: "Roberto Silva",
-      fullName: "Roberto Silva Torres",
-      active: true,
-      phone: "+51 987 654 326",
-      DNI: "44332211",
-      bank: "Banco Scotiabank",
-      bankAccount: "4433221100",
-      CCI: "44332211004433221100",
-      contactPerson: "Carmen Silva",
-    },
-    {
-      name: "Lucía Fernández",
-      fullName: "Lucía Fernández Castro",
-      active: true,
-      phone: "+51 987 654 327",
-      DNI: "77665544",
-      bank: "Banco BBVA",
-      bankAccount: "7766554433",
-      CCI: "77665544337766554433",
-      contactPerson: "Pedro Fernández",
-    },
-    {
-      name: "Andrés Morales",
-      fullName: "Andrés Morales Jiménez",
-      active: true,
-      phone: "+51 987 654 328",
-      DNI: "33445566",
-      bank: "Banco Interbank",
-      bankAccount: "3344556677",
-      CCI: "33445566773344556677",
-      contactPerson: "Rosa Morales",
-    },
-    {
-      name: "Carmen Vega",
-      fullName: "Carmen Vega Herrera",
-      active: true,
-      phone: "+51 987 654 329",
-      DNI: "11223399",
-      bank: "Banco Pichincha",
-      bankAccount: "1122339900",
-      CCI: "11223399001122339900",
-      contactPerson: "Miguel Vega",
-    },
-    {
-      name: "Fernando Castro",
-      fullName: "Fernando Castro Mendoza",
-      active: true,
-      phone: "+51 987 654 330",
-      DNI: "99887755",
-      bank: "Banco Continental",
-      bankAccount: "9988775500",
-      CCI: "99887755009988775500",
-      contactPerson: "Patricia Castro",
-    },
-    {
-      name: "Isabel Torres",
-      fullName: "Isabel Torres Ramos",
-      active: true,
-      phone: "+51 987 654 331",
-      DNI: "55667744",
-      bank: "Banco Santander",
-      bankAccount: "5566774400",
-      CCI: "55667744005566774400",
-      contactPerson: "Luis Torres",
-    },
-    {
-      name: "Miguel Herrera",
-      fullName: "Miguel Herrera Flores",
-      active: true,
-      phone: "+51 987 654 332",
-      DNI: "33445577",
-      bank: "Banco BCP",
-      bankAccount: "3344557700",
-      CCI: "33445577003344557700",
-      contactPerson: "Rosa Herrera",
-    },
-    {
-      name: "Patricia Ramos",
-      fullName: "Patricia Ramos Gutiérrez",
-      active: true,
-      phone: "+51 987 654 333",
-      DNI: "77665533",
-      bank: "Banco Falabella",
-      bankAccount: "7766553300",
-      CCI: "77665533007766553300",
-      contactPerson: "Carlos Ramos",
-    },
-    {
-      name: "Ricardo Flores",
-      fullName: "Ricardo Flores Salinas",
-      active: true,
-      phone: "+51 987 654 334",
-      DNI: "11223388",
-      bank: "Banco Ripley",
-      bankAccount: "1122338800",
-      CCI: "11223388001122338800",
-      contactPerson: "Ana Flores",
-    },
-    {
-      name: "Valeria Gutiérrez",
-      fullName: "Valeria Gutiérrez Paredes",
-      active: true,
-      phone: "+51 987 654 335",
-      DNI: "99887744",
-      bank: "Banco Interbank",
-      bankAccount: "9988774400",
-      CCI: "99887744009988774400",
-      contactPerson: "Roberto Gutiérrez",
-    },
-    {
-      name: "Alejandro Salinas",
-      fullName: "Alejandro Salinas Quispe",
-      active: true,
-      phone: "+51 987 654 336",
-      DNI: "55667733",
-      bank: "Banco Nacional",
-      bankAccount: "5566773300",
-      CCI: "55667733005566773300",
-      contactPerson: "María Salinas",
-    },
-    {
-      name: "Gabriela Paredes",
-      fullName: "Gabriela Paredes Huamán",
-      active: true,
-      phone: "+51 987 654 337",
-      DNI: "33445588",
-      bank: "Banco BBVA",
-      bankAccount: "3344558800",
-      CCI: "33445588003344558800",
-      contactPerson: "José Paredes",
-    },
-    {
-      name: "Héctor Quispe",
-      fullName: "Héctor Quispe Mamani",
-      active: true,
-      phone: "+51 987 654 338",
-      DNI: "77665522",
-      bank: "Banco Scotiabank",
-      bankAccount: "7766552200",
-      CCI: "77665522007766552200",
-      contactPerson: "Elena Quispe",
-    },
-    {
-      name: "Natalia Huamán",
-      fullName: "Natalia Huamán Cáceres",
-      active: true,
-      phone: "+51 987 654 339",
-      DNI: "11223377",
-      bank: "Banco de Crédito",
-      bankAccount: "1122337700",
-      CCI: "11223377001122337700",
-      contactPerson: "Pedro Huamán",
-    },
-    {
-      name: "Oscar Mamani",
-      fullName: "Oscar Mamani Condori",
-      active: true,
-      phone: "+51 987 654 340",
-      DNI: "99887733",
-      bank: "Banco Pichincha",
-      bankAccount: "9988773300",
-      CCI: "99887733009988773300",
-      contactPerson: "Carmen Mamani",
-    },
-  ];
-
-  const createdInstructors = [];
-  for (const instructor of instructors) {
-    const createdInstructor = await prisma.instructor.create({
-      data: {
-        ...instructor,
-        tenantId: sicloTenant.id,
-      },
-    });
-    createdInstructors.push(createdInstructor);
-  }
-
-  // Associate instructors with disciplines (some instructors can teach multiple disciplines)
-  console.log("🔗 Associating instructors with disciplines...");
-  const instructorDisciplineAssociations = [
-    // Ana García - Síclo, Barre
-    { instructorIndex: 0, disciplineIndices: [0, 1] },
-    // Carlos López - Síclo, Ejercito
-    { instructorIndex: 1, disciplineIndices: [0, 3] },
-    // Sofia Martín - Barre, Yoga
-    { instructorIndex: 2, disciplineIndices: [1, 2] },
-    // Diego Ruiz - Síclo, Barre, Yoga
-    { instructorIndex: 3, disciplineIndices: [0, 1, 2] },
-    // María Elena - Yoga, Ejercito
-    { instructorIndex: 4, disciplineIndices: [2, 3] },
-    // Roberto Silva - Síclo, Barre, Yoga, Ejercito
-    { instructorIndex: 5, disciplineIndices: [0, 1, 2, 3] },
-    // Lucía Fernández - Barre, Yoga
-    { instructorIndex: 6, disciplineIndices: [1, 2] },
-    // Andrés Morales - Síclo, Ejercito
-    { instructorIndex: 7, disciplineIndices: [0, 3] },
-    // Carmen Vega - Barre, Yoga
-    { instructorIndex: 8, disciplineIndices: [1, 2] },
-    // Fernando Castro - Síclo, Barre
-    { instructorIndex: 9, disciplineIndices: [0, 1] },
-    // Isabel Torres - Yoga, Ejercito
-    { instructorIndex: 10, disciplineIndices: [2, 3] },
-    // Miguel Herrera - Síclo, Barre, Yoga
-    { instructorIndex: 11, disciplineIndices: [0, 1, 2] },
-    // Patricia Ramos - Barre, Yoga
-    { instructorIndex: 12, disciplineIndices: [1, 2] },
-    // Ricardo Flores - Síclo, Ejercito
-    { instructorIndex: 13, disciplineIndices: [0, 3] },
-    // Valeria Gutiérrez - Barre, Yoga, Ejercito
-    { instructorIndex: 14, disciplineIndices: [1, 2, 3] },
-    // Alejandro Salinas - Síclo, Barre
-    { instructorIndex: 15, disciplineIndices: [0, 1] },
-    // Gabriela Paredes - Yoga, Ejercito
-    { instructorIndex: 16, disciplineIndices: [2, 3] },
-    // Héctor Quispe - Síclo, Barre, Yoga
-    { instructorIndex: 17, disciplineIndices: [0, 1, 2] },
-    // Natalia Huamán - Barre, Yoga
-    { instructorIndex: 18, disciplineIndices: [1, 2] },
-    // Oscar Mamani - Síclo, Ejercito
-    { instructorIndex: 19, disciplineIndices: [0, 3] },
-  ];
-
-  for (const association of instructorDisciplineAssociations) {
-    const instructor = createdInstructors[association.instructorIndex];
-    if (instructor) {
-      for (const disciplineIndex of association.disciplineIndices) {
-        const discipline = createdDisciplines[disciplineIndex];
-        if (discipline) {
-          await prisma.instructor.update({
-            where: { id: instructor.id },
-            data: {
-              disciplines: {
-                connect: { id: discipline.id },
-              },
-            },
-          });
-        }
-      }
-    }
-  }
-
   // Create formulas for each discipline and period
   console.log("📊 Creating formulas...");
+
+  // Requisitos de categoría (igual que SilcoAdmin)
   const categoryRequirements = {
     INSTRUCTOR: {
-      minClasses: 10,
-      minOccupation: 0.7,
-      requirements: ["Completar entrenamiento básico", "Certificación válida"],
+      ocupacion: 0.0,
+      clases: 0,
+      localesEnLima: 1,
+      dobleteos: 0,
+      horariosNoPrime: 0,
+      participacionEventos: false,
+      lineamientos: true,
     },
     JUNIOR_AMBASSADOR: {
-      minClasses: 20,
-      minOccupation: 0.8,
-      requirements: ["6 meses de experiencia", "Evaluación positiva"],
+      ocupacion: 40.0,
+      clases: 4,
+      localesEnLima: 2,
+      dobleteos: 1,
+      horariosNoPrime: 1,
+      participacionEventos: false,
+      lineamientos: true,
     },
     AMBASSADOR: {
-      minClasses: 30,
-      minOccupation: 0.85,
-      requirements: ["1 año de experiencia", "Liderazgo demostrado"],
+      ocupacion: 60.0,
+      clases: 6,
+      localesEnLima: 3,
+      dobleteos: 2,
+      horariosNoPrime: 2,
+      participacionEventos: true,
+      lineamientos: true,
     },
     SENIOR_AMBASSADOR: {
-      minClasses: 40,
-      minOccupation: 0.9,
-      requirements: ["2 años de experiencia", "Mentoría a otros instructores"],
+      ocupacion: 80.0,
+      clases: 9,
+      localesEnLima: 4,
+      dobleteos: 3,
+      horariosNoPrime: 3,
+      participacionEventos: true,
+      lineamientos: true,
     },
   };
 
+  // Parámetros de pago (igual que SilcoAdmin)
   const paymentParameters = {
     INSTRUCTOR: {
-      guaranteedMinimum: 1000,
-      baseRate: 50,
-      maxBonus: 500,
+      cuotaFija: 0.0,
+      minimoGarantizado: 0.0,
+      tarifas: [
+        { tarifa: 3.25, numeroReservas: 19 },
+        { tarifa: 4.25, numeroReservas: 49 },
+      ],
+      tarifaFullHouse: 5.25,
+      maximo: 262.5,
+      bono: 0.0,
+      retencionPorcentaje: 8.0,
+      ajustePorDobleteo: 0.0,
     },
     JUNIOR_AMBASSADOR: {
-      guaranteedMinimum: 1200,
-      baseRate: 60,
-      maxBonus: 600,
+      cuotaFija: 0.0,
+      minimoGarantizado: 60.0,
+      tarifas: [
+        { tarifa: 3.5, numeroReservas: 19 },
+        { tarifa: 4.5, numeroReservas: 49 },
+      ],
+      tarifaFullHouse: 5.5,
+      maximo: 275.0,
+      bono: 0.5,
+      retencionPorcentaje: 8.0,
+      ajustePorDobleteo: 0.25,
     },
     AMBASSADOR: {
-      guaranteedMinimum: 1500,
-      baseRate: 75,
-      maxBonus: 750,
+      cuotaFija: 0.0,
+      minimoGarantizado: 80.0,
+      tarifas: [
+        { tarifa: 4.0, numeroReservas: 19 },
+        { tarifa: 5.0, numeroReservas: 49 },
+      ],
+      tarifaFullHouse: 6.0,
+      maximo: 300.0,
+      bono: 1.0,
+      retencionPorcentaje: 8.0,
+      ajustePorDobleteo: 0.5,
     },
     SENIOR_AMBASSADOR: {
-      guaranteedMinimum: 2000,
-      baseRate: 100,
-      maxBonus: 1000,
+      cuotaFija: 0.0,
+      minimoGarantizado: 100.0,
+      tarifas: [
+        { tarifa: 4.0, numeroReservas: 19 },
+        { tarifa: 5.0, numeroReservas: 49 },
+      ],
+      tarifaFullHouse: 6.0,
+      maximo: 325.0,
+      bono: 1.5,
+      retencionPorcentaje: 8.0,
+      ajustePorDobleteo: 1.0,
     },
   };
 
@@ -1111,482 +862,7 @@ async function main() {
     }
   }
 
-  // Create sample classes
-  console.log("🏋️‍♀️ Creating sample classes...");
-
-  // Verificar que tenemos las disciplinas e instructores necesarios
-  if (createdDisciplines.length < 4) {
-    console.error("❌ No hay suficientes disciplinas creadas");
-    return;
-  }
-
-  if (createdInstructors.length < 8) {
-    console.error("❌ No hay suficientes instructores creados");
-    return;
-  }
-
-  if (createdPeriods.length < 4) {
-    console.error("❌ No hay suficientes períodos creados");
-    return;
-  }
-
-  const sampleClasses = [
-    // Síclo classes
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[0]?.id, // Síclo
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[0]?.id, // Ana García
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala A",
-      totalReservations: 25,
-      waitingLists: 5,
-      complimentary: 2,
-      spots: 30,
-      paidReservations: 23,
-      specialText: "Clase especial de 45 minutos",
-      date: new Date("2025-04-15T18:00:00Z"),
-      isVersus: false,
-    },
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[0]?.id, // Síclo
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[1]?.id, // Carlos López
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala A",
-      totalReservations: 28,
-      waitingLists: 3,
-      complimentary: 1,
-      spots: 30,
-      paidReservations: 27,
-      specialText: null,
-      date: new Date("2025-04-15T19:30:00Z"),
-      isVersus: true,
-      versusNumber: 1,
-    },
-    // Barre classes
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[1]?.id, // Barre
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[2]?.id, // Sofia Martín
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala B",
-      totalReservations: 20,
-      waitingLists: 3,
-      complimentary: 1,
-      spots: 25,
-      paidReservations: 19,
-      specialText: null,
-      date: new Date("2025-04-15T20:00:00Z"),
-      isVersus: false,
-    },
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[1]?.id, // Barre
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[3]?.id, // Diego Ruiz
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala B",
-      totalReservations: 18,
-      waitingLists: 2,
-      complimentary: 0,
-      spots: 25,
-      paidReservations: 18,
-      specialText: "Clase de barre avanzado",
-      date: new Date("2025-04-16T18:00:00Z"),
-      isVersus: false,
-    },
-    // Yoga classes
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[2]?.id, // Yoga
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[4]?.id, // María Elena
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala C",
-      totalReservations: 15,
-      waitingLists: 2,
-      complimentary: 0,
-      spots: 20,
-      paidReservations: 15,
-      specialText: "Clase de yoga restaurativo",
-      date: new Date("2025-04-15T20:00:00Z"),
-      isVersus: false,
-    },
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[2]?.id, // Yoga
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[5]?.id, // Roberto Silva
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala C",
-      totalReservations: 12,
-      waitingLists: 1,
-      complimentary: 0,
-      spots: 20,
-      paidReservations: 12,
-      specialText: "Yoga flow para principiantes",
-      date: new Date("2025-04-16T19:00:00Z"),
-      isVersus: false,
-    },
-    // Ejercito classes
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[3]?.id, // Ejercito
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[6]?.id, // Lucía Fernández
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala D",
-      totalReservations: 22,
-      waitingLists: 4,
-      complimentary: 1,
-      spots: 25,
-      paidReservations: 21,
-      specialText: "Entrenamiento militar intenso",
-      date: new Date("2025-04-15T21:00:00Z"),
-      isVersus: false,
-    },
-    // Síclo classes adicionales
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[0]?.id, // Síclo
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[7]?.id, // Andrés Morales
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala A",
-      totalReservations: 20,
-      waitingLists: 2,
-      complimentary: 0,
-      spots: 30,
-      paidReservations: 20,
-      specialText: "Síclo HIIT",
-      date: new Date("2025-04-16T18:00:00Z"),
-      isVersus: false,
-    },
-    // Barre classes adicionales
-    {
-      country: "Perú",
-      city: "Lima",
-      disciplineId: createdDisciplines[1]?.id, // Barre
-      week: 1,
-      studio: "Siclo Lima Centro",
-      instructorId: createdInstructors[8]?.id, // Carmen Vega
-      periodId: createdPeriods[3]?.id, // Period 4
-      room: "Sala B",
-      totalReservations: 16,
-      waitingLists: 1,
-      complimentary: 0,
-      spots: 25,
-      paidReservations: 16,
-      specialText: "Barre clásico",
-      date: new Date("2025-04-16T20:00:00Z"),
-      isVersus: false,
-    },
-  ];
-
-  const createdClasses = [];
-  for (const classData of sampleClasses) {
-    // Skip classes with undefined required fields
-    if (
-      !classData.disciplineId ||
-      !classData.instructorId ||
-      !classData.periodId
-    ) {
-      console.warn("Skipping class with missing required fields:", classData);
-      continue;
-    }
-
-    // Create a properly typed data object
-    const classCreateData = {
-      country: classData.country,
-      city: classData.city,
-      disciplineId: classData.disciplineId,
-      week: classData.week,
-      studio: classData.studio,
-      instructorId: classData.instructorId,
-      periodId: classData.periodId,
-      room: classData.room,
-      totalReservations: classData.totalReservations,
-      waitingLists: classData.waitingLists,
-      complimentary: classData.complimentary,
-      spots: classData.spots,
-      paidReservations: classData.paidReservations,
-      specialText: classData.specialText,
-      date: classData.date,
-      isVersus: classData.isVersus,
-      versusNumber: classData.versusNumber,
-      tenantId: sicloTenant.id,
-    };
-
-    const createdClass = await prisma.class.create({
-      data: classCreateData,
-    });
-    createdClasses.push(createdClass);
-  }
-
-  // Create instructor categories
-  console.log("🏷️ Creating instructor categories...");
-  const categories = [
-    "INSTRUCTOR",
-    "JUNIOR_AMBASSADOR",
-    "AMBASSADOR",
-    "SENIOR_AMBASSADOR",
-  ];
-  for (const instructor of createdInstructors) {
-    for (const discipline of createdDisciplines) {
-      // Skip if period doesn't exist
-      if (!createdPeriods[3]?.id) {
-        console.warn("Skipping instructor category - period not found");
-        continue;
-      }
-
-      const randomCategory =
-        categories[Math.floor(Math.random() * categories.length)];
-      await prisma.instructorCategory.create({
-        data: {
-          instructorId: instructor.id,
-          disciplineId: discipline.id,
-          periodId: createdPeriods[3].id, // Period 4
-          category: randomCategory || "INSTRUCTOR",
-          isManual: Math.random() > 0.7, // 30% manual assignments
-          metrics: {
-            classes: Math.floor(Math.random() * 30) + 10,
-            occupation: Math.random() * 0.3 + 0.7,
-            performance: ["Excellent", "Good", "Average"][
-              Math.floor(Math.random() * 3)
-            ],
-            satisfaction: Math.random() * 0.3 + 0.7,
-          },
-          tenantId: sicloTenant.id,
-        },
-      });
-    }
-  }
-
-  // Create instructor payments
-  console.log("💰 Creating instructor payments...");
-  for (const instructor of createdInstructors) {
-    for (const period of createdPeriods.slice(0, 4)) {
-      // First 4 periods
-      const baseAmount = Math.random() * 2000 + 1000; // 1000-3000
-      const retention = Math.random() * 200; // 0-200
-      const adjustment = Math.random() * 300 - 150; // -150 to 150
-      const penalty = Math.random() * 100; // 0-100
-      const cover = Math.random() * 200; // 0-200
-      const branding = Math.random() * 300; // 0-300
-      const themeRide = Math.random() * 200; // 0-200
-      const workshop = Math.random() * 400; // 0-400
-      const versusBonus = Math.random() * 150; // 0-150
-      const bonus = Math.random() * 500; // 0-500
-
-      const finalPayment =
-        baseAmount -
-        retention +
-        adjustment -
-        penalty +
-        cover +
-        branding +
-        themeRide +
-        workshop +
-        versusBonus +
-        (bonus || 0);
-
-      await prisma.instructorPayment.create({
-        data: {
-          amount: baseAmount,
-          status: Math.random() > 0.2 ? "PAID" : "PENDING", // 80% paid
-          instructorId: instructor.id,
-          periodId: period.id,
-          details: {
-            classes: Math.floor(Math.random() * 20) + 10,
-            hours: Math.floor(Math.random() * 40) + 20,
-            performance: "Good",
-          },
-          meetsGuidelines: Math.random() > 0.1, // 90% meet guidelines
-          doubleShifts: Math.floor(Math.random() * 5),
-          nonPrimeHours: Math.random() * 10,
-          eventParticipation: Math.random() > 0.3, // 70% participate
-          retention,
-          adjustment,
-          penalty,
-          cover,
-          branding,
-          themeRide,
-          workshop,
-          versusBonus,
-          adjustmentType: Math.random() > 0.5 ? "FIXED" : "PERCENTAGE",
-          bonus,
-          finalPayment,
-          comments: Math.random() > 0.7 ? "Pago completado exitosamente" : null,
-          tenantId: sicloTenant.id,
-        },
-      });
-    }
-  }
-
-  // Create some covers
-  console.log("🔄 Creating covers...");
-  const coverReasons = [
-    "Enfermedad",
-    "Emergencia familiar",
-    "Viaje de trabajo",
-    "Capacitación",
-  ];
-  for (let i = 0; i < 5; i++) {
-    const originalInstructor =
-      createdInstructors[Math.floor(Math.random() * createdInstructors.length)];
-    const replacementInstructor =
-      createdInstructors[Math.floor(Math.random() * createdInstructors.length)];
-    const discipline =
-      createdDisciplines[Math.floor(Math.random() * createdDisciplines.length)];
-    const period = createdPeriods[3]; // Period 4
-
-    if (originalInstructor && replacementInstructor && discipline && period) {
-      await prisma.cover.create({
-        data: {
-          originalInstructorId: originalInstructor.id,
-          replacementInstructorId: replacementInstructor.id,
-          disciplineId: discipline.id,
-          periodId: period.id,
-          date: new Date("2025-04-15T18:00:00Z"),
-          time: "18:00",
-          justification: Math.random() > 0.3 ? "APPROVED" : "PENDING",
-          bonusPayment: Math.random() > 0.5,
-          fullHousePayment: Math.random() > 0.7,
-          comments:
-            coverReasons[Math.floor(Math.random() * coverReasons.length)],
-          tenantId: sicloTenant.id,
-        },
-      });
-    }
-  }
-
-  // Create some penalties
-  console.log("⚠️ Creating penalties...");
-  const penaltyTypes = [
-    "FIXED_CANCELLATION",
-    "OUT_OF_TIME_CANCELLATION",
-    "CANCEL_LESS_24HRS",
-    "LATE_EXIT",
-    "CUSTOM",
-  ];
-  for (let i = 0; i < 8; i++) {
-    const instructor =
-      createdInstructors[Math.floor(Math.random() * createdInstructors.length)];
-    const discipline =
-      createdDisciplines[Math.floor(Math.random() * createdDisciplines.length)];
-    const period = createdPeriods[3]; // Period 4
-
-    if (instructor && discipline && period) {
-      const penaltyType =
-        penaltyTypes[Math.floor(Math.random() * penaltyTypes.length)];
-      await prisma.penalty.create({
-        data: {
-          instructorId: instructor.id,
-          disciplineId: discipline.id,
-          periodId: period.id,
-          type: penaltyType || "CUSTOM",
-          points: Math.floor(Math.random() * 50) + 10,
-          description: "Penalización por incumplimiento",
-          active: Math.random() > 0.2, // 80% active
-          comments: "Penalización aplicada según reglamento",
-          tenantId: sicloTenant.id,
-        },
-      });
-    }
-  }
-
-  // Create some brandings
-  console.log("🏷️ Creating brandings...");
-  for (let i = 0; i < 10; i++) {
-    const instructor =
-      createdInstructors[Math.floor(Math.random() * createdInstructors.length)];
-    const period = createdPeriods[Math.floor(Math.random() * 4)]; // First 4 periods
-
-    if (instructor && period) {
-      await prisma.branding.create({
-        data: {
-          number: i + 1,
-          instructorId: instructor.id,
-          periodId: period.id,
-          comments: `Branding ${i + 1} - ${instructor.name}`,
-          tenantId: sicloTenant.id,
-        },
-      });
-    }
-  }
-
-  // Create some theme rides
-  console.log("🎭 Creating theme rides...");
-  for (let i = 0; i < 8; i++) {
-    const instructor =
-      createdInstructors[Math.floor(Math.random() * createdInstructors.length)];
-    const period = createdPeriods[Math.floor(Math.random() * 4)]; // First 4 periods
-
-    if (instructor && period) {
-      await prisma.themeRide.create({
-        data: {
-          number: i + 1,
-          instructorId: instructor.id,
-          periodId: period.id,
-          comments: `Theme Ride ${i + 1} - ${instructor.name}`,
-          tenantId: sicloTenant.id,
-        },
-      });
-    }
-  }
-
-  // Create some workshops
-  console.log("🎓 Creating workshops...");
-  const workshopNames = [
-    "Workshop de Técnica de Ciclismo",
-    "Taller de Nutrición Deportiva",
-    "Seminario de Motivación",
-    "Curso de Primeros Auxilios",
-    "Workshop de Core Training",
-  ];
-
-  for (let i = 0; i < 6; i++) {
-    const instructor =
-      createdInstructors[Math.floor(Math.random() * createdInstructors.length)];
-    const period = createdPeriods[Math.floor(Math.random() * 4)]; // First 4 periods
-    const workshopName =
-      workshopNames[Math.floor(Math.random() * workshopNames.length)];
-
-    if (instructor && period) {
-      await prisma.workshop.create({
-        data: {
-          name: workshopName || "Workshop de Técnica de Ciclismo",
-          instructorId: instructor.id,
-          periodId: period.id,
-          date: new Date("2025-04-15T10:00:00Z"),
-          comments: `Workshop impartido por ${instructor.name}`,
-          payment: Math.random() * 500 + 200, // 200-700
-          tenantId: sicloTenant.id,
-        },
-      });
-    }
-  }
-
-  console.log("✅ Fitness management data created successfully!");
+  console.log("✅ Basic data created successfully!");
 
   console.log("✅ Multitenant seed finished successfully!");
   console.log(`
@@ -1597,14 +873,7 @@ async function main() {
 - Permissions: ${createdPermissions.length} permissions (${createdPermissions.length / 2} per tenant)
 - Periods: ${createdPeriods.length} periods for 2025
 - Disciplines: ${createdDisciplines.length} fitness disciplines (Síclo, Barre, Yoga, Ejercito)
-- Instructors: ${createdInstructors.length} instructors with discipline associations
-- Classes: ${createdClasses.length} sample classes
-- Payments: ${createdInstructors.length * 4} instructor payments
-- Covers: 5 instructor covers
-- Penalties: 8 penalties
-- Brandings: 10 brandings
-- Theme Rides: 8 theme rides
-- Workshops: 6 workshops
+- Formulas: ${createdDisciplines.length * createdPeriods.length} formulas with complete payment structure
 
 🔐 Login Credentials:
 
@@ -1620,24 +889,17 @@ async function main() {
 - Admin: admin@democorp.com / DemoAdmin123!@#
 - User: user@democorp.com / DemoUser123!@#
 
-🏋️ Fitness Data Created:
+🏋️ Basic Data Created:
 - Disciplines: Síclo, Barre, Yoga, Ejercito (4 disciplines total)
-- Instructors: 20 instructors with diverse discipline associations:
-  * Some teach 1 discipline (specialists)
-  * Some teach 2-3 disciplines (versatile)
-  * Roberto Silva teaches all 4 disciplines (master instructor)
 - Periods: 13 periods for 2025 (complete year)
-- Classes: 9 sample classes with reservations, waiting lists, and metrics
-- Payments: Comprehensive payment calculations with bonuses, penalties, and adjustments
-- Covers: Instructor substitution system with approvals
-- Penalties: Various penalty types for instructor violations
-- Brandings: Instructor branding activities
-- Theme Rides: Special themed classes
-- Workshops: Educational workshops with variable payments
-- Categories: Instructor performance categories and metrics
+- Formulas: Complete payment structure with:
+  * Category requirements (INSTRUCTOR, JUNIOR_AMBASSADOR, AMBASSADOR, SENIOR_AMBASSADOR)
+  * Payment parameters with dynamic tariffs
+  * Retention percentages and bonus calculations
+  * Full house payments and adjustments
 
-🎯 Ready for Production:
-The platform now includes a complete fitness management system with realistic data for testing and development!
+🎯 Ready for Development:
+The platform now includes the basic structure needed for fitness management with proper formulas and user authentication!
   `);
 }
 

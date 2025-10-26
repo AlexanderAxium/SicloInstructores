@@ -8,7 +8,7 @@ export const brandingsRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(20),
           offset: z.number().min(0).default(0),
         })
         .optional()
@@ -80,7 +80,7 @@ export const brandingsRouter = router({
   getWithFilters: protectedProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(1000).default(20),
         offset: z.number().min(0).default(0),
         search: z.string().optional(),
         instructorId: z.string().optional(),
@@ -95,7 +95,17 @@ export const brandingsRouter = router({
         throw new Error("Tenant ID is required");
       }
 
-      const where: any = {
+      const where: {
+        tenantId: string;
+        OR?: Array<{
+          instructor?: {
+            name?: { contains: string; mode: "insensitive" };
+          };
+          comments?: { contains: string; mode: "insensitive" };
+        }>;
+        instructorId?: string;
+        periodId?: string;
+      } = {
         tenantId: user.tenantId,
       };
 

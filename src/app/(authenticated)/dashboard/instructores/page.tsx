@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { InstructorListPDF } from "@/components/instructors/pdf/instructor-list-pdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -32,15 +38,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useExcelExport } from "@/hooks/useExcelExport";
+import { usePDFExport } from "@/hooks/usePDFExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
+import type { Instructor as InstructorType } from "@/types";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Calendar,
   ChevronDown,
   ChevronUp,
   Edit,
   Eye,
+  FileSpreadsheet,
+  FileText,
   Filter,
   GraduationCap,
   Plus,
@@ -49,6 +61,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const updateInstructorSchema = z.object({
@@ -65,16 +78,17 @@ const createInstructorSchema = z.object({
   phone: z.string().optional(),
   DNI: z.string().optional(),
   password: z.string().optional(),
+  active: z.boolean().optional(),
 });
 
-type Instructor = {
-  id: string;
-  name: string;
-  fullName?: string | null;
-  active: boolean;
-  phone?: string | null;
-  DNI?: string | null;
+// Extended Instructor type for UI with additional fields
+type Instructor = Omit<
+  InstructorType,
+  "createdAt" | "updatedAt" | "tenantId"
+> & {
   createdAt: string;
+  updatedAt?: string;
+  tenantId?: string;
   disciplines?: Array<{
     name: string;
     color: string | null;
@@ -253,6 +267,13 @@ export default function InstructoresPage() {
     defaultPage: 1,
   });
 
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
+  const { exportToPDF } = usePDFExport();
+
+  // Obtener utils de tRPC
+  const utils = trpc.useUtils();
+
   // Obtener datos para filtros
   const { data: disciplines } = trpc.disciplines.getAll.useQuery();
 
@@ -277,24 +298,21 @@ export default function InstructoresPage() {
   // Mutaciones tRPC
   const createInstructor = trpc.instructor.create.useMutation({
     onSuccess: () => {
-      // Refrescar la lista de instructores
-      trpc.useUtils().instructor.getWithFilters.invalidate();
+      utils.instructor.getWithFilters.invalidate();
       handleDialogClose();
     },
   });
 
   const updateInstructor = trpc.instructor.update.useMutation({
     onSuccess: () => {
-      // Refrescar la lista de instructores
-      trpc.useUtils().instructor.getWithFilters.invalidate();
+      utils.instructor.getWithFilters.invalidate();
       handleDialogClose();
     },
   });
 
   const deleteInstructor = trpc.instructor.delete.useMutation({
     onSuccess: () => {
-      // Refrescar la lista de instructores
-      trpc.useUtils().instructor.getWithFilters.invalidate();
+      utils.instructor.getWithFilters.invalidate();
     },
   });
 
@@ -362,25 +380,7 @@ export default function InstructoresPage() {
       key: "name",
       title: "Instructor",
       render: (_, record) => (
-        <div className="flex items-center">
-          <Avatar className="h-8 w-8 mr-3">
-            <AvatarImage src={undefined} alt={record.name || "Instructor"} />
-            <AvatarFallback className="bg-blue-100 text-blue-600">
-              {record.name?.charAt(0)?.toUpperCase() || "I"}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="text-sm font-medium text-foreground">
-              {record.name}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {record.fullName ||
-                record.phone ||
-                record.DNI ||
-                "Sin información adicional"}
-            </div>
-          </div>
-        </div>
+        <div className="text-sm font-medium text-foreground">{record.name}</div>
       ),
     },
     {
@@ -480,6 +480,84 @@ export default function InstructoresPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handlers
+  const handleExportExcel = async () => {
+    if (instructors.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los instructores sin paginación
+    const allInstructorsData = await utils.client.instructor.getAll.query();
+
+    const allInstructors = allInstructorsData?.instructors || [];
+
+    if (allInstructors.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const exportData = allInstructors.map(
+      (instructor: {
+        name: string;
+        fullName: string | null;
+        phone: string | null;
+        DNI: string | null;
+        active: boolean;
+        createdAt: string;
+        disciplines?: Array<{ name: string }>;
+        classes?: Array<unknown>;
+        payments?: Array<unknown>;
+      }) => ({
+        Nombre: instructor.name,
+        "Nombre Completo": instructor.fullName || "N/A",
+        Teléfono: instructor.phone || "N/A",
+        DNI: instructor.DNI || "N/A",
+        Disciplinas:
+          instructor.disciplines?.map((d) => d.name).join(", ") || "N/A",
+        "Total Clases": instructor.classes?.length || 0,
+        "Total Pagos": instructor.payments?.length || 0,
+        Estado: instructor.active ? "Activo" : "Inactivo",
+        "Fecha Creación": new Date(instructor.createdAt).toLocaleDateString(
+          "es-PE"
+        ),
+      })
+    );
+
+    exportToExcel(exportData, "Instructores", "Instructores", {
+      columnWidths: [20, 25, 15, 12, 30, 12, 12, 10, 15],
+    });
+  };
+
+  const handleExportPDF = async () => {
+    if (instructors.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los instructores sin paginación
+    const allInstructorsData = await utils.client.instructor.getAll.query();
+
+    const allInstructors = allInstructorsData?.instructors || [];
+
+    if (allInstructors.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    await exportToPDF(
+      <InstructorListPDF
+        instructors={allInstructors}
+        totalCount={allInstructors.length}
+      />,
+      "Listado_Instructores"
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -490,12 +568,36 @@ export default function InstructoresPage() {
             Administra instructores del sistema y sus especialidades
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nuevo Instructor</span>
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={instructors.length === 0}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportExcel}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Exportar a Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <FileText className="mr-2 h-4 w-4" />
+                Exportar a PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nuevo Instructor</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filtros Compactos */}
@@ -503,31 +605,30 @@ export default function InstructoresPage() {
         <div className="flex items-center gap-3">
           {/* Búsqueda principal */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
             <Input
               placeholder="Buscar por nombre, teléfono, DNI..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-8 text-xs"
             />
           </div>
 
           {/* Botón para expandir filtros */}
           <Button
             variant="outline"
-            size="sm"
             onClick={toggleFilters}
-            className="flex items-center gap-2 border-border"
+            className="flex items-center gap-2 border-border h-8 text-xs hover:bg-muted hover:text-foreground"
           >
-            <Filter className="h-4 w-4" />
+            <Filter className="h-3.5 w-3.5" />
             {filtersExpanded ? (
               <>
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-3.5 w-3.5" />
                 <span>Ocultar filtros</span>
               </>
             ) : (
               <>
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-3.5 w-3.5" />
                 <span>Filtros</span>
               </>
             )}

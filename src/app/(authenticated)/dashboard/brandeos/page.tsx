@@ -32,7 +32,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
+import { usePeriodFilter } from "@/hooks/usePeriodFilter";
 import { useRBAC } from "@/hooks/useRBAC";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +43,7 @@ import {
   ChevronUp,
   Edit,
   Eye,
+  FileSpreadsheet,
   Filter,
   Plus,
   Search,
@@ -49,6 +52,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const updateBrandeoSchema = z.object({
@@ -110,7 +114,11 @@ function BrandeoDialog({
   const { data: periodsData } = trpc.periods.getAll.useQuery();
 
   const instructors = instructorsData?.instructors || [];
-  const periods = periodsData?.periods || [];
+  const periods = (periodsData?.periods || []) as Array<{
+    id: string;
+    number: number;
+    year: number;
+  }>;
 
   const form = useForm({
     resolver: zodResolver(isEdit ? updateBrandeoSchema : createBrandeoSchema),
@@ -235,7 +243,7 @@ function BrandeoDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {periods?.map((period) => (
+                        {periods.map((period) => (
                           <SelectItem key={period.id} value={period.id}>
                             {period.number} - {period.year}
                           </SelectItem>
@@ -285,10 +293,12 @@ export default function BrandeosPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogBrandeo, setDialogBrandeo] = useState<Brandeo | null>(null);
 
+  // Hook para filtro de periodo compartido
+  const { selectedPeriod, setSelectedPeriod } = usePeriodFilter();
+
   // Estados para filtros
   const [searchText, setSearchText] = useState("");
   const [selectedInstructor, setSelectedInstructor] = useState<string>("all");
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("all");
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Paginación
@@ -297,12 +307,22 @@ export default function BrandeosPage() {
     defaultPage: 1,
   });
 
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
+
+  // Obtener utils de tRPC
+  const utils = trpc.useUtils();
+
   // Obtener datos para filtros
   const { data: instructorsData } = trpc.instructor.getAll.useQuery();
   const { data: periodsData } = trpc.periods.getAll.useQuery();
 
   const instructors = instructorsData?.instructors || [];
-  const periods = periodsData?.periods || [];
+  const periods = (periodsData?.periods || []) as Array<{
+    id: string;
+    number: number;
+    year: number;
+  }>;
 
   // Obtener brandeos con filtros usando tRPC
   const { data: brandeosData, isLoading } =
@@ -317,9 +337,6 @@ export default function BrandeosPage() {
 
   const brandeos = brandeosData?.brandings || [];
   const totalBrandeos = brandeosData?.total || 0;
-
-  // Obtener utils de tRPC
-  const utils = trpc.useUtils();
 
   // Mutaciones tRPC
   const createBrandeo = trpc.brandings.create.useMutation({
@@ -484,6 +501,55 @@ export default function BrandeosPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handler
+  const handleExportExcel = async () => {
+    if (selectedPeriod === "all") {
+      toast.error("Por favor selecciona un período específico para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los datos del período sin paginación
+    const allBrandeosData = await utils.client.brandings.getWithFilters.query({
+      limit: 1000,
+      offset: 0,
+      search: searchText,
+      instructorId:
+        selectedInstructor !== "all" ? selectedInstructor : undefined,
+      periodId: selectedPeriod,
+    });
+
+    const allBrandeos = allBrandeosData?.brandings || [];
+
+    if (allBrandeos.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const exportData = allBrandeos.map(
+      (brandeo: {
+        number: number;
+        instructor: { name: string };
+        period: { number: number; year: number };
+        comments: string | null;
+        createdAt: string;
+      }) => ({
+        Número: brandeo.number,
+        Instructor: brandeo.instructor.name,
+        Período: `P${brandeo.period.number} - ${brandeo.period.year}`,
+        Comentarios: brandeo.comments || "",
+        "Fecha Creación": new Date(brandeo.createdAt).toLocaleDateString(
+          "es-PE"
+        ),
+      })
+    );
+
+    exportToExcel(exportData, "Brandeos", "Brandeos", {
+      columnWidths: [12, 20, 15, 40, 15],
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -494,12 +560,23 @@ export default function BrandeosPage() {
             Administra los brandeos del sistema
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nuevo Brandeo</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={selectedPeriod === "all"}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+            Exportar Excel
           </Button>
-        )}
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nuevo Brandeo</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filtros Compactos */}
@@ -515,6 +592,23 @@ export default function BrandeosPage() {
               className="pl-10"
             />
           </div>
+
+          {/* Selector de período - siempre visible */}
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los períodos</SelectItem>
+              {periods?.map(
+                (period: { id: string; number: number; year: number }) => (
+                  <SelectItem key={period.id} value={period.id}>
+                    {period.number} - {period.year}
+                  </SelectItem>
+                )
+              )}
+            </SelectContent>
+          </Select>
 
           {/* Botón para expandir filtros */}
           <Button
@@ -585,11 +679,17 @@ export default function BrandeosPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos los períodos</SelectItem>
-                    {periods?.map((period) => (
-                      <SelectItem key={period.id} value={period.id}>
-                        {period.number} - {period.year}
-                      </SelectItem>
-                    ))}
+                    {periods?.map(
+                      (period: {
+                        id: string;
+                        number: number;
+                        year: number;
+                      }) => (
+                        <SelectItem key={period.id} value={period.id}>
+                          {period.number} - {period.year}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>

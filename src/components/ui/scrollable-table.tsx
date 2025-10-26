@@ -141,10 +141,12 @@ export function ScrollableTable<T = Record<string, unknown>>({
   };
 
   const getRowClassName = (record: T, index: number): string => {
-    const baseClasses = "hover:bg-muted transition-colors";
+    const baseClasses = "hover:bg-muted/20 transition-colors duration-200";
     const clickableClasses = onRowClick ? "cursor-pointer" : "";
     const selectedClasses =
-      selectable && selectedRows.includes(getRowKey(record)) ? "bg-muted" : "";
+      selectable && selectedRows.includes(getRowKey(record))
+        ? "bg-muted/30"
+        : "";
 
     if (typeof rowClassName === "function") {
       return `${baseClasses} ${clickableClasses} ${selectedClasses} ${rowClassName(record, index)}`.trim();
@@ -189,9 +191,9 @@ export function ScrollableTable<T = Record<string, unknown>>({
       )}
 
       {/* Table Container */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="bg-card rounded-xl border border-border">
         {/* Horizontal Scroll Container */}
-        <div className="table-scroll-container min-w-0">
+        <div className="table-scroll-container min-w-0 rounded-xl">
           {/* Loading State */}
           {loading && (
             <div className="space-y-0">
@@ -217,7 +219,7 @@ export function ScrollableTable<T = Record<string, unknown>>({
               {Array.from({ length: 5 }).map((_, rowIndex) => (
                 <div
                   key={`skeleton-row-${rowIndex}`}
-                  className="px-6 py-4 border-b border-border/30 last:border-b-0 hover:bg-muted/10 transition-colors duration-200"
+                  className="px-6 py-4 border-b border-border/30 last:border-b-0 hover:bg-muted/15 transition-colors duration-200"
                 >
                   <div className="flex space-x-6 items-center">
                     {selectable && (

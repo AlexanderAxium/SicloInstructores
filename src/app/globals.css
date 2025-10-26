@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+@theme {
   --font-family-sans: "Raleway", "sans-serif";
 
   /* Colors for light mode */
@@ -117,7 +117,8 @@ body {
   /* Custom scrollbar styles for tables */
   .table-scroll-container {
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: auto;
+    max-height: 70vh;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 #f1f5f9;
     min-width: 0;
@@ -126,6 +127,7 @@ body {
 
   .table-scroll-container::-webkit-scrollbar {
     height: 8px;
+    width: 8px;
   }
 
   .table-scroll-container::-webkit-scrollbar-track {
@@ -157,15 +159,6 @@ body {
 
   .dark .table-scroll-container::-webkit-scrollbar-thumb:hover {
     background: #64748b;
-  }
-
-  /* Compact table styles */
-  .compact-table th {
-    padding: 0.5rem 0.75rem !important;
-  }
-
-  .compact-table td {
-    padding: 0.5rem 0.75rem !important;
   }
 
   @keyframes blob {

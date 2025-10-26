@@ -44,7 +44,10 @@ export function DashboardNavbar() {
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
-              <div key={index} className="flex items-center">
+              <div
+                key={`breadcrumb-mobile-${item.label}-${index}`}
+                className="flex items-center"
+              >
                 {index > 0 && <BreadcrumbSeparator />}
                 <BreadcrumbItem>
                   {index === breadcrumbs.length - 1 ? (
@@ -66,7 +69,10 @@ export function DashboardNavbar() {
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
-              <div key={index} className="flex items-center">
+              <div
+                key={`breadcrumb-desktop-${item.label}-${index}`}
+                className="flex items-center"
+              >
                 {index > 0 && <BreadcrumbSeparator />}
                 <BreadcrumbItem>
                   {index === breadcrumbs.length - 1 ? (

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useRBAC } from "@/hooks/useRBAC";
 import {
+  BarChart3,
   Bike,
   BookOpen,
   Building2,
@@ -28,6 +29,7 @@ import {
   Settings,
   Shield,
   Star,
+  Upload,
   UserCog,
   Users,
 } from "lucide-react";
@@ -65,16 +67,16 @@ export function AppSidebar() {
       return [
         ...baseItems,
         {
+          title: "Estadísticas",
+          href: "/dashboard/estadisticas",
+          icon: BarChart3,
+          description: "Ver estadísticas del sistema",
+        },
+        {
           title: "Instructores",
           href: "/dashboard/instructores",
           icon: GraduationCap,
           description: "Gestionar instructores del sistema",
-        },
-        {
-          title: "Disciplinas",
-          href: "/dashboard/disciplinas",
-          icon: BookOpen,
-          description: "Gestionar disciplinas del sistema",
         },
         {
           title: "Clases",
@@ -83,34 +85,16 @@ export function AppSidebar() {
           description: "Gestionar clases del sistema",
         },
         {
-          title: "Fórmulas",
-          href: "/dashboard/formulas",
+          title: "Pagos",
+          href: "/dashboard/pagos",
           icon: Calculator,
-          description: "Gestionar fórmulas de cálculo",
+          description: "Gestionar pagos de instructores",
         },
         {
-          title: "Workshops",
-          href: "/dashboard/workshops",
-          icon: GraduationCap,
-          description: "Gestionar workshops de instructores",
-        },
-        {
-          title: "Períodos",
-          href: "/dashboard/periodos",
-          icon: Clock,
-          description: "Gestionar períodos del sistema",
-        },
-        {
-          title: "Theme Rides",
-          href: "/dashboard/theme-rides",
-          icon: Bike,
-          description: "Gestionar theme rides de instructores",
-        },
-        {
-          title: "Brandeos",
-          href: "/dashboard/brandeos",
-          icon: Star,
-          description: "Gestionar brandeos de instructores",
+          title: "Importar",
+          href: "/dashboard/importar",
+          icon: Upload,
+          description: "Importar datos desde Excel",
         },
       ];
     }
@@ -120,16 +104,16 @@ export function AppSidebar() {
       return [
         ...baseItems,
         {
+          title: "Estadísticas",
+          href: "/dashboard/estadisticas",
+          icon: BarChart3,
+          description: "Ver estadísticas del sistema",
+        },
+        {
           title: "Instructores",
           href: "/dashboard/instructores",
           icon: GraduationCap,
           description: "Ver instructores del sistema",
-        },
-        {
-          title: "Disciplinas",
-          href: "/dashboard/disciplinas",
-          icon: BookOpen,
-          description: "Ver disciplinas del sistema",
         },
         {
           title: "Clases",
@@ -138,34 +122,10 @@ export function AppSidebar() {
           description: "Ver clases del sistema",
         },
         {
-          title: "Fórmulas",
-          href: "/dashboard/formulas",
+          title: "Pagos",
+          href: "/dashboard/pagos",
           icon: Calculator,
-          description: "Ver fórmulas de cálculo",
-        },
-        {
-          title: "Workshops",
-          href: "/dashboard/workshops",
-          icon: GraduationCap,
-          description: "Ver workshops de instructores",
-        },
-        {
-          title: "Períodos",
-          href: "/dashboard/periodos",
-          icon: Clock,
-          description: "Ver períodos del sistema",
-        },
-        {
-          title: "Theme Rides",
-          href: "/dashboard/theme-rides",
-          icon: Bike,
-          description: "Ver theme rides de instructores",
-        },
-        {
-          title: "Brandeos",
-          href: "/dashboard/brandeos",
-          icon: Star,
-          description: "Ver brandeos de instructores",
+          description: "Ver pagos de instructores",
         },
       ];
     }
@@ -181,6 +141,24 @@ export function AppSidebar() {
     }
 
     return [
+      {
+        title: "Disciplinas",
+        href: "/dashboard/disciplinas",
+        icon: BookOpen,
+        description: "Gestionar disciplinas del sistema",
+      },
+      {
+        title: "Períodos",
+        href: "/dashboard/periodos",
+        icon: Clock,
+        description: "Gestionar períodos del sistema",
+      },
+      {
+        title: "Fórmulas",
+        href: "/dashboard/formulas",
+        icon: Calculator,
+        description: "Gestionar fórmulas de cálculo",
+      },
       {
         title: "Usuarios",
         href: "/dashboard/users",
@@ -212,12 +190,12 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <LayoutDashboard className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground border-2 border-sidebar-primary-foreground">
+                  <span className="text-lg font-bold">S</span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Dashboard</span>
-                  <span className="truncate text-xs">Panel de Control</span>
+                  <span className="truncate font-semibold">Siclo</span>
+                  <span className="truncate text-xs">Instructores</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -231,6 +209,54 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/dashboard" &&
+                    pathname.startsWith(item.href));
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-2 min-w-0"
+                      >
+                        <item.icon className="flex-shrink-0" />
+                        <span className="truncate">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+        <SidebarGroup>
+          <SidebarGroupLabel>Bonos</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {[
+                {
+                  title: "Workshops",
+                  href: "/dashboard/workshops",
+                  icon: GraduationCap,
+                  description: "Gestionar workshops de instructores",
+                },
+                {
+                  title: "Theme Rides",
+                  href: "/dashboard/theme-rides",
+                  icon: Bike,
+                  description: "Gestionar theme rides de instructores",
+                },
+                {
+                  title: "Brandeos",
+                  href: "/dashboard/brandeos",
+                  icon: Star,
+                  description: "Gestionar brandeos de instructores",
+                },
+              ].map((item) => {
                 const isActive =
                   pathname === item.href ||
                   (item.href !== "/dashboard" &&

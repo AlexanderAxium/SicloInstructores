@@ -32,8 +32,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
+import type { ThemeRide as ThemeRideType } from "@/types";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -42,6 +44,7 @@ import {
   ChevronUp,
   Edit,
   Eye,
+  FileSpreadsheet,
   Filter,
   Plus,
   Search,
@@ -49,6 +52,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const updateThemeRideSchema = z.object({
@@ -65,14 +69,11 @@ const createThemeRideSchema = z.object({
   comments: z.string().optional(),
 });
 
-type ThemeRide = {
-  id: string;
-  number: number;
-  instructorId: string;
-  periodId: string;
-  comments?: string | null;
+// Extended ThemeRide type for UI
+type ThemeRide = Omit<ThemeRideType, "createdAt" | "updatedAt" | "tenantId"> & {
   createdAt: string;
   updatedAt: string;
+  tenantId?: string;
   instructor: {
     id: string;
     name: string;
@@ -308,6 +309,9 @@ export default function ThemeRidesPage() {
     defaultPage: 1,
   });
 
+  // Export hooks
+  const { exportToExcel } = useExcelExport();
+
   // Obtener datos para filtros
   const { data: instructorsData } = trpc.instructor.getAll.useQuery();
   const { data: periodsData } = trpc.periods.getAll.useQuery();
@@ -495,6 +499,47 @@ export default function ThemeRidesPage() {
     hasPrev: pagination.page > 1,
   };
 
+  // Export handler
+  const handleExportExcel = async () => {
+    if (selectedPeriod === "all") {
+      toast.error("Por favor selecciona un período específico para exportar");
+      return;
+    }
+
+    toast.info("Obteniendo datos para exportar...");
+
+    // Obtener TODOS los datos del período sin paginación
+    const allThemeRidesData = await utils.themeRides.getWithFilters.fetch({
+      limit: 1000,
+      offset: 0,
+      search: searchText,
+      instructorId:
+        selectedInstructor !== "all" ? selectedInstructor : undefined,
+      periodId: selectedPeriod,
+    });
+
+    const allThemeRides = allThemeRidesData?.themeRides || [];
+
+    if (allThemeRides.length === 0) {
+      toast.error("No hay datos para exportar");
+      return;
+    }
+
+    const exportData = allThemeRides.map((themeRide) => ({
+      Número: themeRide.number,
+      Instructor: themeRide.instructor.name,
+      Período: `P${themeRide.period.number} - ${themeRide.period.year}`,
+      Comentarios: themeRide.comments || "",
+      "Fecha Creación": new Date(themeRide.createdAt).toLocaleDateString(
+        "es-PE"
+      ),
+    }));
+
+    exportToExcel(exportData, "Theme_Rides", "Theme Rides", {
+      columnWidths: [12, 20, 15, 40, 15],
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -505,12 +550,23 @@ export default function ThemeRidesPage() {
             Administra los theme rides del sistema
           </p>
         </div>
-        {canManageUsers && (
-          <Button size="sm" variant="edit" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            <span>Nuevo Theme Ride</span>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={selectedPeriod === "all"}
+          >
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+            Exportar Excel
           </Button>
-        )}
+          {canManageUsers && (
+            <Button size="sm" variant="edit" onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              <span>Nuevo Theme Ride</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Filtros Compactos */}

@@ -1,896 +1,663 @@
 import { z } from "zod";
 import { prisma } from "../../lib/db";
-import { protectedProcedure, publicProcedure, router } from "../trpc";
+import { publicProcedure, router } from "../trpc";
 
 export const statisticsRouter = router({
-  // Get general statistics (public)
-  getGeneral: publicProcedure.query(async () => {
-    const [
-      totalInstructors,
-      totalClasses,
-      totalPayments,
-      totalPeriods,
-      totalDisciplines,
-    ] = await Promise.all([
-      prisma.instructor.count({ where: { active: true } }),
-      prisma.class.count(),
-      prisma.instructorPayment.count(),
-      prisma.period.count(),
-      prisma.discipline.count({ where: { active: true } }),
-    ]);
-
-    return {
-      totalInstructors,
-      totalClasses,
-      totalPayments,
-      totalPeriods,
-      totalDisciplines,
-    };
-  }),
-
-  // Get period statistics (protected)
-  getPeriodStats: protectedProcedure
-    .input(z.object({ periodId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
-      }
-
-      const period = await prisma.period.findUnique({
-        where: {
-          id: input.periodId,
-          tenantId: ctx.user.tenantId,
-        },
-      });
-
-      if (!period) {
-        throw new Error("Period not found");
-      }
-
-      const [
-        classes,
-        payments,
-        instructors,
-        disciplines,
-        workshops,
-        themeRides,
-        covers,
-        penalties,
-      ] = await Promise.all([
-        prisma.class.findMany({
-          where: { periodId: input.periodId, tenantId: ctx.user.tenantId },
-          select: {
-            totalReservations: true,
-            paidReservations: true,
-            spots: true,
-            date: true,
-          },
-        }),
-        prisma.instructorPayment.findMany({
-          where: { periodId: input.periodId, tenantId: ctx.user.tenantId },
-          select: {
-            amount: true,
-            finalPayment: true,
-            status: true,
-          },
-        }),
-        prisma.instructor.findMany({
-          where: {
-            classes: { some: { periodId: input.periodId } },
-            tenantId: ctx.user.tenantId,
-          },
-          select: { id: true },
-        }),
-        prisma.discipline.findMany({
-          where: {
-            classes: { some: { periodId: input.periodId } },
-            tenantId: ctx.user.tenantId,
-          },
-          select: { id: true },
-        }),
-        prisma.workshop.findMany({
-          where: { periodId: input.periodId, tenantId: ctx.user.tenantId },
-          select: { payment: true },
-        }),
-        prisma.themeRide.findMany({
-          where: { periodId: input.periodId, tenantId: ctx.user.tenantId },
-          select: { id: true },
-        }),
-        prisma.cover.findMany({
-          where: { periodId: input.periodId, tenantId: ctx.user.tenantId },
-          select: { justification: true },
-        }),
-        prisma.penalty.findMany({
-          where: { periodId: input.periodId, tenantId: ctx.user.tenantId },
-          select: { points: true, active: true },
-        }),
-      ]);
-
-      const totalReservations = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.totalReservations,
-        0
-      );
-      const totalPaidReservations = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.paidReservations,
-        0
-      );
-      const totalSpots = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.spots,
-        0
-      );
-      const avgOccupation =
-        totalSpots > 0 ? (totalPaidReservations / totalSpots) * 100 : 0;
-
-      const totalAmount = payments.reduce(
-        (sum: number, payment) => sum + (payment.amount || 0),
-        0
-      );
-      const totalFinalPayment = payments.reduce(
-        (sum: number, payment) => sum + (payment.finalPayment || 0),
-        0
-      );
-      const paidPayments = payments.filter(
-        (p: { status: string }) => p.status === "PAID"
-      );
-      const totalPaid = paidPayments.reduce(
-        (sum: number, payment) => sum + (payment.finalPayment || 0),
-        0
-      );
-
-      const totalWorkshopPayment = workshops.reduce(
-        (sum: number, workshop: { payment: number }) => sum + workshop.payment,
-        0
-      );
-      const confirmedCovers = covers.filter(
-        (c: {
-          justification: string;
-          originalInstructorId?: string;
-          replacementInstructorId?: string;
-          createdAt?: Date;
-        }) => c.justification === "APPROVED"
-      ).length;
-      const totalPenaltyPoints = penalties.reduce(
-        (
-          sum: number,
-          penalty: {
-            points: number;
-            active?: boolean;
-            type?: string;
-          }
-        ) => sum + penalty.points,
-        0
-      );
-      const activePenalties = penalties.filter(
-        (p: { active: boolean }) => p.active
-      ).length;
-
-      return {
-        period,
-        stats: {
-          classes: {
-            total: classes.length,
-            totalReservations,
-            totalPaidReservations,
-            totalSpots,
-            avgOccupation: Math.round(avgOccupation * 100) / 100,
-          },
-          payments: {
-            total: payments.length,
-            totalAmount,
-            totalFinalPayment,
-            totalPaid,
-            paid: paidPayments.length,
-            pending: payments.filter(
-              (p: { status: string }) => p.status === "PENDING"
-            ).length,
-            approved: payments.filter(
-              (p: { status: string }) => p.status === "APPROVED"
-            ).length,
-            cancelled: payments.filter(
-              (p: { status: string }) => p.status === "CANCELLED"
-            ).length,
-          },
-          instructors: {
-            total: instructors.length,
-          },
-          disciplines: {
-            total: disciplines.length,
-          },
-          workshops: {
-            total: workshops.length,
-            totalPayment: totalWorkshopPayment,
-          },
-          themeRides: {
-            total: themeRides.length,
-          },
-          covers: {
-            total: covers.length,
-            confirmed: confirmedCovers,
-          },
-          penalties: {
-            total: penalties.length,
-            active: activePenalties,
-            totalPoints: totalPenaltyPoints,
-          },
-        },
-      };
-    }),
-
-  // Get instructor statistics (protected)
-  getInstructorStats: protectedProcedure
-    .input(z.object({ instructorId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
-      }
-
-      const instructor = await prisma.instructor.findUnique({
-        where: {
-          id: input.instructorId,
-          tenantId: ctx.user.tenantId,
-        },
-      });
-
-      if (!instructor) {
-        throw new Error("Instructor not found");
-      }
-
-      const [classes, payments, workshops, themeRides, covers, penalties] =
-        await Promise.all([
-          prisma.class.findMany({
-            where: {
-              instructorId: input.instructorId,
-              tenantId: ctx.user.tenantId,
-            },
-            select: {
-              totalReservations: true,
-              paidReservations: true,
-              spots: true,
-              date: true,
-              discipline: { select: { name: true } },
-            },
-          }),
-          prisma.instructorPayment.findMany({
-            where: {
-              instructorId: input.instructorId,
-              tenantId: ctx.user.tenantId,
-            },
-            select: {
-              amount: true,
-              finalPayment: true,
-              status: true,
-              period: { select: { number: true, year: true } },
-            },
-          }),
-          prisma.workshop.findMany({
-            where: {
-              instructorId: input.instructorId,
-              tenantId: ctx.user.tenantId,
-            },
-            select: { payment: true, date: true },
-          }),
-          prisma.themeRide.findMany({
-            where: {
-              instructorId: input.instructorId,
-              tenantId: ctx.user.tenantId,
-            },
-            select: { number: true, createdAt: true },
-          }),
-          prisma.cover.findMany({
-            where: {
-              OR: [
-                { originalInstructorId: input.instructorId },
-                { replacementInstructorId: input.instructorId },
-              ],
-              tenantId: ctx.user.tenantId,
-            },
-            select: { justification: true, createdAt: true },
-          }),
-          prisma.penalty.findMany({
-            where: {
-              instructorId: input.instructorId,
-              tenantId: ctx.user.tenantId,
-            },
-            select: { points: true, active: true, type: true },
-          }),
-        ]);
-
-      const totalReservations = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.totalReservations,
-        0
-      );
-      const totalPaidReservations = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.paidReservations,
-        0
-      );
-      const totalSpots = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.spots,
-        0
-      );
-      const avgOccupation =
-        totalSpots > 0 ? (totalPaidReservations / totalSpots) * 100 : 0;
-
-      const totalAmount = payments.reduce(
-        (sum: number, payment) => sum + (payment.amount || 0),
-        0
-      );
-      const totalFinalPayment = payments.reduce(
-        (sum: number, payment) => sum + (payment.finalPayment || 0),
-        0
-      );
-      const paidPayments = payments.filter(
-        (p: { status: string }) => p.status === "PAID"
-      );
-      const totalPaid = paidPayments.reduce(
-        (sum: number, payment) => sum + (payment.finalPayment || 0),
-        0
-      );
-
-      const totalWorkshopPayment = workshops.reduce(
-        (sum: number, workshop: { payment: number }) => sum + workshop.payment,
-        0
-      );
-      const asOriginalCover = covers.filter(
-        (c: {
-          justification: string;
-          originalInstructorId?: string;
-          replacementInstructorId?: string;
-          createdAt?: Date;
-        }) => c.originalInstructorId === input.instructorId
-      ).length;
-      const asReplacementCover = covers.filter(
-        (c: {
-          justification: string;
-          originalInstructorId?: string;
-          replacementInstructorId?: string;
-          createdAt?: Date;
-        }) => c.replacementInstructorId === input.instructorId
-      ).length;
-      const confirmedCovers = covers.filter(
-        (c: {
-          justification: string;
-          originalInstructorId?: string;
-          replacementInstructorId?: string;
-          createdAt?: Date;
-        }) => c.justification === "APPROVED"
-      ).length;
-
-      const totalPenaltyPoints = penalties.reduce(
-        (
-          sum: number,
-          penalty: {
-            points: number;
-            active?: boolean;
-            type?: string;
-          }
-        ) => sum + penalty.points,
-        0
-      );
-      const activePenalties = penalties.filter(
-        (p: { active: boolean }) => p.active
-      ).length;
-
-      // Get discipline breakdown
-      const disciplineStats = classes.reduce(
-        (
-          acc: Record<string, number>,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => {
-          const discipline = cls.discipline?.name || "Unknown";
-          acc[discipline] = (acc[discipline] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>
-      );
-
-      return {
-        instructor,
-        stats: {
-          classes: {
-            total: classes.length,
-            totalReservations,
-            totalPaidReservations,
-            totalSpots,
-            avgOccupation: Math.round(avgOccupation * 100) / 100,
-            byDiscipline: disciplineStats,
-          },
-          payments: {
-            total: payments.length,
-            totalAmount,
-            totalFinalPayment,
-            totalPaid,
-            paid: paidPayments.length,
-          },
-          workshops: {
-            total: workshops.length,
-            totalPayment: totalWorkshopPayment,
-          },
-          themeRides: {
-            total: themeRides.length,
-          },
-          covers: {
-            asOriginal: asOriginalCover,
-            asReplacement: asReplacementCover,
-            confirmed: confirmedCovers,
-          },
-          penalties: {
-            total: penalties.length,
-            active: activePenalties,
-            totalPoints: totalPenaltyPoints,
-          },
-        },
-      };
-    }),
-
-  // Get discipline statistics (protected)
-  getDisciplineStats: protectedProcedure
-    .input(z.object({ disciplineId: z.string() }))
-    .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
-      }
-
-      const discipline = await prisma.discipline.findUnique({
-        where: {
-          id: input.disciplineId,
-          tenantId: ctx.user.tenantId,
-        },
-      });
-
-      if (!discipline) {
-        throw new Error("Discipline not found");
-      }
-
-      const [classes, instructors] = await Promise.all([
-        prisma.class.findMany({
-          where: {
-            disciplineId: input.disciplineId,
-            tenantId: ctx.user.tenantId,
-          },
-          select: {
-            totalReservations: true,
-            paidReservations: true,
-            spots: true,
-            date: true,
-            instructor: { select: { name: true } },
-          },
-        }),
-        prisma.instructor.findMany({
-          where: {
-            disciplines: { some: { id: input.disciplineId } },
-            tenantId: ctx.user.tenantId,
-          },
-          select: { id: true, name: true },
-        }),
-      ]);
-
-      const totalReservations = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.totalReservations,
-        0
-      );
-      const totalPaidReservations = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.paidReservations,
-        0
-      );
-      const totalSpots = classes.reduce(
-        (
-          sum: number,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => sum + cls.spots,
-        0
-      );
-      const avgOccupation =
-        totalSpots > 0 ? (totalPaidReservations / totalSpots) * 100 : 0;
-
-      // Get instructor breakdown
-      const instructorStats = classes.reduce(
-        (
-          acc: Record<string, number>,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => {
-          const instructor = cls.instructor?.name || "Unknown";
-          acc[instructor] = (acc[instructor] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>
-      );
-
-      return {
-        discipline,
-        stats: {
-          classes: {
-            total: classes.length,
-            totalReservations,
-            totalPaidReservations,
-            totalSpots,
-            avgOccupation: Math.round(avgOccupation * 100) / 100,
-            byInstructor: instructorStats,
-          },
-          instructors: {
-            total: instructors.length,
-            list: instructors,
-          },
-        },
-      };
-    }),
-
-  // Get venue statistics (protected)
-  getVenueStats: protectedProcedure
+  // Get general statistics
+  getGeneral: publicProcedure
     .input(
       z.object({
         periodId: z.string().optional(),
-        periodStart: z.string().optional(),
-        periodEnd: z.string().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const { user } = ctx;
+      if (!user?.tenantId) {
+        throw new Error("User not authenticated or tenant not found");
       }
 
-      const where: Record<string, any> = {
-        tenantId: ctx.user.tenantId,
+      const periodFilter = input.periodId ? { periodId: input.periodId } : {};
+
+      // Instructors statistics
+      const totalInstructors = await prisma.instructor.count({
+        where: { tenantId: user.tenantId },
+      });
+
+      const activeInstructors = await prisma.instructor.count({
+        where: { tenantId: user.tenantId, active: true },
+      });
+
+      const instructorsWithDisciplines = await prisma.instructor.count({
+        where: {
+          tenantId: user.tenantId,
+          disciplines: { some: {} },
+        },
+      });
+
+      // Get instructors created in the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const newInstructors = await prisma.instructor.count({
+        where: {
+          tenantId: user.tenantId,
+          createdAt: { gte: thirtyDaysAgo },
+        },
+      });
+
+      // Disciplines statistics
+      const totalDisciplines = await prisma.discipline.count({
+        where: { tenantId: user.tenantId },
+      });
+
+      const activeDisciplines = await prisma.discipline.count({
+        where: { tenantId: user.tenantId, active: true },
+      });
+
+      // Classes statistics
+      const classesWhere = {
+        tenantId: user.tenantId,
+        ...periodFilter,
       };
 
-      // Handle period filtering
-      if (input.periodId) {
-        where.periodId = input.periodId;
-      } else if (input.periodStart || input.periodEnd) {
-        const periodFilter: Record<string, number> = {};
-        if (input.periodStart) {
-          periodFilter.gte = Number.parseInt(input.periodStart);
-        }
-        if (input.periodEnd) {
-          periodFilter.lte = Number.parseInt(input.periodEnd);
-        }
-        where.periodId = periodFilter;
-      }
+      const totalClasses = await prisma.class.count({
+        where: classesWhere,
+      });
 
       const classes = await prisma.class.findMany({
-        where,
+        where: classesWhere,
         select: {
-          studio: true,
           totalReservations: true,
-          paidReservations: true,
           spots: true,
-          discipline: { select: { name: true } },
         },
       });
 
-      // Group by venue
-      const venueStats = classes.reduce(
-        (
-          acc: Record<string, any>,
-          cls: {
-            totalReservations: number;
-            paidReservations: number;
-            spots: number;
-            date?: Date;
-            discipline?: { name: string };
-            instructor?: { name: string };
-            studio?: string;
-          }
-        ) => {
-          const venue = cls.studio || "Unknown";
-          if (!acc[venue]) {
-            acc[venue] = {
-              totalClasses: 0,
-              totalReservations: 0,
-              totalPaidReservations: 0,
-              totalSpots: 0,
-              disciplines: new Set(),
-            };
-          }
-          acc[venue].totalClasses++;
-          acc[venue].totalReservations += cls.totalReservations;
-          acc[venue].totalPaidReservations += cls.paidReservations;
-          acc[venue].totalSpots += cls.spots;
-          acc[venue].disciplines.add(cls.discipline?.name || "Unknown");
-          return acc;
-        },
-        {} as Record<string, any>
+      const totalReservations = classes.reduce(
+        (sum, c) => sum + c.totalReservations,
+        0
       );
+      const totalCapacity = classes.reduce((sum, c) => sum + c.spots, 0);
+      const averageOccupation =
+        totalCapacity > 0
+          ? Math.round((totalReservations / totalCapacity) * 100)
+          : 0;
 
-      // Calculate occupation rates
-      Object.keys(venueStats).forEach((venue) => {
-        const stats = venueStats[venue];
-        stats.avgOccupation =
-          stats.totalSpots > 0
-            ? (stats.totalPaidReservations / stats.totalSpots) * 100
-            : 0;
-        stats.disciplines = Array.from(stats.disciplines);
+      const fullClasses = classes.filter(
+        (c) => c.totalReservations >= c.spots
+      ).length;
+      const percentageFullClasses =
+        totalClasses > 0 ? (fullClasses / totalClasses) * 100 : 0;
+
+      // Payments statistics
+      const paymentsWhere = {
+        tenantId: user.tenantId,
+        ...periodFilter,
+      };
+
+      const totalPayments = await prisma.instructorPayment.count({
+        where: paymentsWhere,
       });
+
+      const pendingPayments = await prisma.instructorPayment.count({
+        where: { ...paymentsWhere, status: "PENDING" },
+      });
+
+      const paidPayments = await prisma.instructorPayment.count({
+        where: { ...paymentsWhere, status: "PAID" },
+      });
+
+      const paymentAggregates = await prisma.instructorPayment.aggregate({
+        where: paymentsWhere,
+        _sum: {
+          finalPayment: true,
+        },
+      });
+
+      const paidPaymentAggregates = await prisma.instructorPayment.aggregate({
+        where: { ...paymentsWhere, status: "PAID" },
+        _sum: {
+          finalPayment: true,
+        },
+      });
+
+      const totalAmount = paymentAggregates._sum.finalPayment || 0;
+      const paidAmount = paidPaymentAggregates._sum.finalPayment || 0;
+      const pendingAmount = totalAmount - paidAmount;
+      const averagePayment =
+        totalPayments > 0 ? totalAmount / totalPayments : 0;
+      const percentagePaid =
+        totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+      const percentagePending = 100 - percentagePaid;
 
       return {
-        venues: Object.keys(venueStats).map((venue) => ({
-          venue,
-          ...venueStats[venue],
-          avgOccupation:
-            Math.round(venueStats[venue].avgOccupation * 100) / 100,
-        })),
-        total: Object.keys(venueStats).length,
+        instructors: {
+          total: totalInstructors,
+          active: activeInstructors,
+          inactive: totalInstructors - activeInstructors,
+          withDisciplines: instructorsWithDisciplines,
+          withoutDisciplines: totalInstructors - instructorsWithDisciplines,
+          new: newInstructors,
+        },
+        disciplines: {
+          total: totalDisciplines,
+          active: activeDisciplines,
+          inactive: totalDisciplines - activeDisciplines,
+        },
+        classes: {
+          total: totalClasses,
+          averageOccupation: averageOccupation,
+          fullClasses: fullClasses,
+          percentageFullClasses: Math.round(percentageFullClasses),
+          totalReservations: totalReservations,
+        },
+        payments: {
+          total: totalPayments,
+          pending: pendingPayments,
+          paid: paidPayments,
+          totalAmount: totalAmount,
+          paidAmount: paidAmount,
+          pendingAmount: pendingAmount,
+          averageAmount: averagePayment,
+          percentagePaid: Math.round(percentagePaid),
+          percentagePending: Math.round(percentagePending),
+        },
       };
     }),
 
-  // Get financial summary (protected)
-  getFinancialSummary: protectedProcedure
+  // Get instructor statistics
+  getInstructors: publicProcedure
     .input(
       z.object({
         periodId: z.string().optional(),
-        periodStart: z.string().optional(),
-        periodEnd: z.string().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const { user } = ctx;
+      if (!user?.tenantId) {
+        throw new Error("User not authenticated or tenant not found");
       }
 
-      const where: Record<string, any> = {
-        tenantId: ctx.user.tenantId,
-      };
+      const periodFilter = input.periodId ? { periodId: input.periodId } : {};
 
-      // Handle period filtering
-      if (input.periodId) {
-        where.periodId = input.periodId;
-      } else if (input.periodStart || input.periodEnd) {
-        const periodFilter: Record<string, number> = {};
-        if (input.periodStart) {
-          periodFilter.gte = Number.parseInt(input.periodStart);
-        }
-        if (input.periodEnd) {
-          periodFilter.lte = Number.parseInt(input.periodEnd);
-        }
-        where.periodId = periodFilter;
-      }
-
-      const [payments, workshops] = await Promise.all([
-        prisma.instructorPayment.findMany({
-          where,
-          select: {
-            amount: true,
-            finalPayment: true,
-            status: true,
-            retention: true,
-            adjustment: true,
-            penalty: true,
-            cover: true,
-            branding: true,
-            themeRide: true,
-            workshop: true,
-            versusBonus: true,
-            bonus: true,
+      // Top instructors by earnings
+      const payments = await prisma.instructorPayment.findMany({
+        where: {
+          tenantId: user.tenantId,
+          ...periodFilter,
+        },
+        select: {
+          instructorId: true,
+          finalPayment: true,
+          instructor: {
+            select: {
+              name: true,
+            },
           },
-        }),
-        prisma.workshop.findMany({
-          where,
-          select: { payment: true },
-        }),
-      ]);
+        },
+      });
 
-      const totalAmount = payments.reduce(
-        (sum: number, payment) => sum + (payment.amount || 0),
-        0
-      );
-      const totalFinalPayment = payments.reduce(
-        (sum: number, payment) => sum + (payment.finalPayment || 0),
-        0
-      );
-      const totalRetention = payments.reduce(
-        (sum: number, payment) => sum + (payment.retention || 0),
-        0
-      );
-      const totalAdjustment = payments.reduce(
-        (sum: number, payment) => sum + (payment.adjustment || 0),
-        0
-      );
-      const totalPenalty = payments.reduce(
-        (sum: number, payment) => sum + (payment.penalty || 0),
-        0
-      );
-      const totalCover = payments.reduce(
-        (sum: number, payment) => sum + (payment.cover || 0),
-        0
-      );
-      const totalBranding = payments.reduce(
-        (sum: number, payment) => sum + (payment.branding || 0),
-        0
-      );
-      const totalThemeRide = payments.reduce(
-        (sum: number, payment) => sum + (payment.themeRide || 0),
-        0
-      );
-      const totalWorkshop = payments.reduce(
-        (sum: number, payment) => sum + (payment.workshop || 0),
-        0
-      );
-      const totalVersusBonus = payments.reduce(
-        (sum: number, payment) => sum + (payment.versusBonus || 0),
-        0
-      );
-      const totalBonus = payments.reduce(
-        (sum: number, payment) => sum + (payment.bonus || 0),
-        0
+      // Get classes for occupation calculation
+      const classes = await prisma.class.findMany({
+        where: {
+          tenantId: user.tenantId,
+          ...periodFilter,
+        },
+        select: {
+          instructorId: true,
+          totalReservations: true,
+          spots: true,
+        },
+      });
+
+      // Aggregate by instructor
+      const instructorMap = new Map<
+        string,
+        {
+          id: string;
+          name: string;
+          earnings: number;
+          classes: number;
+          reservations: number;
+          totalCapacity: number;
+        }
+      >();
+
+      payments.forEach((payment) => {
+        const existing = instructorMap.get(payment.instructorId);
+        if (existing) {
+          existing.earnings += payment.finalPayment;
+        } else {
+          instructorMap.set(payment.instructorId, {
+            id: payment.instructorId,
+            name: payment.instructor.name,
+            earnings: payment.finalPayment,
+            classes: 0,
+            reservations: 0,
+            totalCapacity: 0,
+          });
+        }
+      });
+
+      classes.forEach((clase) => {
+        const existing = instructorMap.get(clase.instructorId);
+        if (existing) {
+          existing.classes += 1;
+          existing.reservations += clase.totalReservations;
+          existing.totalCapacity += clase.spots;
+        } else {
+          instructorMap.set(clase.instructorId, {
+            id: clase.instructorId,
+            name: "",
+            earnings: 0,
+            classes: 1,
+            reservations: clase.totalReservations,
+            totalCapacity: clase.spots,
+          });
+        }
+      });
+
+      const instructorStats = Array.from(instructorMap.values()).map(
+        (inst) => ({
+          ...inst,
+          occupation:
+            inst.totalCapacity > 0
+              ? Math.round((inst.reservations / inst.totalCapacity) * 100)
+              : 0,
+        })
       );
 
-      const totalWorkshopPayment = workshops.reduce(
-        (sum: number, workshop: { payment: number }) => sum + workshop.payment,
-        0
-      );
+      // Top by earnings
+      const topByEarnings = instructorStats
+        .sort((a, b) => b.earnings - a.earnings)
+        .slice(0, 10);
 
-      const paidPayments = payments.filter(
-        (p: { status: string }) => p.status === "PAID"
-      );
-      const totalPaid = paidPayments.reduce(
-        (sum: number, payment) => sum + (payment.finalPayment || 0),
-        0
-      );
+      // Top by classes
+      const topByClasses = instructorStats
+        .sort((a, b) => b.classes - a.classes)
+        .slice(0, 10);
+
+      // Occupation distribution
+      const occupationRanges = [
+        { range: "0-20%", min: 0, max: 20, count: 0 },
+        { range: "21-40%", min: 21, max: 40, count: 0 },
+        { range: "41-60%", min: 41, max: 60, count: 0 },
+        { range: "61-80%", min: 61, max: 80, count: 0 },
+        { range: "81-100%", min: 81, max: 100, count: 0 },
+      ];
+
+      instructorStats.forEach((inst) => {
+        const range = occupationRanges.find(
+          (r) => inst.occupation >= r.min && inst.occupation <= r.max
+        );
+        if (range) {
+          range.count += 1;
+        }
+      });
+
+      const occupationDistribution = occupationRanges.map((r) => ({
+        range: r.range,
+        count: r.count,
+      }));
 
       return {
-        summary: {
-          totalAmount,
-          totalFinalPayment,
-          totalPaid,
-          totalRetention,
-          totalAdjustment,
-          totalPenalty,
-          totalCover,
-          totalBranding,
-          totalThemeRide,
-          totalWorkshop,
-          totalVersusBonus,
-          totalBonus,
-          totalWorkshopPayment,
+        topByEarnings,
+        topByClasses,
+        occupationDistribution,
+      };
+    }),
+
+  // Get class statistics
+  getClasses: publicProcedure
+    .input(
+      z.object({
+        periodId: z.string().optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { user } = ctx;
+      if (!user?.tenantId) {
+        throw new Error("User not authenticated or tenant not found");
+      }
+
+      const periodFilter = input.periodId ? { periodId: input.periodId } : {};
+
+      const classes = await prisma.class.findMany({
+        where: {
+          tenantId: user.tenantId,
+          ...periodFilter,
         },
-        breakdown: {
-          deductions: {
-            retention: totalRetention,
-            penalty: totalPenalty,
-            total: (totalRetention || 0) + (totalPenalty || 0),
+        select: {
+          disciplineId: true,
+          date: true,
+          totalReservations: true,
+          spots: true,
+          discipline: {
+            select: {
+              name: true,
+              color: true,
+            },
           },
-          bonuses: {
-            adjustment: totalAdjustment,
-            cover: totalCover,
-            branding: totalBranding,
-            themeRide: totalThemeRide,
-            workshop: totalWorkshop,
-            versusBonus: totalVersusBonus,
-            bonus: totalBonus,
-            total:
-              (totalAdjustment || 0) +
-              (totalCover || 0) +
-              (totalBranding || 0) +
-              (totalThemeRide || 0) +
-              (totalWorkshop || 0) +
-              (totalVersusBonus || 0) +
-              (totalBonus || 0),
+        },
+      });
+
+      // Classes by discipline
+      const disciplineMap = new Map<
+        string,
+        {
+          disciplineId: string;
+          name: string;
+          color: string;
+          count: number;
+          totalReservations: number;
+          totalCapacity: number;
+        }
+      >();
+
+      classes.forEach((clase) => {
+        const existing = disciplineMap.get(clase.disciplineId);
+        if (existing) {
+          existing.count += 1;
+          existing.totalReservations += clase.totalReservations;
+          existing.totalCapacity += clase.spots;
+        } else {
+          disciplineMap.set(clase.disciplineId, {
+            disciplineId: clase.disciplineId,
+            name: clase.discipline.name,
+            color: clase.discipline.color || "#6b7280",
+            count: 1,
+            totalReservations: clase.totalReservations,
+            totalCapacity: clase.spots,
+          });
+        }
+      });
+
+      const byDiscipline = Array.from(disciplineMap.values())
+        .map((disc) => ({
+          disciplineId: disc.disciplineId,
+          name: disc.name,
+          color: disc.color,
+          count: disc.count,
+          averageOccupation:
+            disc.totalCapacity > 0
+              ? Math.round((disc.totalReservations / disc.totalCapacity) * 100)
+              : 0,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      // Classes by day of week
+      const dayMap = new Map<
+        number,
+        { day: number; count: number; reservations: number }
+      >();
+
+      classes.forEach((clase) => {
+        const dayOfWeek = new Date(clase.date).getDay();
+        const existing = dayMap.get(dayOfWeek);
+        if (existing) {
+          existing.count += 1;
+          existing.reservations += clase.totalReservations;
+        } else {
+          dayMap.set(dayOfWeek, {
+            day: dayOfWeek,
+            count: 1,
+            reservations: clase.totalReservations,
+          });
+        }
+      });
+
+      const byDay = Array.from(dayMap.values()).map((day) => ({
+        day: day.day,
+        name: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][day.day] || "",
+        count: day.count,
+        reservations: day.reservations,
+      }));
+
+      // Classes by hour
+      const hourMap = new Map<
+        string,
+        { hour: string; count: number; reservations: number }
+      >();
+
+      classes.forEach((clase) => {
+        const hour = new Date(clase.date).getHours();
+        const hourStr = `${hour.toString().padStart(2, "0")}:00`;
+        const existing = hourMap.get(hourStr);
+        if (existing) {
+          existing.count += 1;
+          existing.reservations += clase.totalReservations;
+        } else {
+          hourMap.set(hourStr, {
+            hour: hourStr,
+            count: 1,
+            reservations: clase.totalReservations,
+          });
+        }
+      });
+
+      const bySchedule = Array.from(hourMap.values()).sort((a, b) =>
+        a.hour.localeCompare(b.hour)
+      );
+
+      // Reservations by hour (same data, different format for chart)
+      const reservationsBySchedule = bySchedule.map((h) => ({
+        hour: h.hour,
+        reservations: h.reservations,
+        averageOccupation: 0,
+      }));
+
+      return {
+        byDiscipline,
+        byDay,
+        bySchedule,
+        reservationsBySchedule,
+      };
+    }),
+
+  // Get venue statistics
+  getVenues: publicProcedure
+    .input(
+      z.object({
+        periodId: z.string().optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { user } = ctx;
+      if (!user?.tenantId) {
+        throw new Error("User not authenticated or tenant not found");
+      }
+
+      const periodFilter = input.periodId ? { periodId: input.periodId } : {};
+
+      const classes = await prisma.class.findMany({
+        where: {
+          tenantId: user.tenantId,
+          ...periodFilter,
+        },
+        select: {
+          studio: true,
+          room: true,
+          totalReservations: true,
+          spots: true,
+          instructorId: true,
+          disciplineId: true,
+          discipline: {
+            select: {
+              name: true,
+              color: true,
+            },
           },
         },
-        status: {
-          total: payments.length,
-          paid: paidPayments.length,
-          pending: payments.filter(
-            (p: { status: string }) => p.status === "PENDING"
-          ).length,
-          approved: payments.filter(
-            (p: { status: string }) => p.status === "APPROVED"
-          ).length,
-          cancelled: payments.filter(
-            (p: { status: string }) => p.status === "CANCELLED"
-          ).length,
+      });
+
+      // Get payments for revenue calculation
+      const payments = await prisma.instructorPayment.findMany({
+        where: {
+          tenantId: user.tenantId,
+          ...periodFilter,
         },
+        select: {
+          instructorId: true,
+          finalPayment: true,
+        },
+      });
+
+      // Create a map of instructor earnings
+      const instructorEarningsMap = new Map<string, number>();
+      payments.forEach((payment) => {
+        const existing = instructorEarningsMap.get(payment.instructorId) || 0;
+        instructorEarningsMap.set(
+          payment.instructorId,
+          existing + payment.finalPayment
+        );
+      });
+
+      // Most used venues
+      const venueMap = new Map<
+        string,
+        {
+          name: string;
+          count: number;
+          reservations: number;
+          totalCapacity: number;
+          instructors: Set<string>;
+          disciplines: Map<
+            string,
+            { name: string; count: number; color: string }
+          >;
+        }
+      >();
+
+      classes.forEach((clase) => {
+        const venueName = `${clase.studio} - ${clase.room}`;
+        const existing = venueMap.get(venueName);
+
+        if (existing) {
+          existing.count += 1;
+          existing.reservations += clase.totalReservations;
+          existing.totalCapacity += clase.spots;
+          existing.instructors.add(clase.instructorId);
+
+          const discExisting = existing.disciplines.get(clase.disciplineId);
+          if (discExisting) {
+            discExisting.count += 1;
+          } else {
+            existing.disciplines.set(clase.disciplineId, {
+              name: clase.discipline.name,
+              count: 1,
+              color: clase.discipline.color || "#6b7280",
+            });
+          }
+        } else {
+          const disciplines = new Map<
+            string,
+            { name: string; count: number; color: string }
+          >();
+          disciplines.set(clase.disciplineId, {
+            name: clase.discipline.name,
+            count: 1,
+            color: clase.discipline.color || "#6b7280",
+          });
+
+          venueMap.set(venueName, {
+            name: venueName,
+            count: 1,
+            reservations: clase.totalReservations,
+            totalCapacity: clase.spots,
+            instructors: new Set([clase.instructorId]),
+            disciplines,
+          });
+        }
+      });
+
+      const venueStats = Array.from(venueMap.values()).map((venue) => {
+        const occupation =
+          venue.totalCapacity > 0
+            ? Math.round((venue.reservations / venue.totalCapacity) * 100)
+            : 0;
+
+        // Calculate revenue for this venue (proportional to classes)
+        let earnings = 0;
+        venue.instructors.forEach((instructorId) => {
+          const instructorEarnings =
+            instructorEarningsMap.get(instructorId) || 0;
+          const instructorClasses = classes.filter(
+            (c) => c.instructorId === instructorId
+          ).length;
+          const venueInstructorClasses = classes.filter(
+            (c) =>
+              c.instructorId === instructorId &&
+              `${c.studio} - ${c.room}` === venue.name
+          ).length;
+
+          if (instructorClasses > 0) {
+            earnings +=
+              (instructorEarnings * venueInstructorClasses) / instructorClasses;
+          }
+        });
+
+        return {
+          name: venue.name,
+          count: venue.count,
+          averageOccupation: occupation,
+          totalReservations: venue.reservations,
+          instructors: venue.instructors.size,
+          earnings,
+          disciplines: Array.from(venue.disciplines.entries()).map(
+            ([disciplineId, disc]) => ({
+              disciplineId,
+              name: disc.name,
+              count: disc.count,
+              color: disc.color,
+            })
+          ),
+        };
+      });
+
+      // Sort by usage
+      const mostUsed = venueStats
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      // Occupation by venue
+      const occupationByVenue = venueStats
+        .map((v) => ({
+          name: v.name,
+          occupation: v.averageOccupation,
+          classes: v.count,
+        }))
+        .sort((a, b) => b.occupation - a.occupation)
+        .slice(0, 10);
+
+      // Revenue by venue
+      const earningsByVenue = venueStats
+        .map((v) => ({
+          name: v.name,
+          earnings: v.earnings,
+          classes: v.count,
+          reservations: v.totalReservations,
+          instructors: v.instructors,
+        }))
+        .sort((a, b) => b.earnings - a.earnings)
+        .slice(0, 10);
+
+      // Disciplines by venue
+      const disciplinesByVenue = venueStats.map((v) => ({
+        name: v.name,
+        disciplines: v.disciplines,
+      }));
+
+      return {
+        totalVenues: venueStats.length,
+        mostUsed: mostUsed.map((v) => ({
+          name: v.name,
+          count: v.count,
+          averageOccupation: v.averageOccupation,
+          totalReservations: v.totalReservations,
+          instructors: v.instructors,
+        })),
+        occupationByVenue,
+        earningsByVenue,
+        disciplinesByVenue,
       };
     }),
 });

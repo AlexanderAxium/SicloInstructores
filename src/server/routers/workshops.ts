@@ -8,7 +8,7 @@ export const workshopsRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(20),
           offset: z.number().min(0).default(0),
         })
         .optional()
@@ -95,7 +95,7 @@ export const workshopsRouter = router({
         dateFrom: z.string().optional(),
         dateTo: z.string().optional(),
         active: z.boolean().optional(),
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(1000).default(20),
         offset: z.number().min(0).default(0),
       })
     )

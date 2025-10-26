@@ -8,7 +8,7 @@ export const classesRouter = router({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).default(20),
+          limit: z.number().min(1).max(1000).default(20),
           offset: z.number().min(0).default(0),
         })
         .optional()
@@ -97,6 +97,52 @@ export const classesRouter = router({
       return classItem;
     }),
 
+  // Get classes by instructor and period (public)
+  getByInstructorAndPeriod: publicProcedure
+    .input(
+      z.object({
+        instructorId: z.string(),
+        periodId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const classes = await prisma.class.findMany({
+        where: {
+          instructorId: input.instructorId,
+          periodId: input.periodId,
+        },
+        include: {
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+          instructor: {
+            select: {
+              id: true,
+              name: true,
+              fullName: true,
+            },
+          },
+          period: {
+            select: {
+              id: true,
+              number: true,
+              year: true,
+            },
+          },
+        },
+        orderBy: [{ date: "asc" }, { week: "asc" }],
+      });
+
+      return {
+        classes,
+        total: classes.length,
+      };
+    }),
+
   // Get classes with filters (protected)
   getWithFilters: protectedProcedure
     .input(
@@ -111,7 +157,7 @@ export const classesRouter = router({
         date: z.string().optional(),
         studio: z.string().optional(),
         active: z.boolean().optional(),
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(1000).default(20),
         offset: z.number().min(0).default(0),
       })
     )
