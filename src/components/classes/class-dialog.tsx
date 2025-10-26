@@ -25,19 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type {
-  ClassDialogProps,
-  ClassFromAPI,
-  CreateClassData,
-  UpdateClassData,
-} from "@/types/classes";
+import type { ClassDialogProps, ClassFromAPI } from "@/types/classes";
+
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const createClassSchema = z.object({
+const classSchema = z.object({
+  id: z.string().optional(), // ID opcional para edición
   country: z.string().min(1, "País es requerido"),
   city: z.string().min(1, "Ciudad es requerida"),
   studio: z.string().min(1, "Estudio es requerido"),
@@ -53,25 +50,11 @@ const createClassSchema = z.object({
   instructorId: z.string().min(1, "Instructor es requerido"),
   periodId: z.string().min(1, "Período es requerido"),
   week: z.number().min(1, "Semana debe ser mayor a 0"),
-  isVersus: z.boolean().default(false),
-  versusNumber: z.number().optional(),
+  isVersus: z.boolean(),
+  versusNumber: z.number(),
 });
 
-const _updateClassSchema = z.object({
-  country: z.string().min(1, "País es requerido"),
-  city: z.string().min(1, "Ciudad es requerida"),
-  studio: z.string().min(1, "Estudio es requerido"),
-  room: z.string().min(1, "Sala es requerida"),
-  spots: z.number().min(1, "Debe tener al menos 1 cupo"),
-  totalReservations: z.number().min(0, "No puede ser negativo"),
-  waitingLists: z.number().min(0, "No puede ser negativo"),
-  complimentary: z.number().min(0, "No puede ser negativo"),
-  paidReservations: z.number().min(0, "No puede ser negativo"),
-  specialText: z.string().optional(),
-  date: z.string().min(1, "Fecha es requerida"),
-  isVersus: z.boolean().default(false),
-  versusNumber: z.number().optional(),
-});
+type ClassFormData = z.infer<typeof classSchema>;
 
 export function ClassDialog({
   classData,
@@ -91,10 +74,11 @@ export function ClassDialog({
   const instructors = instructorsData?.instructors || [];
   const periods = periodsData?.periods || [];
 
-  const form = useForm<CreateClassData | UpdateClassData>({
-    resolver: zodResolver(createClassSchema),
+  const form = useForm({
+    resolver: zodResolver(classSchema),
     defaultValues: isEdit
       ? {
+          id: classData?.id || "",
           country: classData?.country || "",
           city: classData?.city || "",
           studio: classData?.studio || "",
@@ -116,6 +100,7 @@ export function ClassDialog({
           versusNumber: classData?.versusNumber || 0,
         }
       : {
+          id: "",
           country: "Perú",
           city: "Lima",
           studio: "",
@@ -140,6 +125,7 @@ export function ClassDialog({
   useEffect(() => {
     if (classData) {
       form.reset({
+        id: classData.id,
         country: classData.country,
         city: classData.city,
         studio: classData.studio,
@@ -160,6 +146,7 @@ export function ClassDialog({
       });
     } else {
       form.reset({
+        id: "",
         country: "Perú",
         city: "Lima",
         studio: "",
@@ -181,14 +168,14 @@ export function ClassDialog({
     }
   }, [classData, form]);
 
-  const handleSubmit = (data: CreateClassData | UpdateClassData) => {
+  const handleSubmit = (data: ClassFormData) => {
     console.log("=== DEBUG ClassDialog handleSubmit ===");
     console.log("isEdit:", isEdit);
     console.log("data:", data);
 
     if (isEdit && classData) {
       // Para editar, solo actualizar la clase actual
-      const updateData: UpdateClassData = {
+      const updateData = {
         country: data.country,
         city: data.city,
         studio: data.studio,
@@ -207,7 +194,7 @@ export function ClassDialog({
     } else {
       // Clase simple
       console.log("=== CREANDO CLASE SIMPLE ===");
-      const createData: CreateClassData = {
+      const createData = {
         ...data,
         disciplineId: data.disciplineId || "",
         instructorId: data.instructorId || "",
@@ -237,6 +224,21 @@ export function ClassDialog({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
           >
+            {/* ID Field */}
+            <FormField
+              control={form.control}
+              name="id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="ID de la clase (opcional)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Instructor selection */}
             {!isEdit && (
               <div className="space-y-2">

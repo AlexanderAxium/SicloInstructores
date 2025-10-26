@@ -25,39 +25,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type {
+  ClassFromAPI,
   VersusClassData,
   VersusDialogProps,
-  VersusFormData,
 } from "@/types/classes";
+
+type VersusFormData = z.infer<typeof versusFormSchema>;
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-const _versusClassSchema = z.object({
-  country: z.string().min(1, "País es requerido"),
-  city: z.string().min(1, "Ciudad es requerida"),
-  studio: z.string().min(1, "Estudio es requerido"),
-  room: z.string().min(1, "Sala es requerida"),
-  spots: z.number().min(1, "Debe tener al menos 1 cupo"),
-  totalReservations: z.number().min(0, "No puede ser negativo"),
-  waitingLists: z.number().min(0, "No puede ser negativo"),
-  complimentary: z.number().min(0, "No puede ser negativo"),
-  paidReservations: z.number().min(0, "No puede ser negativo"),
-  specialText: z.string().optional(),
-  date: z.string().min(1, "Fecha es requerida"),
-  disciplineId: z.string().min(1, "Disciplina es requerida"),
-  instructorId: z.string().min(1, "Instructor es requerido"),
-  periodId: z.string().min(1, "Período es requerido"),
-  week: z.number().min(1, "Semana debe ser mayor a 0"),
-  isVersus: z.boolean().default(true),
-  versusNumber: z.number().min(1, "Número de versus es requerido"),
-});
-
 const versusFormSchema = z.object({
   // Campos compartidos
+  id: z.string().optional(), // ID opcional para edición
   country: z.string().min(1, "País es requerido"),
   city: z.string().min(1, "Ciudad es requerida"),
   studio: z.string().min(1, "Estudio es requerido"),
@@ -84,8 +67,13 @@ export function VersusDialog({
   onClose,
   onSubmit,
   isLoading,
+  classData,
+  versusClasses = [],
 }: VersusDialogProps) {
-  const [instructors, setInstructors] = useState<string[]>(["", ""]);
+  const isEdit = !!classData;
+  const [instructors, setInstructors] = useState<string[]>(
+    isEdit && classData ? [classData.instructorId] : ["", ""]
+  );
 
   // Obtener datos para los selectores
   const { data: disciplinesData } = trpc.disciplines.getAll.useQuery();
@@ -98,39 +86,123 @@ export function VersusDialog({
 
   const form = useForm<VersusFormData>({
     resolver: zodResolver(versusFormSchema),
-    defaultValues: {
-      country: "Perú",
-      city: "Lima",
-      studio: "",
-      room: "",
-      spots: 0,
-      totalReservations: 0,
-      waitingLists: 0,
-      complimentary: 0,
-      paidReservations: 0,
-      specialText: "",
-      date: "",
-      disciplineId: "",
-      periodId: "",
-      week: 1,
-      versusNumber: 1,
-      instructors: ["", ""],
-    },
+    defaultValues:
+      isEdit && classData
+        ? {
+            id: classData.id,
+            country: classData.country,
+            city: classData.city,
+            studio: classData.studio,
+            room: classData.room,
+            spots: classData.spots,
+            totalReservations: classData.totalReservations,
+            waitingLists: classData.waitingLists,
+            complimentary: classData.complimentary,
+            paidReservations: classData.paidReservations,
+            specialText: classData.specialText || "",
+            date: new Date(classData.date).toISOString().split("T")[0],
+            disciplineId: classData.disciplineId,
+            periodId: classData.periodId,
+            week: classData.week,
+            versusNumber: classData.versusNumber || 1,
+            instructors: [classData.instructorId], // Para edición, solo el instructor actual
+          }
+        : {
+            id: "",
+            country: "Perú",
+            city: "Lima",
+            studio: "",
+            room: "",
+            spots: 0,
+            totalReservations: 0,
+            waitingLists: 0,
+            complimentary: 0,
+            paidReservations: 0,
+            specialText: "",
+            date: "",
+            disciplineId: "",
+            periodId: "",
+            week: 1,
+            versusNumber: 1,
+            instructors: ["", ""],
+          },
   });
+
+  // Resetear el formulario cuando cambie la clase
+  useEffect(() => {
+    if (classData) {
+      // Si hay múltiples clases versus, usar la primera como referencia para los datos compartidos
+      const referenceClass =
+        versusClasses.length > 0 ? versusClasses[0] : classData;
+
+      if (referenceClass) {
+        form.reset({
+          id: referenceClass.id,
+          country: referenceClass.country,
+          city: referenceClass.city,
+          studio: referenceClass.studio,
+          room: referenceClass.room,
+          spots: referenceClass.spots,
+          totalReservations: referenceClass.totalReservations,
+          waitingLists: referenceClass.waitingLists,
+          complimentary: referenceClass.complimentary,
+          paidReservations: referenceClass.paidReservations,
+          specialText: referenceClass.specialText || "",
+          date: new Date(referenceClass.date).toISOString().split("T")[0],
+          disciplineId: referenceClass.disciplineId,
+          periodId: referenceClass.periodId,
+          week: referenceClass.week,
+          versusNumber: referenceClass.versusNumber || 1,
+          instructors:
+            versusClasses.length > 0
+              ? versusClasses.map((c) => c.instructorId)
+              : [classData.instructorId],
+        });
+
+        // Si hay múltiples clases versus, cargar todos los instructores
+        if (versusClasses.length > 0) {
+          setInstructors(versusClasses.map((c) => c.instructorId));
+        } else {
+          setInstructors([classData.instructorId]);
+        }
+      }
+    } else {
+      form.reset({
+        id: "",
+        country: "Perú",
+        city: "Lima",
+        studio: "",
+        room: "",
+        spots: 0,
+        totalReservations: 0,
+        waitingLists: 0,
+        complimentary: 0,
+        paidReservations: 0,
+        specialText: "",
+        date: "",
+        disciplineId: "",
+        periodId: "",
+        week: 1,
+        versusNumber: 1,
+        instructors: ["", ""],
+      });
+      setInstructors(["", ""]);
+    }
+  }, [classData, versusClasses, form]);
 
   const addInstructor = () => {
     setInstructors([...instructors, ""]);
   };
 
   const removeInstructor = (index: number) => {
-    if (instructors.length > 2) {
+    if (instructors.length > 2 || (isEdit && instructors.length > 1)) {
       const newInstructors = instructors.filter((_, i) => i !== index);
       setInstructors(newInstructors);
       form.setValue("instructors", newInstructors);
 
-      // Actualizar automáticamente el número de versus con la cantidad de instructores válidos
-      const validInstructors = newInstructors.filter((id) => id !== "").length;
-      form.setValue("versusNumber", validInstructors);
+      // Actualizar número de versus automáticamente
+      const validCount = newInstructors.filter((id) => id !== "").length;
+      form.setValue("versusNumber", validCount);
     }
   };
 
@@ -140,51 +212,157 @@ export function VersusDialog({
     setInstructors(newInstructors);
     form.setValue("instructors", newInstructors);
 
-    // Actualizar automáticamente el número de versus con la cantidad de instructores válidos
-    const validInstructors = newInstructors.filter((id) => id !== "").length;
-    form.setValue("versusNumber", validInstructors);
+    // Actualizar número de versus automáticamente
+    const validCount = newInstructors.filter((id) => id !== "").length;
+    form.setValue("versusNumber", validCount);
   };
 
   const handleSubmit = (data: VersusFormData) => {
-    console.log("=== DEBUG VersusDialog handleSubmit ===");
-    console.log("data:", data);
-    console.log("instructors:", instructors);
+    console.log("=== Versus Dialog Submit ===");
 
-    // Crear un array de clases versus, una por cada instructor
-    const versusClasses: VersusClassData[] = instructors
-      .filter((instructorId) => instructorId !== "") // Filtrar instructores vacíos
-      .map((instructorId) => ({
-        country: data.country,
-        city: data.city,
-        studio: data.studio,
-        room: data.room,
-        spots: data.spots,
-        totalReservations: data.totalReservations,
-        waitingLists: data.waitingLists,
-        complimentary: data.complimentary,
-        paidReservations: data.paidReservations,
-        specialText: data.specialText,
-        date: data.date,
-        disciplineId: data.disciplineId,
-        instructorId: instructorId,
-        periodId: data.periodId,
-        week: data.week,
-        isVersus: true,
-        versusNumber: data.versusNumber,
-      }));
+    // Validar instructores
+    const validInstructors = instructors.filter((id) => id !== "");
+    if (validInstructors.length < 2) {
+      console.error("Debe haber al menos 2 instructores");
+      return;
+    }
 
-    console.log("versusClasses:", versusClasses);
-    onSubmit(versusClasses);
+    if (isEdit && versusClasses.length > 0) {
+      // ===== MODO EDICIÓN: Sincronizar todo el grupo versus =====
+      console.log("EDITANDO: Sincronizando grupo versus");
+
+      const currentInstructorIds = versusClasses.map((c) => c.instructorId);
+      const newInstructorIds = validInstructors;
+
+      // Identificar cambios
+      const toKeep = newInstructorIds.filter((id) =>
+        currentInstructorIds.includes(id)
+      );
+      const toAdd = newInstructorIds.filter(
+        (id) => !currentInstructorIds.includes(id)
+      );
+      const toRemove = currentInstructorIds.filter(
+        (id) => !newInstructorIds.includes(id)
+      );
+
+      console.log(
+        `Mantener: ${toKeep.length}, Agregar: ${toAdd.length}, Eliminar: ${toRemove.length}`
+      );
+
+      // Preparar cambios
+      const classesToUpdate: VersusClassData[] = [];
+      const classesToCreate: VersusClassData[] = [];
+      const classesToDelete: string[] = [];
+
+      // 1. Actualizar clases existentes que se mantienen
+      versusClasses.forEach((existingClass) => {
+        if (toKeep.includes(existingClass.instructorId)) {
+          classesToUpdate.push({
+            id: existingClass.id,
+            country: data.country,
+            city: data.city,
+            studio: data.studio,
+            room: data.room,
+            spots: data.spots,
+            totalReservations: data.totalReservations,
+            waitingLists: data.waitingLists,
+            complimentary: data.complimentary,
+            paidReservations: data.paidReservations,
+            specialText: data.specialText,
+            date: data.date,
+            disciplineId: data.disciplineId,
+            instructorId: existingClass.instructorId, // Mantener instructor original
+            periodId: data.periodId,
+            week: data.week,
+            isVersus: true,
+            versusNumber: data.versusNumber,
+          });
+        }
+      });
+
+      // 2. Crear clases para nuevos instructores
+      toAdd.forEach((instructorId) => {
+        classesToCreate.push({
+          country: data.country,
+          city: data.city,
+          studio: data.studio,
+          room: data.room,
+          spots: data.spots,
+          totalReservations: data.totalReservations,
+          waitingLists: data.waitingLists,
+          complimentary: data.complimentary,
+          paidReservations: data.paidReservations,
+          specialText: data.specialText,
+          date: data.date,
+          disciplineId: data.disciplineId,
+          instructorId: instructorId,
+          periodId: data.periodId,
+          week: data.week,
+          isVersus: true,
+          versusNumber: data.versusNumber,
+        });
+      });
+
+      // 3. Identificar clases a eliminar
+      toRemove.forEach((instructorId) => {
+        const classToDelete = versusClasses.find(
+          (c) => c.instructorId === instructorId
+        );
+        if (classToDelete) {
+          classesToDelete.push(classToDelete.id);
+        }
+      });
+
+      // Enviar todos los cambios en una sola operación
+      const allChanges = [...classesToUpdate, ...classesToCreate];
+      onSubmit(allChanges, classesToDelete);
+    } else {
+      // ===== MODO CREACIÓN: Crear todas las clases versus =====
+      console.log("CREANDO: Nuevo grupo versus");
+
+      const versusClasses: VersusClassData[] = validInstructors.map(
+        (instructorId) => ({
+          country: data.country,
+          city: data.city,
+          studio: data.studio,
+          room: data.room,
+          spots: data.spots,
+          totalReservations: data.totalReservations,
+          waitingLists: data.waitingLists,
+          complimentary: data.complimentary,
+          paidReservations: data.paidReservations,
+          specialText: data.specialText,
+          date: data.date,
+          disciplineId: data.disciplineId,
+          instructorId: instructorId,
+          periodId: data.periodId,
+          week: data.week,
+          isVersus: true,
+          versusNumber: data.versusNumber,
+        })
+      );
+
+      onSubmit(versusClasses);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nueva Clase Versus</DialogTitle>
+          <DialogTitle>
+            {isEdit
+              ? versusClasses.length > 1
+                ? `Editar ${versusClasses.length} Clases Versus`
+                : "Editar Clase Versus"
+              : "Nueva Clase Versus"}
+          </DialogTitle>
           <DialogDescription>
-            Crea múltiples clases versus con diferentes instructores para el
-            mismo horario y ubicación.
+            {isEdit
+              ? versusClasses.length > 1
+                ? `Modifica los datos de ${versusClasses.length} clases versus relacionadas. Los cambios se aplicarán a todas las clases del grupo.`
+                : "Modifica los datos de la clase versus."
+              : "Crea múltiples clases versus con diferentes instructores para el mismo horario y ubicación."}
           </DialogDescription>
         </DialogHeader>
 
@@ -193,6 +371,21 @@ export function VersusDialog({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
           >
+            {/* ID Field */}
+            <FormField
+              control={form.control}
+              name="id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="ID de la clase (opcional)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* Información compartida */}
             <div className="space-y-4 p-4 bg-muted/20 rounded-lg">
               <h3 className="text-sm font-medium text-muted-foreground">
@@ -529,7 +722,10 @@ export function VersusDialog({
               </div>
 
               {instructors.map((instructorId, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div
+                  key={instructorId || `instructor-${index}`}
+                  className="flex items-center gap-2"
+                >
                   <div className="flex-1">
                     <Select
                       value={instructorId}
@@ -547,7 +743,8 @@ export function VersusDialog({
                       </SelectContent>
                     </Select>
                   </div>
-                  {instructors.length > 2 && (
+                  {(instructors.length > 2 ||
+                    (isEdit && instructors.length > 1)) && (
                     <Button
                       type="button"
                       variant="outline"
@@ -567,7 +764,13 @@ export function VersusDialog({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creando..." : "Crear Clases Versus"}
+                {isLoading
+                  ? isEdit
+                    ? "Actualizando..."
+                    : "Creando..."
+                  : isEdit
+                    ? "Actualizar Clase Versus"
+                    : "Crear Clases Versus"}
               </Button>
             </div>
           </form>

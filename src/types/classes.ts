@@ -97,6 +97,7 @@ export interface ClassWithRelations extends Class {
 
 // Types for class creation
 export interface CreateClassData {
+  id?: string; // ID opcional para edición
   country: string;
   city: string;
   studio: string;
@@ -117,6 +118,7 @@ export interface CreateClassData {
 }
 
 export interface UpdateClassData {
+  id?: string; // ID opcional para edición
   country: string;
   city: string;
   studio: string;
@@ -140,6 +142,7 @@ export interface VersusClassData extends CreateClassData {
 
 export interface VersusFormData {
   // Campos compartidos
+  id?: string; // ID opcional para edición
   country: string;
   city: string;
   studio: string;
@@ -171,8 +174,10 @@ export interface ClassDialogProps {
 export interface VersusDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: VersusClassData[]) => void;
+  onSubmit: (data: VersusClassData[], classesToDelete?: string[]) => void;
   isLoading: boolean;
+  classData?: ClassFromAPI | null; // Para edición de clases versus existentes
+  versusClasses?: ClassFromAPI[]; // Todas las clases versus relacionadas para edición
 }
 
 // API-specific types (data comes as strings from API)
