@@ -4,11 +4,17 @@ import { PaymentDetailPDF } from "@/components/payments/pdf/payment-detail-pdf";
 import { usePDFExport } from "@/hooks/usePDFExport";
 import type { Class } from "@/types/classes";
 import type {
+  Discipline,
   DisciplineFromAPI,
+  Instructor,
   InstructorFromAPI,
+  Period,
   PeriodFromAPI,
 } from "@/types/instructor";
-import type { InstructorPaymentFromAPI } from "@/types/payments";
+import type {
+  InstructorPayment,
+  InstructorPaymentFromAPI,
+} from "@/types/payments";
 import type { FormulaFromAPI } from "@/types/schema";
 import { trpc } from "@/utils/trpc";
 import { useParams, useRouter } from "next/navigation";
@@ -34,6 +40,58 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Award, Calendar, FileText } from "lucide-react";
+
+// Helper functions to convert API types to regular types
+const convertInstructorFromAPI = (
+  instructor: InstructorFromAPI | undefined
+): Instructor | undefined => {
+  if (!instructor) return undefined;
+  return {
+    ...instructor,
+    tenantId: instructor.tenantId || "",
+    createdAt: new Date(instructor.createdAt),
+    updatedAt: new Date(instructor.updatedAt),
+  };
+};
+
+const convertPeriodFromAPI = (
+  period: PeriodFromAPI | undefined
+): Period | undefined => {
+  if (!period) return undefined;
+  return {
+    ...period,
+    startDate: new Date(period.startDate),
+    endDate: new Date(period.endDate),
+    paymentDate: new Date(period.paymentDate),
+    createdAt: new Date(period.createdAt),
+    updatedAt: new Date(period.updatedAt),
+    discountRules: period.discountRules as
+      | Record<string, unknown>
+      | null
+      | undefined,
+  };
+};
+
+const convertDisciplinesFromAPI = (
+  disciplines: DisciplineFromAPI[] | undefined
+): Discipline[] => {
+  if (!disciplines || !Array.isArray(disciplines)) {
+    return [];
+  }
+  return disciplines.map((discipline) => ({
+    ...discipline,
+    createdAt: new Date(discipline.createdAt),
+    updatedAt: new Date(discipline.updatedAt),
+  }));
+};
+
+const convertPaymentFromAPI = (
+  payment: InstructorPaymentFromAPI
+): InstructorPayment => ({
+  ...payment,
+  createdAt: new Date(payment.createdAt),
+  updatedAt: new Date(payment.updatedAt),
+});
 
 export default function PaymentDetailPage() {
   const router = useRouter();
@@ -88,11 +146,11 @@ export default function PaymentDetailPage() {
     data: FormulaFromAPI[] | undefined;
   };
 
-  // Extract data
-  const instructor = instructorData;
-  const period = periodData;
+  // Extract data and convert API types to regular types
+  const instructor = convertInstructorFromAPI(instructorData);
+  const period = convertPeriodFromAPI(periodData);
   const classes = classesData?.classes || [];
-  const disciplines = disciplinesData || [];
+  const disciplines = convertDisciplinesFromAPI(disciplinesData);
   const formulas = formulasData || [];
   const paymentDetails = payment?.details || {};
 
@@ -112,7 +170,7 @@ export default function PaymentDetailPage() {
   const { exportToPDF } = usePDFExport();
 
   const handleExportPDF = async () => {
-    if (!payment || !instructor || !period) {
+    if (!payment || !instructorData || !periodData) {
       toast.error("Datos incompletos para exportar");
       return;
     }
@@ -131,7 +189,7 @@ export default function PaymentDetailPage() {
 
     const disciplineStats = Object.entries(classesByDiscipline).map(
       ([disciplineId, classes]) => {
-        const discipline = disciplines.find(
+        const discipline = disciplinesData?.find(
           (d: DisciplineFromAPI) => d.id === disciplineId
         );
         const reservations = classes.reduce(
@@ -158,14 +216,14 @@ export default function PaymentDetailPage() {
     await exportToPDF(
       <PaymentDetailPDF
         payment={payment}
-        instructor={instructor}
-        period={period}
-        disciplines={disciplines}
+        instructor={instructorData}
+        period={periodData}
+        disciplines={disciplinesData || []}
         instructorClasses={instructorClasses}
         disciplineStats={disciplineStats}
         details={paymentDetails}
       />,
-      `Pago_${instructor.name.replace(/\s+/g, "_")}_P${period.number}_${period.year}`
+      `Pago_${instructorData.name.replace(/\s+/g, "_")}_P${periodData.number}_${periodData.year}`
     );
   };
 
@@ -272,8 +330,8 @@ export default function PaymentDetailPage() {
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <PageHeader
-        instructor={instructor}
-        period={period}
+        instructor={instructorData || ({} as InstructorFromAPI)}
+        period={periodData || ({} as PeriodFromAPI)}
         payment={payment}
         getStatusColor={getStatusColor}
         togglePaymentStatus={handleStatusToggle}
@@ -400,9 +458,9 @@ export default function PaymentDetailPage() {
           {/* Tab Content */}
           <div className="mt-2 sm:mt-4">
             {/* Details Tab */}
-            {activeTab === "details" && (
+            {activeTab === "details" && instructor && period && (
               <PaymentDetails
-                payment={payment}
+                payment={convertPaymentFromAPI(payment)}
                 instructor={instructor}
                 period={period}
                 disciplines={disciplines}
@@ -428,20 +486,17 @@ export default function PaymentDetailPage() {
             {activeTab === "classes" && (
               <ClassesTab
                 instructorClasses={instructorClasses}
-                payment={payment}
-                formulas={formulas}
                 disciplines={disciplines}
-                formatCurrency={formatCurrency}
               />
             )}
 
             {/* Category Tab */}
-            {activeTab === "category" && (
+            {activeTab === "category" && instructorData && periodData && (
               <CategoryTab
-                instructor={instructor}
+                instructor={instructorData}
                 payment={payment}
-                period={period}
-                disciplines={disciplines}
+                period={periodData}
+                disciplines={disciplinesData || []}
                 instructorClasses={instructorClasses}
                 formulas={formulas}
               />

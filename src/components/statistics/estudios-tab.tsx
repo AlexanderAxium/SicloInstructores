@@ -31,10 +31,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useExcelExport } from "@/hooks/useExcelExport";
+import type {
+  ChartDataPoint,
+  DisciplinaPorEstudio,
+  EstudioConDisciplinas,
+  EstudioStats,
+  ExportDisciplinaData,
+  ExportEstudioData,
+  OccupationChartDataPoint,
+  VenueStats,
+} from "@/types/statistics";
 import { DashboardChart } from "./dashboard-chart";
 
 interface EstudiosTabProps {
-  venueStats: any;
+  venueStats: VenueStats | undefined;
   isLoading: boolean;
   periodLabel: string;
 }
@@ -65,15 +75,29 @@ export function EstudiosTab({
   const { exportToExcel } = useExcelExport();
 
   // Use venue stats from store for basic data
-  const estadisticasPorEstudio = useMemo(() => {
+  const estadisticasPorEstudio = useMemo((): EstudioStats[] => {
     if (!venueStats) return [];
 
     // Agrupar por estudio base (antes del " - ")
-    const estudiosMap = new Map();
+    const estudiosMap = new Map<
+      string,
+      {
+        nombre: string;
+        clases: number;
+        reservas: number;
+        ocupacion: number;
+        ocupacionPonderada: number;
+        pagoTotal: number;
+        instructores: Set<string>;
+        disciplinas: Set<string>;
+        porcentajeTotal: number;
+        promedioPorClase: number;
+      }
+    >();
 
-    // Process masUsados
-    venueStats.masUsados.forEach((venue: any) => {
-      const estudioBase = venue.nombre.split(" - ")[0];
+    // Process mostUsed
+    venueStats.mostUsed.forEach((venue) => {
+      const estudioBase = venue.name.split(" - ")[0] || venue.name;
 
       if (!estudiosMap.has(estudioBase)) {
         estudiosMap.set(estudioBase, {
@@ -83,24 +107,25 @@ export function EstudiosTab({
           ocupacion: 0,
           ocupacionPonderada: 0,
           pagoTotal: 0,
-          instructores: new Set(),
-          disciplinas: new Set(),
+          instructores: new Set<string>(),
+          disciplinas: new Set<string>(),
           porcentajeTotal: 0,
           promedioPorClase: 0,
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase);
+      const estudio = estudiosMap.get(estudioBase)!;
       estudio.clases += venue.count;
-      estudio.reservas += venue.reservasTotales;
+      estudio.reservas += venue.totalReservations;
       // Promedio ponderado de ocupación basado en número de clases
-      estudio.ocupacionPonderada += venue.ocupacionPromedio * venue.count;
-      if (venue.instructores) estudio.instructores.add(venue.instructores);
+      estudio.ocupacionPonderada += venue.averageOccupation * venue.count;
+      if (venue.instructors)
+        estudio.instructores.add(venue.instructors.toString());
     });
 
-    // Process ingresosPorSalon
-    venueStats.ingresosPorSalon.forEach((venue: any) => {
-      const estudioBase = venue.nombre.split(" - ")[0];
+    // Process earningsByVenue
+    venueStats.earningsByVenue.forEach((venue) => {
+      const estudioBase = venue.name.split(" - ")[0] || venue.name;
 
       if (!estudiosMap.has(estudioBase)) {
         estudiosMap.set(estudioBase, {
@@ -110,86 +135,104 @@ export function EstudiosTab({
           ocupacion: 0,
           ocupacionPonderada: 0,
           pagoTotal: 0,
-          instructores: new Set(),
-          disciplinas: new Set(),
+          instructores: new Set<string>(),
+          disciplinas: new Set<string>(),
           porcentajeTotal: 0,
           promedioPorClase: 0,
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase);
-      estudio.pagoTotal += venue.ingresos;
-      if (venue.clases > 0 && estudio.clases === 0)
-        estudio.clases = venue.clases;
-      if (venue.reservas > 0 && estudio.reservas === 0)
-        estudio.reservas = venue.reservas;
-      if (venue.instructores) estudio.instructores.add(venue.instructores);
+      const estudio = estudiosMap.get(estudioBase)!;
+      estudio.pagoTotal += venue.earnings;
+      if (venue.classes > 0 && estudio.clases === 0)
+        estudio.clases = venue.classes;
+      if (venue.reservations > 0 && estudio.reservas === 0)
+        estudio.reservas = venue.reservations;
+      if (venue.instructors)
+        estudio.instructores.add(venue.instructors.toString());
     });
 
-    // Process disciplinasPorSalon
-    venueStats.disciplinasPorSalon.forEach((venue: any) => {
-      const estudioBase = venue.nombre.split(" - ")[0];
+    // Process disciplinesByVenue
+    venueStats.disciplinesByVenue.forEach((venue) => {
+      const estudioBase = venue.name.split(" - ")[0] || venue.name;
 
       if (estudiosMap.has(estudioBase)) {
-        const estudio = estudiosMap.get(estudioBase);
-        venue.disciplinas.forEach((d: any) => {
-          estudio.disciplinas.add(d.disciplinaId);
+        const estudio = estudiosMap.get(estudioBase)!;
+        venue.disciplines.forEach((d) => {
+          estudio.disciplinas.add(d.disciplineId);
         });
       }
     });
 
     // Calculate derived values
     const totalClases = Array.from(estudiosMap.values()).reduce(
-      (sum: number, estudio: any) => sum + estudio.clases,
+      (sum, estudio) => sum + estudio.clases,
       0
     );
 
-    Array.from(estudiosMap.values()).forEach((estudio: any) => {
-      // Calcular ocupación promedio ponderada
-      estudio.ocupacion =
-        estudio.clases > 0
-          ? Math.round(estudio.ocupacionPonderada / estudio.clases)
-          : 0;
+    const processedEstudios = Array.from(estudiosMap.values()).map(
+      (estudio) => {
+        // Calcular ocupación promedio ponderada
+        const ocupacion =
+          estudio.clases > 0
+            ? Math.round(estudio.ocupacionPonderada / estudio.clases)
+            : 0;
 
-      // Calcular promedio por clase
-      estudio.promedioPorClase =
-        estudio.clases > 0 ? estudio.pagoTotal / estudio.clases : 0;
+        // Calcular promedio por clase
+        const promedioPorClase =
+          estudio.clases > 0 ? estudio.pagoTotal / estudio.clases : 0;
 
-      // Calcular porcentaje del total
-      estudio.porcentajeTotal =
-        totalClases > 0 ? (estudio.clases / totalClases) * 100 : 0;
+        // Calcular porcentaje del total
+        const porcentajeTotal =
+          totalClases > 0 ? (estudio.clases / totalClases) * 100 : 0;
 
-      // Convertir Sets a números
-      estudio.instructores = estudio.instructores.size;
-      estudio.disciplinas = estudio.disciplinas.size;
+        // Convertir Sets a números
+        const instructores = estudio.instructores.size;
+        const disciplinas = estudio.disciplinas.size;
 
-      // Eliminar campo temporal
-      estudio.ocupacionPonderada = undefined;
-    });
+        return {
+          nombre: estudio.nombre,
+          clases: estudio.clases,
+          reservas: estudio.reservas,
+          ocupacion,
+          pagoTotal: estudio.pagoTotal,
+          instructores,
+          disciplinas,
+          porcentajeTotal,
+          promedioPorClase,
+        } as EstudioStats;
+      }
+    );
 
-    return Array.from(estudiosMap.values())
-      .filter((estudio: any) => estudio.clases > 0)
-      .sort((a: any, b: any) => b.clases - a.clases);
+    return processedEstudios
+      .filter((estudio) => estudio.clases > 0)
+      .sort((a, b) => b.clases - a.clases);
   }, [venueStats]);
 
   // Calcular estadísticas por disciplina para cada estudio
-  const disciplinasPorEstudio = useMemo(() => {
-    if (!venueStats?.disciplinasPorSalon || !venueStats?.ingresosPorSalon)
+  const disciplinasPorEstudio = useMemo((): EstudioConDisciplinas[] => {
+    if (!venueStats?.disciplinesByVenue || !venueStats?.earningsByVenue)
       return [];
 
     // Agrupar venues por estudio base (antes del " - ")
-    const estudiosMap = new Map<string, any>();
+    const estudiosMap = new Map<
+      string,
+      {
+        nombre: string;
+        disciplinas: DisciplinaPorEstudio[];
+      }
+    >();
 
-    venueStats.disciplinasPorSalon.forEach((venue: any) => {
+    venueStats.disciplinesByVenue.forEach((venue) => {
       // Extraer el nombre base del estudio (parte antes del primer " - ")
-      const estudioBase = venue.nombre.split(" - ")[0];
+      const estudioBase = venue.name.split(" - ")[0] || venue.name;
 
       // Get revenue data for this specific venue (not estudio base)
-      const venueIngresos = venueStats.ingresosPorSalon.find(
-        (v: any) => v.nombre === venue.nombre
+      const venueIngresos = venueStats.earningsByVenue.find(
+        (v) => v.name === venue.name
       );
-      const venueOcupacion = venueStats.masUsados.find(
-        (v: any) => v.nombre === venue.nombre
+      const venueOcupacion = venueStats.mostUsed.find(
+        (v) => v.name === venue.name
       );
 
       // Si el estudio base no existe, crearlo
@@ -200,27 +243,27 @@ export function EstudiosTab({
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase);
+      const estudio = estudiosMap.get(estudioBase)!;
 
       // Agregar disciplinas de este venue al estudio base
-      venue.disciplinas.forEach((d: any) => {
-        const totalClasesVenue = venue.disciplinas.reduce(
-          (total: number, disc: any) => total + disc.count,
+      venue.disciplines.forEach((d) => {
+        const totalClasesVenue = venue.disciplines.reduce(
+          (total, disc) => total + disc.count,
           0
         );
         const porcentaje =
           totalClasesVenue > 0 ? (d.count / totalClasesVenue) * 100 : 0;
 
         // Calculate proportional values based on this specific venue's totals
-        const ocupacion = venueOcupacion ? venueOcupacion.ocupacionPromedio : 0;
+        const ocupacion = venueOcupacion ? venueOcupacion.averageOccupation : 0;
         const pagoTotal = venueIngresos
-          ? (venueIngresos.ingresos * porcentaje) / 100
+          ? (venueIngresos.earnings * porcentaje) / 100
           : 0;
         const promedioPorClase = d.count > 0 ? pagoTotal / d.count : 0;
 
         // Buscar si esta disciplina ya existe en el estudio
         const existingDisciplina = estudio.disciplinas.find(
-          (disc: any) => disc.disciplinaId === d.disciplinaId
+          (disc) => disc.disciplinaId === d.disciplineId
         );
 
         if (existingDisciplina) {
@@ -246,8 +289,8 @@ export function EstudiosTab({
         } else {
           // Si no existe, agregarla
           estudio.disciplinas.push({
-            disciplinaId: d.disciplinaId,
-            nombre: d.nombre,
+            disciplinaId: d.disciplineId,
+            nombre: d.name,
             color: d.color,
             clases: d.count,
             porcentaje,
@@ -262,21 +305,15 @@ export function EstudiosTab({
 
     // Convertir el Map a array y ordenar por número de clases totales
     return Array.from(estudiosMap.values()).sort((a, b) => {
-      const totalClasesA = a.disciplinas.reduce(
-        (sum: number, d: any) => sum + d.clases,
-        0
-      );
-      const totalClasesB = b.disciplinas.reduce(
-        (sum: number, d: any) => sum + d.clases,
-        0
-      );
+      const totalClasesA = a.disciplinas.reduce((sum, d) => sum + d.clases, 0);
+      const totalClasesB = b.disciplinas.reduce((sum, d) => sum + d.clases, 0);
       return totalClasesB - totalClasesA;
     });
   }, [venueStats]);
 
   // Filtrar estudios basándose en el término de búsqueda
   const filteredEstadisticas = useMemo(() => {
-    return estadisticasPorEstudio.filter((estudio: any) =>
+    return estadisticasPorEstudio.filter((estudio) =>
       estudio.nombre.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [estadisticasPorEstudio, searchTerm]);
@@ -285,9 +322,9 @@ export function EstudiosTab({
   const sortedEstadisticas = useMemo(() => {
     if (!sortConfig) return filteredEstadisticas;
 
-    return [...filteredEstadisticas].sort((a: any, b: any) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+    return [...filteredEstadisticas].sort((a, b) => {
+      const aValue = a[sortConfig.key as keyof EstudioStats];
+      const bValue = b[sortConfig.key as keyof EstudioStats];
 
       if (typeof aValue === "string" && typeof bValue === "string") {
         return sortConfig.direction === "ascending"
@@ -315,7 +352,7 @@ export function EstudiosTab({
   };
 
   const handleExport = () => {
-    const exportData = sortedEstadisticas.map((estudio: any) => ({
+    const exportData = sortedEstadisticas.map((estudio) => ({
       Estudio: estudio.nombre,
       Clases: estudio.clases,
       Reservas: estudio.reservas,
@@ -333,11 +370,11 @@ export function EstudiosTab({
   };
 
   const handleExportDisciplinas = () => {
-    const exportData: any[] = [];
+    const exportData: Array<Record<string, unknown>> = [];
 
-    disciplinasPorEstudio.forEach((estudio: any) => {
+    disciplinasPorEstudio.forEach((estudio) => {
       // Add individual discipline rows
-      estudio.disciplinas.forEach((disciplina: any) => {
+      estudio.disciplinas.forEach((disciplina) => {
         exportData.push({
           Estudio: estudio.nombre,
           Disciplina: disciplina.nombre,
@@ -350,16 +387,16 @@ export function EstudiosTab({
 
       // Add total row for this study
       const totalClases = estudio.disciplinas.reduce(
-        (sum: number, disc: any) => sum + disc.clases,
+        (sum, disc) => sum + disc.clases,
         0
       );
       const totalOcupacion =
         estudio.disciplinas.reduce(
-          (sum: number, disc: any) => sum + (disc.ocupacion || 0),
+          (sum, disc) => sum + (disc.ocupacion || 0),
           0
         ) / estudio.disciplinas.length || 0;
       const totalPago = estudio.disciplinas.reduce(
-        (sum: number, disc: any) => sum + (disc.pagoTotal || 0),
+        (sum, disc) => sum + (disc.pagoTotal || 0),
         0
       );
       const totalPromedio = totalClases > 0 ? totalPago / totalClases : 0;
@@ -405,13 +442,13 @@ export function EstudiosTab({
   }
 
   // Agrupar salones más usados por estudio base
-  const localesMasUsadosData = useMemo(() => {
-    if (!venueStats?.masUsados) return [];
+  const localesMasUsadosData = useMemo((): ChartDataPoint[] => {
+    if (!venueStats?.mostUsed) return [];
 
     const estudiosMap = new Map<string, { name: string; value: number }>();
 
-    venueStats.masUsados.forEach((local: any) => {
-      const estudioBase = local.nombre.split(" - ")[0];
+    venueStats.mostUsed.forEach((local) => {
+      const estudioBase = local.name.split(" - ")[0] || local.name;
 
       if (!estudiosMap.has(estudioBase)) {
         estudiosMap.set(estudioBase, {
@@ -430,8 +467,8 @@ export function EstudiosTab({
   }, [venueStats]);
 
   // Agrupar ocupación por estudio base con promedio ponderado
-  const ocupacionPorSalonData = useMemo(() => {
-    if (!venueStats?.ocupacionPorSalon) return [];
+  const ocupacionPorSalonData = useMemo((): OccupationChartDataPoint[] => {
+    if (!venueStats?.occupationByVenue) return [];
 
     const estudiosMap = new Map<
       string,
@@ -443,8 +480,8 @@ export function EstudiosTab({
       }
     >();
 
-    venueStats.ocupacionPorSalon.forEach((salon: any) => {
-      const estudioBase = salon.nombre.split(" - ")[0];
+    venueStats.occupationByVenue.forEach((salon) => {
+      const estudioBase = salon.name.split(" - ")[0] || salon.name;
 
       if (!estudiosMap.has(estudioBase)) {
         estudiosMap.set(estudioBase, {
@@ -456,8 +493,8 @@ export function EstudiosTab({
       }
 
       const estudio = estudiosMap.get(estudioBase)!;
-      estudio.clases += salon.clases;
-      estudio.ocupacionPonderada += salon.ocupacion * salon.clases;
+      estudio.clases += salon.classes;
+      estudio.ocupacionPonderada += salon.occupation * salon.classes;
     });
 
     // Calcular ocupación promedio ponderada
@@ -854,7 +891,7 @@ export function EstudiosTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedEstadisticas.map((estudio: any) => (
+                {sortedEstadisticas.map((estudio) => (
                   <TableRow key={estudio.nombre} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
                       {estudio.nombre}
@@ -944,19 +981,19 @@ export function EstudiosTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {disciplinasPorEstudio.map((estudio: any) => {
+                {disciplinasPorEstudio.map((estudio) => {
                   // Calcular totales para este estudio
                   const totalClases = estudio.disciplinas.reduce(
-                    (sum: number, disc: any) => sum + disc.clases,
+                    (sum, disc) => sum + disc.clases,
                     0
                   );
                   const totalOcupacion =
                     estudio.disciplinas.reduce(
-                      (sum: number, disc: any) => sum + (disc.ocupacion || 0),
+                      (sum, disc) => sum + (disc.ocupacion || 0),
                       0
                     ) / estudio.disciplinas.length || 0;
                   const totalPago = estudio.disciplinas.reduce(
-                    (sum: number, disc: any) => sum + (disc.pagoTotal || 0),
+                    (sum, disc) => sum + (disc.pagoTotal || 0),
                     0
                   );
                   const totalPromedio =
@@ -965,41 +1002,39 @@ export function EstudiosTab({
                   return (
                     <React.Fragment key={estudio.nombre}>
                       {/* Filas de disciplinas individuales */}
-                      {estudio.disciplinas.map(
-                        (disciplina: any, index: number) => (
-                          <TableRow
-                            key={`${estudio.nombre}-${disciplina.disciplinaId}`}
-                            className="hover:bg-muted/50"
-                          >
-                            <TableCell className="font-medium">
-                              {index === 0 ? estudio.nombre : ""}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: disciplina.color }}
-                                />
-                                <span>{disciplina.nombre}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {disciplina.clases}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <span className="text-sm font-medium">
-                                {Math.round(disciplina.ocupacion || 0)}%
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {formatCurrency(disciplina.promedioPorClase || 0)}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {formatCurrency(disciplina.pagoTotal || 0)}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      )}
+                      {estudio.disciplinas.map((disciplina, index) => (
+                        <TableRow
+                          key={`${estudio.nombre}-${disciplina.disciplinaId}`}
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell className="font-medium">
+                            {index === 0 ? estudio.nombre : ""}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: disciplina.color }}
+                              />
+                              <span>{disciplina.nombre}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {disciplina.clases}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="text-sm font-medium">
+                              {Math.round(disciplina.ocupacion || 0)}%
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {formatCurrency(disciplina.promedioPorClase || 0)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {formatCurrency(disciplina.pagoTotal || 0)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
                       {/* Fila de total para este estudio */}
                       <TableRow className="bg-muted/30 font-semibold">
                         <TableCell className="font-bold">

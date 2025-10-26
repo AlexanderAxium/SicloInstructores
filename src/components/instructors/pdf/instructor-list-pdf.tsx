@@ -1,6 +1,36 @@
 import type { InstructorFromAPI } from "@/types/instructor";
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
+// Extended type for PDF with all the data from getAll endpoint
+type InstructorForPDF = InstructorFromAPI & {
+  disciplines?: Array<{
+    id: string;
+    name: string;
+    color?: string | null;
+  }>;
+  classes?: Array<{
+    id: string;
+    date: string;
+    totalReservations: number;
+    paidReservations: number;
+    spots: number;
+    discipline: {
+      name: string;
+      color?: string | null;
+    };
+  }>;
+  payments?: Array<{
+    id: string;
+    amount: number;
+    finalPayment: number;
+    status: string;
+    period: {
+      number: number;
+      year: number;
+    };
+  }>;
+};
+
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -27,18 +57,19 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#e0e0e0",
-    padding: 5,
+    padding: 3,
     fontWeight: "bold",
-    fontSize: 9,
+    fontSize: 8,
   },
   tableRow: {
     flexDirection: "row",
     borderBottom: "1pt solid #e0e0e0",
-    padding: 5,
-    fontSize: 9,
+    padding: 3,
+    fontSize: 8,
   },
   tableCell: {
     flex: 1,
+    paddingHorizontal: 2,
   },
   footer: {
     position: "absolute",
@@ -79,7 +110,7 @@ const styles = StyleSheet.create({
 });
 
 interface InstructorListPDFProps {
-  instructors: InstructorFromAPI[];
+  instructors: InstructorForPDF[];
   totalCount: number;
 }
 
@@ -124,20 +155,42 @@ export function InstructorListPDF({
         {/* Tabla de Instructores */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableCell, { flex: 2 }]}>Nombre</Text>
-            <Text style={styles.tableCell}>DNI</Text>
+            <Text style={[styles.tableCell, { flex: 1.5 }]}>Nombre</Text>
+            <Text style={[styles.tableCell, { flex: 1.5 }]}>
+              Nombre Completo
+            </Text>
             <Text style={styles.tableCell}>Teléfono</Text>
+            <Text style={styles.tableCell}>DNI</Text>
+            <Text style={[styles.tableCell, { flex: 1.5 }]}>Disciplinas</Text>
+            <Text style={styles.tableCell}>Total Clases</Text>
+            <Text style={styles.tableCell}>Total Pagos</Text>
             <Text style={styles.tableCell}>Estado</Text>
+            <Text style={styles.tableCell}>Fecha Creación</Text>
           </View>
           {instructors.map((instructor) => (
             <View key={instructor.id} style={styles.tableRow}>
-              <Text style={[styles.tableCell, { flex: 2 }]}>
+              <Text style={[styles.tableCell, { flex: 1.5 }]}>
                 {instructor.name}
               </Text>
-              <Text style={styles.tableCell}>{instructor.DNI || "N/A"}</Text>
+              <Text style={[styles.tableCell, { flex: 1.5 }]}>
+                {instructor.fullName || "N/A"}
+              </Text>
               <Text style={styles.tableCell}>{instructor.phone || "N/A"}</Text>
+              <Text style={styles.tableCell}>{instructor.DNI || "N/A"}</Text>
+              <Text style={[styles.tableCell, { flex: 1.5 }]}>
+                {instructor.disciplines?.map((d) => d.name).join(", ") || "N/A"}
+              </Text>
+              <Text style={styles.tableCell}>
+                {instructor.classes?.length || 0}
+              </Text>
+              <Text style={styles.tableCell}>
+                {instructor.payments?.length || 0}
+              </Text>
               <Text style={styles.tableCell}>
                 {instructor.active ? "Activo" : "Inactivo"}
+              </Text>
+              <Text style={styles.tableCell}>
+                {_formatDate(instructor.createdAt)}
               </Text>
             </View>
           ))}

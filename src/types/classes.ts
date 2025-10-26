@@ -94,3 +94,91 @@ export interface ClassWithRelations extends Class {
   };
   covers?: Cover[];
 }
+
+// Types for class creation
+export interface CreateClassData {
+  country: string;
+  city: string;
+  studio: string;
+  room: string;
+  spots: number;
+  totalReservations: number;
+  waitingLists: number;
+  complimentary: number;
+  paidReservations: number;
+  specialText?: string;
+  date: string;
+  disciplineId: string;
+  instructorId: string;
+  periodId: string;
+  week: number;
+  isVersus: boolean;
+  versusNumber?: number;
+}
+
+export interface UpdateClassData {
+  country: string;
+  city: string;
+  studio: string;
+  room: string;
+  spots: number;
+  totalReservations: number;
+  waitingLists: number;
+  complimentary: number;
+  paidReservations: number;
+  specialText?: string;
+  date: string;
+  isVersus: boolean;
+  versusNumber?: number;
+}
+
+// Types for versus class creation
+export interface VersusClassData extends CreateClassData {
+  isVersus: true;
+  versusNumber: number;
+}
+
+export interface VersusFormData {
+  // Campos compartidos
+  country: string;
+  city: string;
+  studio: string;
+  room: string;
+  spots: number;
+  totalReservations: number;
+  waitingLists: number;
+  complimentary: number;
+  paidReservations: number;
+  specialText?: string;
+  date: string;
+  disciplineId: string;
+  periodId: string;
+  week: number;
+  versusNumber: number;
+  // Instructores para las clases versus
+  instructors: string[];
+}
+
+// Dialog props types
+export interface ClassDialogProps {
+  classData: ClassFromAPI | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: CreateClassData | UpdateClassData) => void;
+  isLoading: boolean;
+}
+
+export interface VersusDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: VersusClassData[]) => void;
+  isLoading: boolean;
+}
+
+// API-specific types (data comes as strings from API)
+export interface ClassFromAPI
+  extends Omit<ClassWithRelations, "date" | "createdAt" | "updatedAt"> {
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+}

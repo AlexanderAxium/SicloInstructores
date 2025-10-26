@@ -1,30 +1,17 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
+import { ClassDialog } from "@/components/classes/class-dialog";
 import { ClassesListPDF } from "@/components/classes/pdf/classes-list-pdf";
+import { VersusDialog } from "@/components/classes/versus-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type {
   TableAction,
@@ -43,8 +30,14 @@ import { usePDFExport } from "@/hooks/usePDFExport";
 import { usePagination } from "@/hooks/usePagination";
 import { usePeriodFilter } from "@/hooks/usePeriodFilter";
 import { useRBAC } from "@/hooks/useRBAC";
+import type {
+  ClassFromAPI,
+  ClassWithRelations,
+  CreateClassData,
+  UpdateClassData,
+  VersusClassData,
+} from "@/types/classes";
 import { trpc } from "@/utils/trpc";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Calendar,
   ChevronDown,
@@ -58,12 +51,11 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const updateClassSchema = z.object({
+const _updateClassSchema = z.object({
   country: z.string().min(1, "País es requerido"),
   city: z.string().min(1, "Ciudad es requerida"),
   studio: z.string().min(1, "Estudio es requerido"),
@@ -79,7 +71,7 @@ const updateClassSchema = z.object({
   versusNumber: z.number().optional(),
 });
 
-const createClassSchema = z.object({
+const _createClassSchema = z.object({
   country: z.string().min(1, "País es requerido"),
   city: z.string().min(1, "Ciudad es requerida"),
   studio: z.string().min(1, "Estudio es requerido"),
@@ -99,527 +91,12 @@ const createClassSchema = z.object({
   versusNumber: z.number().optional(),
 });
 
-type Class = {
-  id: string;
-  country: string;
-  city: string;
-  disciplineId: string;
-  week: number;
-  studio: string;
-  instructorId: string;
-  periodId: string;
-  room: string;
-  totalReservations: number;
-  waitingLists: number;
-  complimentary: number;
-  spots: number;
-  paidReservations: number;
-  specialText?: string | null;
-  date: string;
-  replacementInstructorId?: string | null;
-  penaltyType?: string | null;
-  penaltyPoints?: number | null;
-  isVersus: boolean;
-  versusNumber?: number | null;
-  createdAt: string;
-  updatedAt: string;
-  instructor: {
-    id: string;
-    name: string;
-  };
-  discipline: {
-    id: string;
-    name: string;
-    color?: string | null;
-  };
-  period: {
-    id: string;
-    number: number;
-    year: number;
-  };
-  replacementInstructor?: {
-    id: string;
-    name: string;
-  } | null;
-};
-
-type Period = {
-  id: string;
-  number: number;
-  year: number;
-};
-
-interface ClassDialogProps {
-  classData: Class | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: z.infer<typeof createClassSchema>) => void;
-  isLoading: boolean;
-}
-
-function ClassDialog({
-  classData,
-  isOpen,
-  onClose,
-  onSubmit,
-  isLoading,
-}: ClassDialogProps) {
-  const isEdit = !!classData;
-
-  // Obtener datos para los selectores
-  const { data: disciplinesData } = trpc.disciplines.getAll.useQuery();
-  const { data: instructorsData } = trpc.instructor.getAll.useQuery();
-  const { data: periodsData } = trpc.periods.getAll.useQuery();
-
-  const disciplines = disciplinesData?.disciplines || [];
-  const instructors = instructorsData?.instructors || [];
-  const periods = periodsData?.periods || [];
-
-  const form = useForm({
-    resolver: zodResolver(createClassSchema),
-    defaultValues: isEdit
-      ? {
-          country: classData?.country || "",
-          city: classData?.city || "",
-          studio: classData?.studio || "",
-          room: classData?.room || "",
-          spots: classData?.spots || 0,
-          totalReservations: classData?.totalReservations || 0,
-          waitingLists: classData?.waitingLists || 0,
-          complimentary: classData?.complimentary || 0,
-          paidReservations: classData?.paidReservations || 0,
-          specialText: classData?.specialText || "",
-          date: classData?.date
-            ? new Date(classData.date).toISOString().split("T")[0]
-            : "",
-          isVersus: classData?.isVersus || false,
-          versusNumber: classData?.versusNumber || 0,
-        }
-      : {
-          country: "",
-          city: "",
-          studio: "",
-          room: "",
-          spots: 0,
-          totalReservations: 0,
-          waitingLists: 0,
-          complimentary: 0,
-          paidReservations: 0,
-          specialText: "",
-          date: "",
-          disciplineId: "",
-          instructorId: "",
-          periodId: "",
-          week: 1,
-          isVersus: false,
-          versusNumber: 0,
-        },
-  });
-
-  // Resetear el formulario cuando cambie la clase
-  useEffect(() => {
-    if (classData) {
-      form.reset({
-        country: classData.country,
-        city: classData.city,
-        studio: classData.studio,
-        room: classData.room,
-        spots: classData.spots,
-        totalReservations: classData.totalReservations,
-        waitingLists: classData.waitingLists,
-        complimentary: classData.complimentary,
-        paidReservations: classData.paidReservations,
-        specialText: classData.specialText || "",
-        date: new Date(classData.date).toISOString().split("T")[0],
-        isVersus: classData.isVersus,
-        versusNumber: classData.versusNumber || 0,
-      });
-    } else {
-      form.reset({
-        country: "",
-        city: "",
-        studio: "",
-        room: "",
-        spots: 0,
-        totalReservations: 0,
-        waitingLists: 0,
-        complimentary: 0,
-        paidReservations: 0,
-        specialText: "",
-        date: "",
-        disciplineId: "",
-        instructorId: "",
-        periodId: "",
-        week: 1,
-        isVersus: false,
-        versusNumber: 0,
-      });
-    }
-  }, [classData, form]);
-
-  const handleSubmit = (data: z.infer<typeof createClassSchema>) => {
-    onSubmit(data);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar Clase" : "Nueva Clase"}</DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Modifica los datos de la clase."
-              : "Agrega una nueva clase al sistema."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>País *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Perú" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ciudad *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Lima" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="studio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estudio *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Studio 1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="room"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sala *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: Sala A" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {!isEdit && (
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="disciplineId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Disciplina *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar disciplina" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {disciplines?.map((discipline) => (
-                            <SelectItem
-                              key={discipline.id}
-                              value={discipline.id}
-                            >
-                              {discipline.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="instructorId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instructor *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar instructor" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {instructors?.map((instructor) => (
-                            <SelectItem
-                              key={instructor.id}
-                              value={instructor.id}
-                            >
-                              {instructor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="periodId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Período *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar período" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {periods?.map(
-                            (period: {
-                              id: string;
-                              number: number;
-                              year: number;
-                            }) => (
-                              <SelectItem key={period.id} value={period.id}>
-                                {period.number} - {period.year}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {!isEdit && (
-                <FormField
-                  control={form.control}
-                  name="week"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Semana *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={field.value || ""}
-                          onChange={(e) =>
-                            field.onChange(Number.parseInt(e.target.value) || 1)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="spots"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cupos *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(Number.parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="totalReservations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reservas Totales</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(Number.parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="waitingLists"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lista de Espera</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(Number.parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="complimentary"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cortesías</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(Number.parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="paidReservations"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reservas Pagadas</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(Number.parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="specialText"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Texto Especial</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Texto especial opcional" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Guardando..." : isEdit ? "Actualizar" : "Crear"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function ClasesPage() {
   const { user: _ } = useAuthContext();
   const { canManageUsers } = useRBAC();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogClass, setDialogClass] = useState<Class | null>(null);
+  const [isVersusDialogOpen, setIsVersusDialogOpen] = useState(false);
+  const [dialogClass, setDialogClass] = useState<ClassFromAPI | null>(null);
 
   // Hook para filtro de periodo compartido
   const { selectedPeriod, setSelectedPeriod } = usePeriodFilter();
@@ -678,6 +155,10 @@ export default function ClasesPage() {
       utils.classes.getWithFilters.invalidate();
       handleDialogClose();
     },
+    onError: (error) => {
+      console.error("Error creating class:", error);
+      toast.error(`Error al crear la clase: ${error.message}`);
+    },
   });
 
   const updateClass = trpc.classes.update.useMutation({
@@ -685,26 +166,38 @@ export default function ClasesPage() {
       utils.classes.getWithFilters.invalidate();
       handleDialogClose();
     },
+    onError: (error) => {
+      console.error("Error updating class:", error);
+      toast.error(`Error al actualizar la clase: ${error.message}`);
+    },
   });
 
   const deleteClass = trpc.classes.delete.useMutation({
     onSuccess: () => {
       utils.classes.getWithFilters.invalidate();
     },
+    onError: (error) => {
+      console.error("Error deleting class:", error);
+      toast.error(`Error al eliminar la clase: ${error.message}`);
+    },
   });
 
   // Handlers
-  const handleCreate = () => {
+  const handleCreateSimple = () => {
     setDialogClass(null);
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (classData: Class) => {
+  const handleCreateVersus = () => {
+    setIsVersusDialogOpen(true);
+  };
+
+  const handleEdit = (classData: ClassFromAPI) => {
     setDialogClass(classData);
     setIsDialogOpen(true);
   };
 
-  const handleView = (classData: Class) => {
+  const handleView = (classData: ClassFromAPI) => {
     // Mostrar información completa de la clase en un modal
     const classInfo = `
 📅 INFORMACIÓN DE LA CLASE
@@ -729,13 +222,13 @@ export default function ClasesPage() {
 ${classData.isVersus ? `🏆 CLASE VERSUS #${classData.versusNumber || "N/A"}` : ""}
 ${classData.specialText ? `📝 Texto Especial: ${classData.specialText}` : ""}
 ${classData.penaltyType ? `⚠️ Penalización: ${classData.penaltyType} (${classData.penaltyPoints} puntos)` : ""}
-${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData.replacementInstructor?.name || "N/A"}` : ""}
+${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData.replacementInstructorId}` : ""}
     `.trim();
 
     alert(classInfo);
   };
 
-  const handleDelete = (classData: Class) => {
+  const handleDelete = (classData: ClassFromAPI) => {
     if (
       confirm(
         `¿Estás seguro de eliminar la clase del ${new Date(classData.date).toLocaleDateString()}?`
@@ -750,24 +243,89 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
     setDialogClass(null);
   };
 
+  const handleVersusDialogClose = () => {
+    setIsVersusDialogOpen(false);
+  };
+
+  const handleVersusDialogSubmit = (data: VersusClassData[]) => {
+    console.log("=== DEBUG handleVersusDialogSubmit ===");
+    console.log("data:", data);
+    console.log("Array.isArray(data):", Array.isArray(data));
+
+    console.log("CREANDO MÚLTIPLES CLASES VERSUS");
+    // Crear múltiples clases (versus)
+
+    data.forEach((classData, index) => {
+      console.log(`Creando clase ${index + 1}:`, classData);
+      createClass.mutate(classData, {
+        onSuccess: () => {
+          console.log(`Clase ${index + 1} creada exitosamente`);
+          utils.classes.getWithFilters.invalidate();
+        },
+        onError: (error) => {
+          console.error(`Error creando clase ${index + 1}:`, error);
+          toast.error(`Error al crear las clases versus: ${error.message}`);
+          handleVersusDialogClose();
+        },
+      });
+    });
+
+    toast.success(`Creando ${data.length} clases versus...`);
+    handleVersusDialogClose();
+  };
+
   const handleDialogSubmit = (
-    data: z.infer<typeof updateClassSchema> | z.infer<typeof createClassSchema>
+    data: CreateClassData | UpdateClassData | VersusClassData[]
   ) => {
+    console.log("=== DEBUG handleDialogSubmit ===");
+    console.log("dialogClass:", dialogClass);
+    console.log("data:", data);
+    console.log("Array.isArray(data):", Array.isArray(data));
+
     if (dialogClass) {
       // Editar clase existente
+      console.log("EDITANDO CLASE EXISTENTE");
       updateClass.mutate({
         id: dialogClass.id,
         ...data,
       });
     } else {
-      // Crear nueva clase - asegurar que data tiene los campos requeridos
-      if (
-        "disciplineId" in data &&
-        "instructorId" in data &&
-        "periodId" in data &&
-        "week" in data
-      ) {
-        createClass.mutate(data);
+      // Verificar si data es un array (para clases versus)
+      if (Array.isArray(data)) {
+        console.log("CREANDO MÚLTIPLES CLASES VERSUS");
+        // Crear múltiples clases (versus)
+
+        data.forEach((classData, index) => {
+          console.log(`Creando clase ${index + 1}:`, classData);
+          createClass.mutate(classData, {
+            onSuccess: () => {
+              console.log(`Clase ${index + 1} creada exitosamente`);
+              utils.classes.getWithFilters.invalidate();
+            },
+            onError: (error) => {
+              console.error(`Error creando clase ${index + 1}:`, error);
+              toast.error(`Error al crear las clases versus: ${error.message}`);
+              handleDialogClose();
+            },
+          });
+        });
+
+        toast.success(`Creando ${data.length} clases versus...`);
+        handleDialogClose();
+      } else {
+        console.log("CREANDO CLASE NORMAL");
+        // Crear nueva clase - asegurar que data tiene los campos requeridos
+        if (
+          "disciplineId" in data &&
+          "instructorId" in data &&
+          "periodId" in data &&
+          "week" in data
+        ) {
+          console.log("Datos válidos para clase normal:", data);
+          createClass.mutate(data);
+        } else {
+          console.log("ERROR: Datos inválidos para clase normal");
+        }
       }
     }
   };
@@ -788,7 +346,7 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
   };
 
   // Configuración de columnas para la tabla
-  const columns: TableColumn<Class>[] = [
+  const columns: TableColumn<ClassFromAPI>[] = [
     {
       key: "date",
       title: "Fecha",
@@ -866,7 +424,7 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<Class>[] = [
+  const actions: TableAction<ClassFromAPI>[] = [
     {
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
@@ -994,8 +552,9 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
       return;
     }
 
-    const currentPeriod = (periods as Period[]).find(
-      (p) => p.id === selectedPeriod
+    const currentPeriod = periods.find(
+      (p: { id: string; number: number; year: number }) =>
+        p.id === selectedPeriod
     );
     const periodLabel = currentPeriod
       ? `P${currentPeriod.number} - ${currentPeriod.year}`
@@ -1048,10 +607,25 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
             </DropdownMenuContent>
           </DropdownMenu>
           {canManageUsers && (
-            <Button size="sm" variant="edit" onClick={handleCreate}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              <span>Nueva Clase</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="edit">
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  <span>Nueva Clase</span>
+                  <ChevronDown className="h-4 w-4 ml-1.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleCreateSimple}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Clase Simple
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCreateVersus}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Clase Versus
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
@@ -1237,7 +811,7 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
       </div>
 
       {/* Tabla con ScrollableTable */}
-      <ScrollableTable<Class>
+      <ScrollableTable<ClassFromAPI>
         data={classes}
         columns={columns}
         loading={isLoading}
@@ -1258,6 +832,14 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
         onClose={handleDialogClose}
         onSubmit={handleDialogSubmit}
         isLoading={createClass.isPending || updateClass.isPending}
+      />
+
+      {/* Dialog para crear clase versus */}
+      <VersusDialog
+        isOpen={isVersusDialogOpen}
+        onClose={handleVersusDialogClose}
+        onSubmit={handleVersusDialogSubmit}
+        isLoading={createClass.isPending}
       />
     </div>
   );
