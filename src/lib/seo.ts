@@ -2,56 +2,57 @@ import type { Metadata } from "next";
 
 export const defaultMetadata: Metadata = {
   title: {
-    default: "MiApp - Plataforma de Productividad",
-    template: "%s | MiApp",
+    default: "Siclo Instructores - Gestión de Pago",
+    template: "%s | Siclo Instructores",
   },
   description:
-    "Una plataforma moderna para gestionar proyectos, colaborar en equipo y alcanzar tus objetivos con herramientas diseñadas para el éxito.",
+    "Plataforma integral para la gestión de instructores y pagos de Siclo. Administra tus instructores, calcula pagos y gestiona toda la información financiera de manera eficiente.",
   keywords: [
-    "productividad",
-    "gestión de proyectos",
-    "colaboración",
-    "equipo",
-    "objetivos",
-    "herramientas",
+    "siclo",
+    "instructores",
+    "gestión de pago",
+    "pagos",
+    "administración",
     "plataforma",
+    "calculadora de pagos",
+    "gestión financiera",
   ],
-  authors: [{ name: "MiApp Team" }],
-  creator: "MiApp",
-  publisher: "MiApp",
+  authors: [{ name: "Siclo Team" }],
+  creator: "Siclo",
+  publisher: "Siclo",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.SITE_URL || "https://myapp.example.com"),
+  metadataBase: new URL(process.env.SITE_URL || "https://siclo.axium.com.pe"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "es_ES",
-    url: process.env.SITE_URL || "https://myapp.example.com",
-    title: "MiApp - Plataforma de Productividad",
+    url: process.env.SITE_URL || "https://siclo.axium.com.pe",
+    title: "Siclo Instructores - Gestión de Pago",
     description:
-      "Una plataforma moderna para gestionar proyectos, colaborar en equipo y alcanzar tus objetivos.",
-    siteName: "MiApp",
+      "Plataforma integral para la gestión de instructores y pagos de Siclo. Administra tus instructores, calcula pagos y gestiona toda la información financiera de manera eficiente.",
+    siteName: "Siclo Instructores",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "MiApp - Plataforma de Productividad",
+        alt: "Siclo Instructores - Gestión de Pago",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MiApp - Plataforma de Productividad",
+    title: "Siclo Instructores - Gestión de Pago",
     description:
-      "Una plataforma moderna para gestionar proyectos, colaborar en equipo y alcanzar tus objetivos.",
+      "Plataforma integral para la gestión de instructores y pagos de Siclo. Administra tus instructores, calcula pagos y gestiona toda la información financiera de manera eficiente.",
     images: ["/og-image.jpg"],
-    creator: "@miapp",
+    creator: "@siclo",
   },
   robots: {
     index: true,
@@ -83,7 +84,7 @@ export function generateMetadata({
   image?: string;
 }): Metadata {
   return {
-    title: title ? `${title} | MiApp` : defaultMetadata.title,
+    title: title ? `${title} | Siclo Instructores` : defaultMetadata.title,
     description: description || defaultMetadata.description,
     keywords: keywords || defaultMetadata.keywords,
     openGraph: {

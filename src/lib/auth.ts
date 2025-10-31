@@ -105,9 +105,9 @@ export const auth = betterAuth({
     corsOrigin:
       process.env.NODE_ENV === "production"
         ? [
-            process.env.SITE_URL || "https://myapp.example.com",
-            "https://myapp.example.com",
-            "https://www.myapp.example.com",
+            process.env.SITE_URL || "https://siclo.axium.com.pe",
+            "https://siclo.axium.com.pe",
+            "https://www.siclo.axium.com.pe",
           ]
         : ["http://localhost:3000"],
   },

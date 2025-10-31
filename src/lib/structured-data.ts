@@ -2,21 +2,21 @@ export function generateOrganizationSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "MiApp",
+    name: "Siclo Instructores",
     description:
-      "Una plataforma moderna para gestionar proyectos, colaborar en equipo y alcanzar tus objetivos.",
-    url: process.env.SITE_URL || "https://myapp.example.com",
-    logo: `${process.env.SITE_URL || "https://myapp.example.com"}/logo.png`,
+      "Plataforma integral para la gestión de instructores y pagos de Siclo. Administra tus instructores, calcula pagos y gestiona toda la información financiera de manera eficiente.",
+    url: process.env.SITE_URL || "https://siclo.axium.com.pe",
+    logo: `${process.env.SITE_URL || "https://siclo.axium.com.pe"}/logo.png`,
     sameAs: [
       // Agregar URLs de redes sociales cuando estén disponibles
-      // "https://twitter.com/miapp",
-      // "https://linkedin.com/company/miapp",
-      // "https://facebook.com/miapp"
+      // "https://twitter.com/siclo",
+      // "https://linkedin.com/company/siclo",
+      // "https://facebook.com/siclo"
     ],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",
-      email: "support@miapp.com",
+      email: "support@siclo.axium.com.pe",
     },
   };
 }
@@ -25,9 +25,9 @@ export function generateWebSiteSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "MiApp",
+    name: "Siclo Instructores",
     description:
-      "Una plataforma moderna para gestionar proyectos, colaborar en equipo y alcanzar tus objetivos.",
+      "Plataforma integral para la gestión de instructores y pagos de Siclo. Administra tus instructores, calcula pagos y gestiona toda la información financiera de manera eficiente.",
     url: process.env.SITE_URL!,
     potentialAction: {
       "@type": "SearchAction",
@@ -44,9 +44,9 @@ export function generateSoftwareApplicationSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "MiApp",
+    name: "Siclo Instructores",
     description:
-      "Una plataforma moderna para gestionar proyectos, colaborar en equipo y alcanzar tus objetivos.",
+      "Plataforma integral para la gestión de instructores y pagos de Siclo. Administra tus instructores, calcula pagos y gestiona toda la información financiera de manera eficiente.",
     url: process.env.SITE_URL!,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web Browser",
