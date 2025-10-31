@@ -12,9 +12,11 @@ import type { InstructorFromAPI, PeriodFromAPI } from "@/types/instructor";
 import type { InstructorPaymentFromAPI } from "@/types/payments";
 import {
   ArrowLeft,
+  Calculator,
   ChevronDown,
   Download,
   FileText,
+  Loader2,
   Printer,
 } from "lucide-react";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -23,10 +25,12 @@ interface PageHeaderProps {
   instructor: InstructorFromAPI;
   period: PeriodFromAPI;
   payment: InstructorPaymentFromAPI;
-  getStatusColor: (status: string) => string;
-  togglePaymentStatus: () => void;
   handleExportPDF: () => void;
   handlePrint: () => void;
+  handleStatusChange: (status: string) => void;
+  handleRecalculate?: () => void;
+  isChangingStatus?: boolean;
+  isRecalculating?: boolean;
   router: AppRouterInstance;
 }
 
@@ -34,12 +38,37 @@ export function PageHeader({
   instructor,
   period,
   payment,
-  getStatusColor,
-  togglePaymentStatus,
   handleExportPDF,
   handlePrint,
+  handleStatusChange,
+  handleRecalculate,
+  isChangingStatus = false,
+  isRecalculating = false,
   router,
 }: PageHeaderProps) {
+  // Status mapping with Spanish translations and colors
+  const statusMap = {
+    PENDING: {
+      label: "Pendiente",
+      color: "bg-yellow-500/15 text-yellow-500 border-yellow-500",
+    },
+    APPROVED: {
+      label: "Aprobado",
+      color: "bg-blue-500/15 text-blue-500 border-blue-500",
+    },
+    PAID: {
+      label: "Pagado",
+      color: "bg-green-500/15 text-green-500 border-green-500",
+    },
+    CANCELLED: {
+      label: "Cancelado",
+      color: "bg-red-500/15 text-red-500 border-red-500",
+    },
+  };
+
+  const currentStatus =
+    statusMap[payment.status as keyof typeof statusMap] || statusMap.PENDING;
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-card rounded-lg p-3 sm:p-4 shadow-sm border border-border">
       {/* Left section - Back button and info */}
@@ -59,13 +88,6 @@ export function PageHeader({
           </h1>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
-            <Badge
-              variant="outline"
-              className={`text-xs sm:text-sm font-medium ${getStatusColor(payment.status)} w-max`}
-            >
-              {payment.status === "PAID" ? "APROBADO" : "PENDIENTE"}
-            </Badge>
-
             <div className="flex items-center gap-1">
               <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {instructor.name} -{" "}
@@ -78,25 +100,78 @@ export function PageHeader({
 
       {/* Right section - Actions */}
       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end sm:justify-normal mt-2 sm:mt-0">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={togglePaymentStatus}
-          className="h-8 sm:h-9 text-xs sm:text-sm bg-card border border-border hover:bg-muted/10"
-        >
-          {payment.status === "PENDING" ? "Aprobar" : "Marcar Pendiente"}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={isChangingStatus}>
+            <Button
+              size="sm"
+              className={`h-7 sm:h-8 px-2 sm:px-3 text-xs border ${currentStatus.color}`}
+            >
+              {isChangingStatus ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                  <span className="text-xs">Actualizando...</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs">{currentStatus.label}</span>
+                  <ChevronDown className="ml-1.5 h-3 w-3" />
+                </>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="end"
+            className="bg-card border border-border w-40"
+          >
+            {Object.entries(statusMap).map(([status, config]) => (
+              <DropdownMenuItem
+                key={status}
+                className="cursor-pointer text-xs sm:text-sm hover:bg-muted/10"
+                onClick={() => handleStatusChange(status)}
+              >
+                <div
+                  className={`w-2 h-2 rounded-full mr-2 ${config.color.split(" ")[0]}`}
+                />
+                {config.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Recalculate Button */}
+        {handleRecalculate && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRecalculate}
+            disabled={isRecalculating}
+            className="h-7 sm:h-8 px-2 sm:px-3 text-xs bg-card border border-border hover:bg-muted/10"
+          >
+            {isRecalculating ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                <span className="text-xs">Recalculando...</span>
+              </>
+            ) : (
+              <>
+                <Calculator className="mr-1.5 h-3 w-3" />
+                <span className="text-xs">Recalcular</span>
+              </>
+            )}
+          </Button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="h-8 sm:h-9 text-xs sm:text-sm bg-card border border-border hover:bg-muted/10"
+              className="h-7 sm:h-8 px-2 sm:px-3 text-xs bg-card border border-border hover:bg-muted/10"
             >
-              <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="sm:inline">Exportar</span>
-              <ChevronDown className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <Download className="mr-1.5 h-3 w-3" />
+              <span className="text-xs">Exportar</span>
+              <ChevronDown className="ml-1.5 h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
 

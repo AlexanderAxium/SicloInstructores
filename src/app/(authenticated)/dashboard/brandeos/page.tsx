@@ -36,6 +36,7 @@ import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { usePeriodFilter } from "@/hooks/usePeriodFilter";
 import { useRBAC } from "@/hooks/useRBAC";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -289,7 +290,25 @@ function BrandeoDialog({
 }
 
 export default function BrandeosPage() {
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para brandeos
+  const canReadBrandeo = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.BRANDEO
+  );
+  const canCreateBrandeo = hasPermission(
+    PermissionAction.CREATE,
+    PermissionResource.BRANDEO
+  );
+  const canUpdateBrandeo = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.BRANDEO
+  );
+  const canDeleteBrandeo = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.BRANDEO
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogBrandeo, setDialogBrandeo] = useState<Brandeo | null>(null);
 
@@ -467,28 +486,31 @@ export default function BrandeosPage() {
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<Brandeo>[] = [
-    {
+  const actions: TableAction<Brandeo>[] = [];
+
+  if (canReadBrandeo) {
+    actions.push({
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleView,
-    },
-  ];
+    });
+  }
 
-  if (canManageUsers) {
-    actions.push(
-      {
-        label: "Editar",
-        icon: <Edit className="h-4 w-4" />,
-        onClick: handleEdit,
-      },
-      {
-        label: "Eliminar",
-        icon: <Trash2 className="h-4 w-4" />,
-        onClick: handleDelete,
-        variant: "destructive",
-      }
-    );
+  if (canUpdateBrandeo) {
+    actions.push({
+      label: "Editar",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEdit,
+    });
+  }
+
+  if (canDeleteBrandeo) {
+    actions.push({
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDelete,
+      variant: "destructive",
+    });
   }
 
   // Información de paginación
@@ -503,6 +525,11 @@ export default function BrandeosPage() {
 
   // Export handler
   const handleExportExcel = async () => {
+    if (!canReadBrandeo) {
+      toast.error("No tienes permisos para exportar brandeos");
+      return;
+    }
+
     if (selectedPeriod === "all") {
       toast.error("Por favor selecciona un período específico para exportar");
       return;
@@ -550,6 +577,19 @@ export default function BrandeosPage() {
     });
   };
 
+  if (!canReadBrandeo) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver brandeos.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -570,7 +610,7 @@ export default function BrandeosPage() {
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />
             Exportar Excel
           </Button>
-          {canManageUsers && (
+          {canCreateBrandeo && (
             <Button size="sm" variant="edit" onClick={handleCreate}>
               <Plus className="h-4 w-4 mr-1.5" />
               <span>Nuevo Brandeo</span>

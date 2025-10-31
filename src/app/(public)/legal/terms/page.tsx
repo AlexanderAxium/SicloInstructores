@@ -19,9 +19,10 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Al acceder y utilizar MyApp, usted acepta estar sujeto a estos
-              términos y condiciones de uso. Si no está de acuerdo con alguna
-              parte de estos términos, no debe utilizar nuestro servicio.
+              Al acceder y utilizar Siclo Instructores, usted acepta estar
+              sujeto a estos términos y condiciones de uso. Si no está de
+              acuerdo con alguna parte de estos términos, no debe utilizar
+              nuestro servicio.
             </p>
             <p className="text-muted-foreground">
               Estos términos se aplican a todos los visitantes, usuarios y otras
@@ -36,9 +37,10 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              MyApp es una plataforma moderna de gestión que permite a los
-              usuarios gestionar contenido, usuarios y configuraciones, y
-              utilizar herramientas de análisis y automatización.
+              Siclo Instructores es una plataforma moderna de gestión que
+              permite a los usuarios gestionar instructores, clases, pagos y
+              configuraciones, y utilizar herramientas de análisis y
+              automatización.
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
               <li>Gestión de usuarios y roles</li>
@@ -111,8 +113,8 @@ export default function TermsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              MyApp se proporciona "tal como está" sin garantías de ningún tipo.
-              No somos responsables por:
+              Siclo Instructores se proporciona "tal como está" sin garantías de
+              ningún tipo. No somos responsables por:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground">
               <li>Pérdidas derivadas del uso de la plataforma</li>

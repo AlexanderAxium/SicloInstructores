@@ -166,7 +166,7 @@ export const coversRouter = router({
         classId?: string;
         justification?: "PENDING" | "APPROVED" | "REJECTED";
       } = {
-        tenantId: ctx.user?.tenantId || undefined,
+        tenantId: ctx.user?.tenantId || ctx.instructor?.tenantId || undefined,
       };
 
       if (input.search) {
@@ -292,8 +292,9 @@ export const coversRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       // Verify original instructor exists
@@ -352,7 +353,7 @@ export const coversRouter = router({
           fullHousePayment: input.fullHousePayment,
           comments: input.comments,
           nameChange: input.nameChange,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         include: {
           originalInstructor: {
@@ -410,8 +411,9 @@ export const coversRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       const { id, ...updateData } = input;
@@ -429,7 +431,7 @@ export const coversRouter = router({
       const cover = await prisma.cover.update({
         where: {
           id,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         data: updateData,
         include: {
@@ -478,14 +480,15 @@ export const coversRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       await prisma.cover.delete({
         where: {
           id: input.id,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
       });
 
@@ -503,7 +506,7 @@ export const coversRouter = router({
       const cover = await prisma.cover.findUnique({
         where: {
           id: input.coverId,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         include: {
           originalInstructor: {
@@ -563,7 +566,7 @@ export const coversRouter = router({
             { originalInstructorId: input.instructorId },
             { replacementInstructorId: input.instructorId },
           ],
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         include: {
           originalInstructor: {
@@ -637,7 +640,7 @@ export const coversRouter = router({
       const covers = await prisma.cover.findMany({
         where: {
           periodId: input.periodId,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         include: {
           originalInstructor: {

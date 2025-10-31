@@ -1,8 +1,9 @@
 "use client";
 
 import { useAuthContext } from "@/AuthContext";
+import { SidebarSkeleton } from "@/components/dashboard/SidebarSkeleton";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,49 +12,48 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { loading, isAuthenticated } = useAuthContext();
   const router = useRouter();
+  const [checkingInstructor, setCheckingInstructor] = useState(true);
+
+  // Check if user is an instructor (only if NOT authenticated as regular user)
+  useEffect(() => {
+    // Wait for loading to finish before checking
+    if (loading) {
+      return;
+    }
+
+    const instructorToken = localStorage.getItem("instructorToken");
+
+    // If user is authenticated as regular user, clear instructor token if exists
+    if (isAuthenticated && instructorToken) {
+      localStorage.removeItem("instructorToken");
+      localStorage.removeItem("instructorData");
+      setCheckingInstructor(false);
+      return;
+    }
+
+    // Only redirect to instructor if:
+    // 1. User is NOT authenticated as regular user (better-auth)
+    // 2. AND has instructorToken in localStorage
+    if (instructorToken && !isAuthenticated) {
+      // User is an instructor (not a regular user), redirect to instructor page
+      router.push("/instructor");
+      return;
+    }
+
+    setCheckingInstructor(false);
+  }, [router, isAuthenticated, loading]);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!checkingInstructor && !loading && !isAuthenticated) {
       router.push("/");
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, isAuthenticated, router, checkingInstructor]);
 
-  if (loading) {
+  if (loading || checkingInstructor) {
     return (
       <div className="min-h-screen bg-background">
         <div className="flex">
-          {/* Sidebar with skeleton */}
-          <div className="w-64 bg-primary h-screen p-4">
-            <div className="space-y-4">
-              {/* Logo skeleton */}
-              <div className="h-8 bg-white/20 rounded animate-pulse" />
-
-              {/* Navigation items skeleton */}
-              <div className="space-y-2">
-                {Array.from({ length: 6 }, (_, i) => (
-                  <div
-                    key={`nav-skeleton-${i}`}
-                    className="flex items-center space-x-3"
-                  >
-                    <div className="h-4 w-4 bg-white/20 rounded animate-pulse" />
-                    <div className="h-4 bg-white/20 rounded animate-pulse flex-1" />
-                  </div>
-                ))}
-              </div>
-
-              {/* User section skeleton */}
-              <div className="mt-8 pt-4 border-t border-white/20">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 bg-white/20 rounded-full animate-pulse" />
-                  <div className="space-y-1">
-                    <div className="h-3 bg-white/20 rounded animate-pulse w-20" />
-                    <div className="h-3 bg-white/20 rounded animate-pulse w-16" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <SidebarSkeleton />
           {/* Main content with spinner */}
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">

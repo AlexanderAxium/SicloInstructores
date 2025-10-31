@@ -126,7 +126,7 @@ export const periodsRouter = router({
         endDate?: { lte: Date };
         bonusCalculated?: boolean;
       } = {
-        tenantId: ctx.user?.tenantId || undefined,
+        tenantId: ctx.user?.tenantId || ctx.instructor?.tenantId || undefined,
       };
 
       if (input.search) {
@@ -202,8 +202,9 @@ export const periodsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       // Check if period with same number and year already exists
@@ -211,7 +212,7 @@ export const periodsRouter = router({
         where: {
           number: input.number,
           year: input.year,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
       });
 
@@ -240,7 +241,7 @@ export const periodsRouter = router({
           endDate,
           paymentDate,
           bonusCalculated: input.bonusCalculated,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
       });
 
@@ -261,8 +262,9 @@ export const periodsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       const { id, ...updateData } = input;
@@ -282,7 +284,7 @@ export const periodsRouter = router({
             where: {
               number,
               year,
-              tenantId: ctx.user.tenantId,
+              tenantId: tenantId,
               NOT: { id },
             },
           });
@@ -337,7 +339,7 @@ export const periodsRouter = router({
       const period = await prisma.period.update({
         where: {
           id,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         data: processedUpdateData,
       });
@@ -349,8 +351,9 @@ export const periodsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       // Check if period has related data
@@ -379,7 +382,7 @@ export const periodsRouter = router({
       await prisma.period.delete({
         where: {
           id: input.id,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
       });
 
@@ -390,14 +393,15 @@ export const periodsRouter = router({
   getStats: protectedProcedure
     .input(z.object({ periodId: z.string() }))
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       const period = await prisma.period.findUnique({
         where: {
           id: input.periodId,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         include: {
           _count: {
@@ -417,7 +421,7 @@ export const periodsRouter = router({
       const payments = await prisma.instructorPayment.findMany({
         where: {
           periodId: input.periodId,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         select: {
           amount: true,
@@ -444,7 +448,7 @@ export const periodsRouter = router({
       const classes = await prisma.class.findMany({
         where: {
           periodId: input.periodId,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         select: {
           totalReservations: true,

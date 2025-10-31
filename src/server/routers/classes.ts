@@ -143,6 +143,46 @@ export const classesRouter = router({
       };
     }),
 
+  // Get classes by instructor (public)
+  getByInstructor: publicProcedure
+    .input(z.object({ instructorId: z.string() }))
+    .query(async ({ input }) => {
+      const classes = await prisma.class.findMany({
+        where: {
+          instructorId: input.instructorId,
+        },
+        include: {
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+          instructor: {
+            select: {
+              id: true,
+              name: true,
+              fullName: true,
+            },
+          },
+          period: {
+            select: {
+              id: true,
+              number: true,
+              year: true,
+            },
+          },
+        },
+        orderBy: [{ date: "desc" }, { week: "desc" }],
+      });
+
+      return {
+        classes,
+        total: classes.length,
+      };
+    }),
+
   // Get classes with filters (protected)
   getWithFilters: protectedProcedure
     .input(
@@ -186,7 +226,7 @@ export const classesRouter = router({
         isVersus?: boolean;
         date?: Date | { gte?: Date; lte?: Date };
       } = {
-        tenantId: ctx.user?.tenantId || undefined,
+        tenantId: ctx.user?.tenantId || ctx.instructor?.tenantId || undefined,
       };
 
       if (input.search) {
@@ -314,8 +354,9 @@ export const classesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       // Verify instructor exists
@@ -361,7 +402,7 @@ export const classesRouter = router({
           date: new Date(input.date),
           isVersus: input.isVersus,
           versusNumber: input.versusNumber,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         include: {
           instructor: {
@@ -417,8 +458,9 @@ export const classesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       const { id, ...updateData } = input;
@@ -461,7 +503,7 @@ export const classesRouter = router({
       const classItem = await prisma.class.update({
         where: {
           id,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         data: dataToUpdate,
         include: {
@@ -496,14 +538,15 @@ export const classesRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       await prisma.class.delete({
         where: {
           id: input.id,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
       });
 
@@ -514,14 +557,15 @@ export const classesRouter = router({
   getStats: protectedProcedure
     .input(z.object({ classId: z.string() }))
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
       }
 
       const classItem = await prisma.class.findUnique({
         where: {
           id: input.classId,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         select: {
           id: true,

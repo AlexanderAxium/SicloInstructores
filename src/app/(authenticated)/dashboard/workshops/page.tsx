@@ -36,6 +36,7 @@ import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
 import type { Workshop as WorkshopType } from "@/types";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -339,7 +340,25 @@ function WorkshopDialog({
 
 export default function WorkshopsPage() {
   const { user: _ } = useAuthContext();
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para workshops
+  const canReadWorkshop = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.WORKSHOP
+  );
+  const canCreateWorkshop = hasPermission(
+    PermissionAction.CREATE,
+    PermissionResource.WORKSHOP
+  );
+  const canUpdateWorkshop = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.WORKSHOP
+  );
+  const canDeleteWorkshop = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.WORKSHOP
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogWorkshop, setDialogWorkshop] = useState<Workshop | null>(null);
 
@@ -530,28 +549,31 @@ export default function WorkshopsPage() {
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<Workshop>[] = [
-    {
+  const actions: TableAction<Workshop>[] = [];
+
+  if (canReadWorkshop) {
+    actions.push({
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleView,
-    },
-  ];
+    });
+  }
 
-  if (canManageUsers) {
-    actions.push(
-      {
-        label: "Editar",
-        icon: <Edit className="h-4 w-4" />,
-        onClick: handleEdit,
-      },
-      {
-        label: "Eliminar",
-        icon: <Trash2 className="h-4 w-4" />,
-        onClick: handleDelete,
-        variant: "destructive",
-      }
-    );
+  if (canUpdateWorkshop) {
+    actions.push({
+      label: "Editar",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEdit,
+    });
+  }
+
+  if (canDeleteWorkshop) {
+    actions.push({
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDelete,
+      variant: "destructive",
+    });
   }
 
   // Información de paginación
@@ -566,6 +588,11 @@ export default function WorkshopsPage() {
 
   // Export handler
   const handleExportExcel = async () => {
+    if (!canReadWorkshop) {
+      toast.error("No tienes permisos para exportar workshops");
+      return;
+    }
+
     if (selectedPeriod === "all") {
       toast.error("Por favor selecciona un período específico para exportar");
       return;
@@ -607,6 +634,19 @@ export default function WorkshopsPage() {
     });
   };
 
+  if (!canReadWorkshop) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver workshops.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -627,7 +667,7 @@ export default function WorkshopsPage() {
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />
             Exportar Excel
           </Button>
-          {canManageUsers && (
+          {canCreateWorkshop && (
             <Button size="sm" variant="edit" onClick={handleCreate}>
               <Plus className="h-4 w-4 mr-1.5" />
               <span>Nuevo Workshop</span>

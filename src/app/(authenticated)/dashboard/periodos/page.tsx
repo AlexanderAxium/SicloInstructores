@@ -28,6 +28,7 @@ import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
 import type { PeriodFromAPI } from "@/types/instructor";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -270,7 +271,25 @@ function PeriodDialog({
 }
 
 export default function PeriodosPage() {
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para períodos
+  const canReadPeriod = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.PERIODO
+  );
+  const canCreatePeriod = hasPermission(
+    PermissionAction.CREATE,
+    PermissionResource.PERIODO
+  );
+  const canUpdatePeriod = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.PERIODO
+  );
+  const canDeletePeriod = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.PERIODO
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogPeriod, setDialogPeriod] = useState<PeriodFromAPI | null>(null);
 
@@ -427,28 +446,31 @@ export default function PeriodosPage() {
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<PeriodFromAPI>[] = [
-    {
+  const actions: TableAction<PeriodFromAPI>[] = [];
+
+  if (canReadPeriod) {
+    actions.push({
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleView,
-    },
-  ];
+    });
+  }
 
-  if (canManageUsers) {
-    actions.push(
-      {
-        label: "Editar",
-        icon: <Edit className="h-4 w-4" />,
-        onClick: handleEdit,
-      },
-      {
-        label: "Eliminar",
-        icon: <Trash2 className="h-4 w-4" />,
-        onClick: handleDelete,
-        variant: "destructive",
-      }
-    );
+  if (canUpdatePeriod) {
+    actions.push({
+      label: "Editar",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEdit,
+    });
+  }
+
+  if (canDeletePeriod) {
+    actions.push({
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDelete,
+      variant: "destructive",
+    });
   }
 
   // Información de paginación
@@ -463,6 +485,11 @@ export default function PeriodosPage() {
 
   // Export handler
   const handleExportExcel = async () => {
+    if (!canReadPeriod) {
+      toast.error("No tienes permisos para exportar períodos");
+      return;
+    }
+
     if (periods.length === 0) {
       toast.error("No hay datos para exportar");
       return;
@@ -499,6 +526,19 @@ export default function PeriodosPage() {
     });
   };
 
+  if (!canReadPeriod) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver períodos.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -519,7 +559,7 @@ export default function PeriodosPage() {
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />
             Exportar Excel
           </Button>
-          {canManageUsers && (
+          {canCreatePeriod && (
             <Button size="sm" variant="edit" onClick={handleCreate}>
               <Plus className="h-4 w-4 mr-1.5" />
               <span>Nuevo Período</span>

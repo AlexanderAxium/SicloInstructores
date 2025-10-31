@@ -14,12 +14,6 @@ import {
 import Link from "next/link";
 
 const footerLinks = {
-  legal: [
-    { name: "Términos y Condiciones", href: "/legal/terms" },
-    { name: "Política de Privacidad", href: "/legal/privacy" },
-    { name: "Política de Cookies", href: "/legal/cookies" },
-    { name: "Libro de Reclamaciones", href: "/legal/complaints" },
-  ],
   support: [
     { name: "Centro de Ayuda", href: "/help" },
     { name: "Documentación", href: "/docs" },
@@ -32,10 +26,10 @@ export function Footer() {
 
   // Default values if no company info is available
   const defaultInfo = {
-    name: "MyApp",
-    displayName: "My Application Platform",
+    name: "Siclo Instructores",
+    displayName: "Siclo Fitness Management",
     description:
-      "La plataforma líder para gestión de usuarios y autenticación.",
+      "La plataforma completa para gestionar instructores, clases, pagos y todo lo necesario para tu centro de fitness.",
     email: null,
     phone: null,
     address: null,
@@ -50,9 +44,10 @@ export function Footer() {
     foundedYear: null,
     logoUrl: null,
     faviconUrl: null,
-    metaTitle: "MyApp - Modern Platform",
-    metaDescription: "Plataforma moderna y escalable",
-    metaKeywords: "gestión, usuarios, plataforma, moderno, escalable",
+    metaTitle: "Siclo Instructores - Gestión de Fitness",
+    metaDescription:
+      "Plataforma completa para gestión de instructores y clases",
+    metaKeywords: "fitness, instructores, gestión, clases, pagos, plataforma",
     termsUrl: "/legal/terms",
     privacyUrl: "/legal/privacy",
     cookiesUrl: "/legal/cookies",
@@ -75,7 +70,7 @@ export function Footer() {
   return (
     <footer className="bg-[#131B2F] border-t border-gray-700">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
             <div>
@@ -140,23 +135,6 @@ export function Footer() {
             )}
           </div>
 
-          {/* Legal Links */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-white">Legal</h4>
-            <ul className="space-y-2">
-              {footerLinks.legal.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-gray-400 hover:text-primary transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
           {/* Support Links */}
           <div className="space-y-4">
             <h4 className="font-semibold text-white">Soporte</h4>
@@ -177,32 +155,19 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-700 mt-8 pt-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-center items-center gap-4">
             <p className="text-sm text-gray-400">
-              © {new Date().getFullYear()}{" "}
-              <span className="text-primary font-medium">{info.name}</span>.
-              Todos los derechos reservados.
+              © 2025{" "}
+              <a
+                href="https://qintitec.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-medium hover:underline transition-colors"
+              >
+                QINTEC
+              </a>
+              . Todos los derechos reservados.
             </p>
-            <div className="flex gap-6 text-sm text-gray-400">
-              <Link
-                href="/legal/terms"
-                className="hover:text-primary transition-colors"
-              >
-                Términos
-              </Link>
-              <Link
-                href="/legal/privacy"
-                className="hover:text-primary transition-colors"
-              >
-                Privacidad
-              </Link>
-              <Link
-                href="/legal/cookies"
-                className="hover:text-primary transition-colors"
-              >
-                Cookies
-              </Link>
-            </div>
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { disciplinesRouter } from "./disciplines";
 import { formulasRouter } from "./formulas";
 import { importRouter } from "./imports";
 import { instructorRouter } from "./instructor";
+import { instructorCategoriesRouter } from "./instructor-categories";
 import { paymentsRouter } from "./payments";
 import { penaltiesRouter } from "./penalties";
 import { periodsRouter } from "./periods";
@@ -21,6 +22,7 @@ export const appRouter = router({
   rbac: rbacRouter,
   companyInfo: companyInfoRouter,
   instructor: instructorRouter,
+  instructorCategories: instructorCategoriesRouter,
   classes: classesRouter,
   payments: paymentsRouter,
   disciplines: disciplinesRouter,

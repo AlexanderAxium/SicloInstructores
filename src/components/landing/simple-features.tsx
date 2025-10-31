@@ -2,7 +2,8 @@ import {
   BarChart3,
   Calendar,
   DollarSign,
-  FileText,
+  FileSpreadsheet,
+  ListChecks,
   Settings,
   Users,
 } from "lucide-react";
@@ -13,37 +14,37 @@ const features = [
     icon: Users,
     title: "Gestión de Instructores",
     description:
-      "Administra instructores, sus disciplinas, categorías y información de contacto de forma centralizada.",
+      "Administra instructores, sus disciplinas, categorías e información de contacto de forma centralizada. Controla el estado activo/inactivo de cada instructor.",
   },
   {
     icon: Calendar,
-    title: "Programación de Clases",
+    title: "Registro de Clases",
     description:
-      "Crea y gestiona horarios de clases, reservas, listas de espera y estadísticas de ocupación.",
+      "Registra clases por semana, instructor y disciplina. Gestiona ocupación, covers, clases versus y seguimiento completo de cada sesión.",
+  },
+  {
+    icon: FileSpreadsheet,
+    title: "Importación Masiva",
+    description:
+      "Importa clases desde Excel con validación automática. El sistema detecta instructores, disciplinas y crea clases en masa de forma eficiente.",
   },
   {
     icon: DollarSign,
-    title: "Cálculo de Pagos",
+    title: "Cálculo Automático de Pagos",
     description:
-      "Sistema automático de cálculo de pagos con bonificaciones, penalizaciones y ajustes personalizados.",
+      "Calcula pagos según ocupación, categoría del instructor y fórmulas personalizadas. Incluye bonos, penalizaciones y retención automática.",
   },
   {
-    icon: BarChart3,
-    title: "Reportes y Estadísticas",
+    icon: ListChecks,
+    title: "Bonos y Penalizaciones",
     description:
-      "Genera reportes detallados de rendimiento, ocupación y métricas financieras en tiempo real.",
-  },
-  {
-    icon: FileText,
-    title: "Gestión de Documentos",
-    description:
-      "Administra covers, penalizaciones, brandings, theme rides y workshops de manera organizada.",
+      "Administra covers, brandings, theme rides, workshops, clases versus y penalizaciones con sistema de puntos configurable.",
   },
   {
     icon: Settings,
     title: "Configuración Flexible",
     description:
-      "Personaliza fórmulas de pago, períodos, disciplinas y parámetros del sistema según tus necesidades.",
+      "Define períodos, disciplinas, fórmulas de pago y tarifas personalizadas. Ajusta parámetros del sistema según tus necesidades.",
   },
 ];
 

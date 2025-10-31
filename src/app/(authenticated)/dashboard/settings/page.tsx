@@ -257,7 +257,7 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         handleInputChange("name", e.target.value)
                       }
-                      placeholder="MyApp"
+                      placeholder="Siclo Instructores"
                     />
                   </div>
                   <div className="space-y-2">
@@ -268,7 +268,7 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         handleInputChange("displayName", e.target.value)
                       }
-                      placeholder="My Application Platform"
+                      placeholder="Siclo Fitness Management"
                     />
                   </div>
                 </div>
@@ -481,7 +481,7 @@ export default function SettingsPage() {
                     onChange={(e) =>
                       handleInputChange("metaTitle", e.target.value)
                     }
-                    placeholder="MyApp - Modern Platform"
+                    placeholder="Siclo Instructores - Gestión de Fitness"
                   />
                 </div>
                 <div className="space-y-2">

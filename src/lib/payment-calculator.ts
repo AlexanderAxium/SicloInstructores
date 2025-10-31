@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/db";
+import type { Class, Cover, Discipline } from "@/types";
+import type { Branding, ThemeRide, Workshop } from "@/types";
+import type { Penalty } from "@/types";
+import { getOrCalculateCategory } from "./category-calculator";
 
 export interface ClassCalculationResult {
   classId: string;
@@ -11,6 +15,11 @@ export interface ClassCalculationResult {
   isVersus: boolean;
   versusNumber?: number | null;
   isFullHouse: boolean;
+  studio: string;
+  hour: string;
+  spots: number;
+  totalReservations: number;
+  occupancy: number;
 }
 
 export interface BonusCalculation {
@@ -31,14 +40,26 @@ export interface PaymentCalculationData {
   classCalculations: ClassCalculationResult[];
 }
 
+type PaymentParameters = {
+  tarifaFullHouse?: number;
+  tarifas?: Array<{ numeroReservas: number; tarifa: number }>;
+  cuotaFija?: number;
+  minimoGarantizado?: number;
+  maximo?: number;
+};
+
+type FormulaShape = {
+  paymentParameters: Record<string, PaymentParameters>;
+};
+
 /**
  * Calculate payment for a single class
  */
 export async function calculateClassPayment(
-  clase: any,
+  clase: Class,
   instructorCategory: string,
-  formula: any,
-  discipline: any,
+  formula: FormulaShape,
+  discipline: Pick<Discipline, "name">,
   logs: string[]
 ): Promise<ClassCalculationResult> {
   try {
@@ -143,6 +164,10 @@ export async function calculateClassPayment(
     );
     logs.push(`   Detalle: ${calculationDetail}`);
 
+    // Calculate occupancy
+    const occupancy =
+      capacity > 0 ? Math.round((reservations / capacity) * 100) : 0;
+
     return {
       classId: clase.id,
       calculatedAmount,
@@ -154,6 +179,14 @@ export async function calculateClassPayment(
       isVersus: clase.isVersus,
       versusNumber: clase.versusNumber,
       isFullHouse: isFullHouseByCover,
+      studio: clase.studio,
+      hour: clase.date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      spots: capacity,
+      totalReservations: reservations,
+      occupancy,
     };
   } catch (error) {
     logs.push(
@@ -167,7 +200,12 @@ export async function calculateClassPayment(
  * Calculate additional bonuses
  */
 export function calculateAdditionalBonuses(
-  instructor: any,
+  instructor: {
+    coversAsReplacement: Cover[];
+    brandings: Branding[];
+    themeRides: ThemeRide[];
+    workshops: Workshop[];
+  },
   _periodId: string,
   logs: string[]
 ): BonusCalculation {
@@ -182,7 +220,7 @@ export function calculateAdditionalBonuses(
   logs.push(`🎓 Workshops del instructor: ${workshops.length}`);
 
   // Calculate cover bonus (S/.30 per cover with bonus)
-  const coversWithBonus = covers.filter((cover: any) => cover.bonusPayment);
+  const coversWithBonus = covers.filter((cover) => cover.bonusPayment);
   const coverBonus = coversWithBonus.length * 30;
   logs.push(
     `🔄 Covers con bono: ${coversWithBonus.length} x S/.30 = S/.${coverBonus}`
@@ -200,7 +238,7 @@ export function calculateAdditionalBonuses(
 
   // Calculate workshop bonus (variable amount)
   const workshopBonus = workshops.reduce(
-    (total: number, workshop: any) => total + workshop.payment,
+    (total: number, workshop) => total + workshop.payment,
     0
   );
   logs.push(`🎓 Workshops: S/.${workshopBonus.toFixed(2)}`);
@@ -225,7 +263,7 @@ export function calculateAdditionalBonuses(
  * Calculate penalties
  */
 export function calculatePenalties(
-  penalties: any[],
+  penalties: Pick<Penalty, "points">[],
   baseAmount: number,
   logs: string[]
 ): number {
@@ -337,13 +375,32 @@ export async function calculateInstructorPaymentData(
       continue;
     }
 
-    // Get instructor category for this discipline
+    // Get or calculate instructor category for this discipline
+    let instructorCategory: string;
+
+    // First check if there's an existing category
     const categoryInfo = categories.find(
       (c) => c.disciplineId === disciplineId
     );
-    const instructorCategory = categoryInfo?.category || "INSTRUCTOR";
 
-    logs.push(`📋 Categoría para ${discipline.name}: ${instructorCategory}`);
+    if (categoryInfo) {
+      instructorCategory = categoryInfo.category;
+      logs.push(
+        `📋 Usando categoría existente para ${discipline.name}: ${instructorCategory}`
+      );
+    } else {
+      // Calculate category based on formula requirements
+      instructorCategory = await getOrCalculateCategory(
+        instructorId,
+        disciplineId,
+        periodId,
+        tenantId,
+        logs
+      );
+      logs.push(
+        `📋 Categoría calculada para ${discipline.name}: ${instructorCategory}`
+      );
+    }
 
     // Calculate payment for each class
     for (const clase of disciplineClasses) {
@@ -351,7 +408,7 @@ export async function calculateInstructorPaymentData(
         const classResult = await calculateClassPayment(
           clase,
           instructorCategory,
-          formula,
+          formula as unknown as FormulaShape,
           discipline,
           logs
         );
@@ -370,7 +427,16 @@ export async function calculateInstructorPaymentData(
   logs.push(`💰 Monto total por clases: ${totalAmount.toFixed(2)}`);
 
   // Calculate additional bonuses
-  const bonuses = calculateAdditionalBonuses(instructor, periodId, logs);
+  const bonuses = calculateAdditionalBonuses(
+    instructor as unknown as {
+      coversAsReplacement: Cover[];
+      brandings: Branding[];
+      themeRides: ThemeRide[];
+      workshops: Workshop[];
+    },
+    periodId,
+    logs
+  );
 
   // Calculate penalties
   const penaltyAmount = calculatePenalties(penalties, totalAmount, logs);

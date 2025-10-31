@@ -6,9 +6,10 @@ import { t } from "./context";
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
-// Protected procedure that requires authentication
+// Protected procedure that requires authentication (either user or instructor)
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.user) {
+  // Allow access if either user or instructor is authenticated
+  if (!ctx.user && !ctx.instructor) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "You must be logged in to access this resource",
@@ -17,7 +18,8 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      user: ctx.user, // Now user is guaranteed to be defined
+      user: ctx.user, // User might be undefined if instructor is logged in
+      instructor: ctx.instructor, // Instructor might be undefined if user is logged in
     },
   });
 });

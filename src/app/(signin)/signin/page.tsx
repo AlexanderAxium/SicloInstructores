@@ -1,6 +1,5 @@
 "use client";
 
-import GoogleIcon from "@/components/icons/GoogleIcon";
 import {
   Form,
   FormControl,
@@ -11,32 +10,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/utils/trpc";
-import { ArrowLeft, Eye, EyeOff, GraduationCap, User } from "lucide-react";
-import Link from "next/link";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 type LoginFormValues = {
-  email: string;
+  emailOrName: string;
   password: string;
-  name?: string; // For instructor login
 };
-
-type LoginMode = "user" | "instructor";
 
 export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loginMode, setLoginMode] = useState<LoginMode>("user");
   const router = useRouter();
 
   const form = useForm<LoginFormValues>({
     defaultValues: {
-      email: "",
+      emailOrName: "",
       password: "",
-      name: "",
     },
   });
 
@@ -52,212 +45,120 @@ export default function SignInPage() {
       });
 
       // Redirect to instructor dashboard
-      router.push("/instructor/dashboard");
-    },
-    onError: (error) => {
-      toast.error("Error al iniciar sesión", {
-        description: error.message,
-      });
+      router.push("/instructor");
       setLoading(false);
+    },
+    onError: () => {
+      // Error will be handled in onSubmit
     },
   });
 
-  const {
-    control,
-    handleSubmit,
-    setError,
-    clearErrors,
-    formState: { errors: _errors },
-  } = form;
+  const { control, handleSubmit, setError, clearErrors } = form;
 
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     clearErrors();
 
-    if (loginMode === "instructor") {
-      // Instructor login logic
-      if (!data.name || !data.password) {
-        toast.error("Completa todos los campos");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        await instructorLoginMutation.mutateAsync({
-          name: data.name,
-          password: data.password,
-        });
-      } catch (_error) {
-        // Error is handled in the mutation onError callback
-      }
+    if (!data.emailOrName || !data.password) {
+      toast.error("Completa todos los campos");
+      setLoading(false);
       return;
     }
 
-    // User login logic
+    // Check if input looks like an email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
-      setError("email", {
-        type: "manual",
-        message: "Ingresa un correo válido",
-      });
-      toast.error("Ingresa un correo válido");
-      setLoading(false);
-      return;
-    }
+    const isEmail = emailRegex.test(data.emailOrName);
 
-    if (!data.password) {
-      setError("password", {
-        type: "manual",
-        message: "Ingresa tu contraseña",
-      });
-      toast.error("Ingresa tu contraseña");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { error } = await authClient.signIn.email({
-        email: data.email,
-        password: data.password,
-        callbackURL: "/",
-        rememberMe: true,
-      });
-
-      if (error) {
-        toast.error("Error al iniciar sesión", {
-          description: error.message,
+    // First, try user login if it looks like an email
+    if (isEmail) {
+      try {
+        const { error } = await authClient.signIn.email({
+          email: data.emailOrName,
+          password: data.password,
+          callbackURL: "/dashboard",
+          rememberMe: true,
         });
-      } else {
-        toast.success("Bienvenido", {
-          description: "Sesión iniciada correctamente",
-        });
-        // Let RoleBasedRedirect handle the redirection
-        router.push("/");
+
+        if (!error) {
+          toast.success("Bienvenido", {
+            description: "Sesión iniciada correctamente",
+          });
+          router.push("/dashboard");
+          setLoading(false);
+          return;
+        }
+        // If user login fails, continue to try instructor login
+      } catch (_error) {
+        // If there's an error, try instructor login as fallback
+        console.log("User login failed, trying instructor login");
       }
-    } catch (_error) {
-      toast.error("Error de red o servidor");
     }
-    setLoading(false);
-  };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
+    // Try instructor login (works with email or name)
     try {
-      await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/dashboard",
-        errorCallbackURL: "/signin",
-        newUserCallbackURL: "/dashboard",
+      await instructorLoginMutation.mutateAsync({
+        name: data.emailOrName,
+        password: data.password,
       });
+      // Success is handled in onSuccess callback
     } catch (_error) {
-      toast.error("No se pudo redirigir a Google");
+      // Both login attempts failed
+      toast.error("Error al iniciar sesión", {
+        description: isEmail
+          ? "No se encontró una cuenta de usuario o instructor con estas credenciales"
+          : "No se encontró un instructor con estas credenciales",
+      });
+
+      setError("emailOrName", {
+        type: "manual",
+        message: "Credenciales incorrectas",
+      });
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-8 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al inicio
-          </Link>
-
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-2xl">M</span>
+          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+            <LogIn className="h-8 w-8 text-white" />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Bienvenido a MyApp
+            Inicia Sesión
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            ¿No tienes cuenta?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Regístrate aquí
-            </Link>
+            Ingresa tu correo electrónico o nombre de instructor
           </p>
-        </div>
-
-        {/* Login Mode Toggle */}
-        <div className="flex bg-gray-100 rounded-lg p-1">
-          <button
-            type="button"
-            onClick={() => setLoginMode("user")}
-            className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              loginMode === "user"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            <User className="h-4 w-4 mr-2" />
-            Usuario
-          </button>
-          <button
-            type="button"
-            onClick={() => setLoginMode("instructor")}
-            className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              loginMode === "instructor"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            <GraduationCap className="h-4 w-4 mr-2" />
-            Instructor
-          </button>
         </div>
 
         {/* Form */}
         <div className="bg-white py-8 px-6 shadow-lg rounded-lg">
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {loginMode === "user" ? (
-                <Controller
-                  name="email"
-                  control={control}
-                  rules={{ required: "Correo requerido" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Correo electrónico</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="tu@email.com"
-                          {...field}
-                          className="w-full"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : (
-                <Controller
-                  name="name"
-                  control={control}
-                  rules={{ required: "Nombre requerido" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre del Instructor</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="Ej: María González"
-                          {...field}
-                          className="w-full"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <Controller
+                name="emailOrName"
+                control={control}
+                rules={{ required: "Este campo es requerido" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Correo electrónico o Nombre de Instructor
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="tu@email.com o Nombre del Instructor"
+                        {...field}
+                        className="w-full"
+                        autoComplete="username"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <Controller
                 name="password"
@@ -273,6 +174,7 @@ export default function SignInPage() {
                           placeholder="Tu contraseña"
                           {...field}
                           className="w-full pr-10"
+                          autoComplete="current-password"
                         />
                         <button
                           type="button"
@@ -292,89 +194,15 @@ export default function SignInPage() {
                 )}
               />
 
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <Link
-                    href="/forgot-password"
-                    className="font-medium text-blue-600 hover:text-blue-500"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                </div>
-              </div>
-
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-lg font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </button>
             </form>
           </Form>
-
-          {/* Google Sign-in - Only for users */}
-          {loginMode === "user" && (
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
-                    O continúa con
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <GoogleIcon className="w-5 h-5 mr-2" />
-                  {loading ? "Redirigiendo..." : "Google"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Instructor Help Text */}
-          {loginMode === "instructor" && (
-            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-blue-800 mb-2">
-                Credenciales de Prueba:
-              </h3>
-              <div className="text-xs text-blue-700 space-y-1">
-                <p>
-                  <strong>Ana García</strong> / anagarcía123
-                </p>
-                <p>
-                  <strong>Carlos López</strong> / carloslópez123
-                </p>
-                <p>
-                  <strong>Sofia Martín</strong> / sofiamartín123
-                </p>
-                <p>
-                  <strong>Diego Ruiz</strong> / diegoruiz123
-                </p>
-                <p>
-                  <strong>María Elena</strong> / maríaelena123
-                </p>
-                <p>
-                  <strong>Roberto Silva</strong> / robertosilva123
-                </p>
-                <p>
-                  <strong>Lucía Fernández</strong> / lucíafernández123
-                </p>
-                <p>
-                  <strong>Andrés Morales</strong> / andrésmorales123
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

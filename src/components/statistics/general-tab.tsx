@@ -262,7 +262,7 @@ export function GeneralTab({
               >
                 {disciplinasData.map((entry, index: number) => (
                   <Cell
-                    key={`cell-${index}`}
+                    key={`cell-${entry.name || index}`}
                     fill={entry.color || COLORS.primary}
                   />
                 ))}

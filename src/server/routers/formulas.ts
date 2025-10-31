@@ -2,7 +2,6 @@ import { z } from "zod";
 import { prisma } from "../../lib/db";
 import type {
   CategoryRequirements,
-  InstructorCategory,
   PaymentParameters,
 } from "../../types/schema";
 import { protectedProcedure, publicProcedure, router } from "../trpc";
@@ -429,6 +428,96 @@ export const formulasRouter = router({
         stats: {
           total: formulas.length,
         },
+      };
+    }),
+
+  // Duplicate formulas from one period to another (protected)
+  duplicateToPeriod: protectedProcedure
+    .input(
+      z.object({
+        fromPeriodId: z.string(),
+        toPeriodId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
+      // Verify periods exist
+      const [fromPeriod, toPeriod] = await Promise.all([
+        prisma.period.findUnique({
+          where: { id: input.fromPeriodId },
+        }),
+        prisma.period.findUnique({
+          where: { id: input.toPeriodId },
+        }),
+      ]);
+
+      if (!fromPeriod) {
+        throw new Error("Período origen no encontrado");
+      }
+
+      if (!toPeriod) {
+        throw new Error("Período destino no encontrado");
+      }
+
+      // Get all formulas from source period
+      const sourceFormulas = await prisma.formula.findMany({
+        where: {
+          periodId: input.fromPeriodId,
+          tenantId: ctx.user.tenantId,
+        },
+        include: {
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (sourceFormulas.length === 0) {
+        return {
+          success: true,
+          message: "No se encontraron fórmulas en el período origen",
+          duplicatedCount: 0,
+        };
+      }
+
+      // Delete all existing formulas in target period
+      await prisma.formula.deleteMany({
+        where: {
+          periodId: input.toPeriodId,
+          tenantId: ctx.user.tenantId,
+        },
+      });
+
+      // Create new formulas for target period
+      const tenantId = ctx.user.tenantId;
+      const duplicatedFormulas = await Promise.all(
+        sourceFormulas.map((formula) =>
+          prisma.formula.create({
+            data: {
+              disciplineId: formula.disciplineId,
+              periodId: input.toPeriodId,
+              categoryRequirements: JSON.parse(
+                JSON.stringify(formula.categoryRequirements)
+              ),
+              paymentParameters: JSON.parse(
+                JSON.stringify(formula.paymentParameters)
+              ),
+              tenantId,
+            },
+          })
+        )
+      );
+
+      return {
+        success: true,
+        message: `Se duplicaron exitosamente ${duplicatedFormulas.length} fórmulas del Período ${fromPeriod.number}/${fromPeriod.year} al Período ${toPeriod.number}/${toPeriod.year}`,
+        duplicatedCount: duplicatedFormulas.length,
       };
     }),
 });

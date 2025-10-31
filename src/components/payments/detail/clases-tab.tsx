@@ -39,6 +39,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { isNonPrimeHour } from "@/lib/config";
 import type { Class, Discipline } from "@/types";
 import {
   AlertTriangle,
@@ -53,11 +54,32 @@ import {
   Info,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 interface ClassesTabProps {
   instructorClasses: Class[];
   disciplines: Discipline[];
+  payment?: {
+    details?: {
+      classCalculations?: Array<{
+        classId: string;
+        calculatedAmount: number;
+        disciplineId: string;
+        disciplineName: string;
+        classDate: Date | string;
+        calculationDetail: string;
+        category: string;
+        isVersus: boolean;
+        versusNumber?: number | null;
+        isFullHouse: boolean;
+        studio: string;
+        hour: string;
+        spots: number;
+        totalReservations: number;
+        occupancy: number;
+      }>;
+    } | null;
+  } | null;
 }
 
 interface FilterState {
@@ -116,7 +138,16 @@ const HORAS_DISPONIBLES = [
 export function ClassesTab({
   instructorClasses,
   disciplines,
+  payment,
 }: ClassesTabProps) {
+  // Helper function to format currency
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency: "PEN",
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     semanas: [],
@@ -144,18 +175,14 @@ export function ClassesTab({
     setCurrentPage(1);
   };
 
-  const obtenerHora = (fecha: string | Date): string => {
+  const obtenerHora = useCallback((fecha: string | Date): string => {
     try {
       const dateObj = new Date(fecha);
       if (Number.isNaN(dateObj.getTime())) {
         return "00:00";
       }
 
-      const dateWithAddedHours = new Date(
-        dateObj.getTime() + 5 * 60 * 60 * 1000
-      );
-
-      return dateWithAddedHours.toLocaleTimeString("es-PE", {
+      return dateObj.toLocaleTimeString("es-PE", {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -164,35 +191,37 @@ export function ClassesTab({
     } catch (_error) {
       return "00:00";
     }
-  };
+  }, []);
 
-  const esClaseHorarioNoPrime = (_clase: Class): boolean => {
-    // Simplified logic - can be enhanced based on actual business rules
-    return false;
-  };
+  const esClaseHorarioNoPrime = useCallback(
+    (clase: Class): boolean => {
+      const hora = obtenerHora(clase.date);
+      return isNonPrimeHour(clase.studio || "", hora);
+    },
+    [obtenerHora]
+  );
 
-  const estaEnRangoHorario = (
-    hora: string,
-    inicio: string,
-    fin: string
-  ): boolean => {
-    const convertirAMinutos = (h: string) => {
-      const parts = h.split(":").map(Number);
-      const horas = parts[0] ?? 0;
-      const minutos = parts[1] ?? 0;
-      return horas * 60 + minutos;
-    };
+  const estaEnRangoHorario = useCallback(
+    (hora: string, inicio: string, fin: string): boolean => {
+      const convertirAMinutos = (h: string) => {
+        const parts = h.split(":").map(Number);
+        const horas = parts[0] ?? 0;
+        const minutos = parts[1] ?? 0;
+        return horas * 60 + minutos;
+      };
 
-    const minHora = convertirAMinutos(hora);
-    const minInicio = convertirAMinutos(inicio);
-    const minFin = convertirAMinutos(fin);
+      const minHora = convertirAMinutos(hora);
+      const minInicio = convertirAMinutos(inicio);
+      const minFin = convertirAMinutos(fin);
 
-    if (minFin < minInicio) {
-      return minHora >= minInicio || minHora <= minFin;
-    }
+      if (minFin < minInicio) {
+        return minHora >= minInicio || minHora <= minFin;
+      }
 
-    return minHora >= minInicio && minHora <= minFin;
-  };
+      return minHora >= minInicio && minHora <= minFin;
+    },
+    []
+  );
 
   const uniqueStudios = useMemo(() => {
     const estudios = new Set<string>();
@@ -335,11 +364,30 @@ export function ClassesTab({
         case "cortesias":
           comparison = (a.complimentary || 0) - (b.complimentary || 0);
           break;
+        case "monto": {
+          const classCalculationA = payment?.details?.classCalculations?.find(
+            (c) => c.classId === a.id
+          );
+          const classCalculationB = payment?.details?.classCalculations?.find(
+            (c) => c.classId === b.id
+          );
+          const montoA = classCalculationA?.calculatedAmount || 0;
+          const montoB = classCalculationB?.calculatedAmount || 0;
+          comparison = montoA - montoB;
+          break;
+        }
       }
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [filteredClasses, sortField, sortDirection, disciplines, obtenerHora]);
+  }, [
+    filteredClasses,
+    sortField,
+    sortDirection,
+    disciplines,
+    obtenerHora,
+    payment?.details?.classCalculations,
+  ]);
 
   const limpiarFiltros = () => {
     setFilters({
@@ -817,6 +865,12 @@ export function ClassesTab({
                   <TableHead className="text-accent font-medium whitespace-nowrap hidden md:table-cell w-[100px]">
                     Lugares
                   </TableHead>
+                  <TableHead
+                    className="text-accent font-medium whitespace-nowrap cursor-pointer w-[120px]"
+                    onClick={() => toggleSort("monto")}
+                  >
+                    Monto {renderSortIndicator("monto")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -845,7 +899,12 @@ export function ClassesTab({
                             {esNoPrime && (
                               <Badge
                                 variant="outline"
-                                className="bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800/70 ml-1 text-xs"
+                                className="text-xs font-medium ml-1"
+                                style={{
+                                  borderColor: "#f59e0b",
+                                  color: "#f59e0b",
+                                  backgroundColor: "#f59e0b1a",
+                                }}
                               >
                                 NP
                               </Badge>
@@ -860,9 +919,13 @@ export function ClassesTab({
                           {esNoPrime && (
                             <Badge
                               variant="outline"
-                              className="bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800/70 ml-1 text-xs"
+                              className="text-xs font-medium ml-1"
+                              style={{
+                                borderColor: "#f59e0b",
+                                color: "#f59e0b",
+                                backgroundColor: "#f59e0b1a",
+                              }}
                             >
-                              <AlertTriangle className="h-3 w-3 mr-1" />
                               No Prime
                             </Badge>
                           )}
@@ -882,14 +945,11 @@ export function ClassesTab({
                         <div className="flex items-center gap-2">
                           <Badge
                             variant="outline"
-                            className="bg-primary/20 text-slate-800 dark:text-accent border-primary/30 font-medium"
+                            className="text-xs font-medium"
                             style={{
-                              backgroundColor: disciplina?.color
-                                ? `${disciplina.color}40`
-                                : undefined,
-                              borderColor: disciplina?.color
-                                ? `${disciplina.color}50`
-                                : undefined,
+                              borderColor: disciplina?.color || "#6b7280",
+                              color: disciplina?.color || "#6b7280",
+                              backgroundColor: `${disciplina?.color || "#6b7280"}1a`,
                             }}
                           >
                             {disciplina?.name ||
@@ -899,8 +959,13 @@ export function ClassesTab({
                             clase.versusNumber &&
                             clase.versusNumber > 1 && (
                               <Badge
-                                variant="secondary"
-                                className="bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/70 text-xs"
+                                variant="outline"
+                                className="text-xs font-medium"
+                                style={{
+                                  borderColor: "#a855f7",
+                                  color: "#a855f7",
+                                  backgroundColor: "#a855f71a",
+                                }}
                               >
                                 VS {clase.versusNumber}
                               </Badge>
@@ -923,6 +988,147 @@ export function ClassesTab({
                       </TableCell>
                       <TableCell className="text-left pl-8 hidden md:table-cell">
                         {clase.spots}
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground">
+                        {(() => {
+                          const classCalculation =
+                            payment?.details?.classCalculations?.find(
+                              (c) => c.classId === clase.id
+                            );
+
+                          if (!classCalculation) {
+                            return <span>-</span>;
+                          }
+
+                          return (
+                            <TooltipProvider delayDuration={500}>
+                              <Tooltip>
+                                <TooltipTrigger className="flex items-center gap-1">
+                                  <span>
+                                    {formatCurrency(
+                                      classCalculation.calculatedAmount
+                                    )}
+                                  </span>
+                                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent className="w-80 max-w-sm bg-white border-border">
+                                  <div className="space-y-2">
+                                    <p className="font-semibold text-sm border-b border-border pb-2 text-gray-900">
+                                      Detalle de cálculo de la clase
+                                    </p>
+
+                                    {/* Información básica de la clase */}
+                                    <div className="bg-gray-50 p-2 rounded text-xs space-y-1 border border-border">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-gray-600">
+                                          Estudio:
+                                        </span>
+                                        <span className="font-medium text-gray-900">
+                                          {classCalculation.studio}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-gray-600">
+                                          Horario:
+                                        </span>
+                                        <span className="font-medium text-gray-900">
+                                          {classCalculation.hour}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-gray-600">
+                                          Capacidad:
+                                        </span>
+                                        <span className="font-medium text-gray-900">
+                                          {classCalculation.spots} lugares
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-gray-600">
+                                          Reservas:
+                                        </span>
+                                        <span className="font-medium text-gray-900">
+                                          {classCalculation.totalReservations}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-gray-600">
+                                          Ocupación:
+                                        </span>
+                                        <span className="font-medium text-gray-900">
+                                          {classCalculation.occupancy}%
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Información de Versus */}
+                                    {classCalculation.isVersus &&
+                                      classCalculation.versusNumber &&
+                                      classCalculation.versusNumber > 1 && (
+                                        <div className="bg-purple-50 p-2 rounded text-xs border border-purple-200">
+                                          <span className="font-medium text-purple-700">
+                                            Clase Versus (
+                                            {classCalculation.versusNumber}{" "}
+                                            instructores)
+                                          </span>
+                                          <p className="text-purple-600 mt-1">
+                                            Los valores mostrados ya están
+                                            ajustados para el cálculo individual
+                                          </p>
+                                        </div>
+                                      )}
+
+                                    {/* Información de Full House */}
+                                    {classCalculation.isFullHouse && (
+                                      <div className="bg-green-50 p-2 rounded text-xs border border-green-200">
+                                        <span className="font-medium text-green-700 flex items-center gap-1">
+                                          <Check className="h-3 w-3 inline" />
+                                          Clase FULL HOUSE
+                                        </span>
+                                        <p className="text-green-600 mt-1">
+                                          Se considera al 100% de ocupación para
+                                          el cálculo
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* Detalle del cálculo */}
+                                    <div className="bg-blue-50 p-2 rounded text-xs border border-blue-200">
+                                      <p className="font-medium text-blue-700 mb-1">
+                                        Fórmula de cálculo:
+                                      </p>
+                                      <p className="text-blue-600 whitespace-pre-line">
+                                        {classCalculation.calculationDetail}
+                                      </p>
+                                    </div>
+
+                                    {/* Resumen final */}
+                                    <div className="pt-2 border-t border-border">
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-gray-600">
+                                          Categoría:
+                                        </span>
+                                        <span className="font-medium text-gray-900">
+                                          {classCalculation.category}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs mt-1">
+                                        <span className="text-gray-600">
+                                          Monto calculado:
+                                        </span>
+                                        <span className="font-bold text-gray-900">
+                                          {formatCurrency(
+                                            classCalculation.calculatedAmount
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
                       </TableCell>
                     </TableRow>
                   );

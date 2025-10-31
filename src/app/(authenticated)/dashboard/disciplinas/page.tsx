@@ -27,6 +27,7 @@ import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -40,6 +41,7 @@ import {
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const updateDisciplineSchema = z.object({
@@ -241,7 +243,25 @@ function DisciplineDialog({
 }
 
 export default function DisciplinasPage() {
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para disciplinas
+  const canReadDiscipline = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.DISCIPLINA
+  );
+  const canCreateDiscipline = hasPermission(
+    PermissionAction.CREATE,
+    PermissionResource.DISCIPLINA
+  );
+  const canUpdateDiscipline = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.DISCIPLINA
+  );
+  const canDeleteDiscipline = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.DISCIPLINA
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogDiscipline, setDialogDiscipline] = useState<Discipline | null>(
     null
@@ -401,28 +421,31 @@ export default function DisciplinasPage() {
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<Discipline>[] = [
-    {
+  const actions: TableAction<Discipline>[] = [];
+
+  if (canReadDiscipline) {
+    actions.push({
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleView,
-    },
-  ];
+    });
+  }
 
-  if (canManageUsers) {
-    actions.push(
-      {
-        label: "Editar",
-        icon: <Edit className="h-4 w-4" />,
-        onClick: handleEdit,
-      },
-      {
-        label: "Eliminar",
-        icon: <Trash2 className="h-4 w-4" />,
-        onClick: handleDelete,
-        variant: "destructive",
-      }
-    );
+  if (canUpdateDiscipline) {
+    actions.push({
+      label: "Editar",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEdit,
+    });
+  }
+
+  if (canDeleteDiscipline) {
+    actions.push({
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDelete,
+      variant: "destructive",
+    });
   }
 
   // Información de paginación
@@ -437,6 +460,11 @@ export default function DisciplinasPage() {
 
   // Export handler
   const handleExportExcel = async () => {
+    if (!canReadDiscipline) {
+      toast.error("No tienes permisos para exportar disciplinas");
+      return;
+    }
+
     if (disciplines.length === 0) {
       toast.error("No hay datos para exportar");
       return;
@@ -445,11 +473,9 @@ export default function DisciplinasPage() {
     toast.info("Obteniendo datos para exportar...");
 
     // Obtener TODAS las disciplinas sin paginación
-    const allDisciplinesData = await utils.disciplines.getAll.fetch({
+    const allDisciplinesData = await utils.disciplines.getWithFilters.fetch({
       limit: 1000,
       offset: 0,
-      search: searchText,
-      status: selectedStatus !== "all" ? selectedStatus : undefined,
     });
 
     const allDisciplines = allDisciplinesData?.disciplines || [];
@@ -476,6 +502,19 @@ export default function DisciplinasPage() {
     });
   };
 
+  if (!canReadDiscipline) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver disciplinas.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -496,7 +535,7 @@ export default function DisciplinasPage() {
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />
             Exportar Excel
           </Button>
-          {canManageUsers && (
+          {canCreateDiscipline && (
             <Button size="sm" variant="edit" onClick={handleCreate}>
               <Plus className="h-4 w-4 mr-1.5" />
               <span>Nueva Disciplina</span>

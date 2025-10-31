@@ -60,11 +60,11 @@ export default function GlobalNavbar() {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center">
-                <div className="h-8 w-8 bg-gradient-to-r from-[#F5BA35] to-orange-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">M</span>
+                <div className="h-8 w-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">S</span>
                 </div>
                 <span className="ml-2 text-xl font-medium text-white">
-                  MyApp
+                  Siclo Instructores
                 </span>
               </Link>
             </div>
@@ -143,16 +143,10 @@ export default function GlobalNavbar() {
                     <button
                       type="button"
                       onClick={handleSignIn}
-                      className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Iniciar Sesión
                     </button>
-                    <Link
-                      href="/signup"
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      Registrarse
-                    </Link>
                   </div>
                 )}
               </div>
@@ -285,13 +279,6 @@ export default function GlobalNavbar() {
                         >
                           Iniciar Sesión
                         </button>
-                        <Link
-                          href="/signup"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="w-full bg-transparent border border-gray-600 text-white hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-colors block text-center"
-                        >
-                          Registrarse
-                        </Link>
                       </div>
                     )}
                   </div>

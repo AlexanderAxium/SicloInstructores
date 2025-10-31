@@ -25,6 +25,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type {
+  CategoryRequirementsES,
+  DisciplineListItem,
+  FormulaDataFromDB,
+  PaymentParametersES,
+  PeriodListItem,
+  Tariff,
+} from "@/types/schema";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Info, Plus, X } from "lucide-react";
@@ -72,7 +80,7 @@ const createFormulaSchema = z.object({
 });
 
 interface FormulaDialogProps {
-  formulaData: any | null; // Changed from Formula to any to match database structure
+  formulaData: FormulaDataFromDB | null;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: z.infer<typeof createFormulaSchema>) => void;
@@ -100,10 +108,10 @@ export function FormulaDialog({
 
   // State for requirements and payment parameters
   const [categoryRequirements, setCategoryRequirements] = useState<
-    Record<string, any>
+    Record<string, CategoryRequirementsES>
   >({});
   const [paymentParameters, setPaymentParameters] = useState<
-    Record<string, any>
+    Record<string, PaymentParametersES>
   >({});
 
   // Obtener datos para los selectores
@@ -147,8 +155,8 @@ export function FormulaDialog({
       }
     } else if (isOpen && !formulaData) {
       // Creating new formula - initialize empty values
-      const emptyRequirements: Record<string, any> = {};
-      const emptyParameters: Record<string, any> = {};
+      const emptyRequirements: Record<string, CategoryRequirementsES> = {};
+      const emptyParameters: Record<string, PaymentParametersES> = {};
 
       instructorCategories.forEach((category) => {
         emptyRequirements[category] = {
@@ -220,18 +228,29 @@ export function FormulaDialog({
     field: string,
     value: string | boolean
   ) => {
-    setCategoryRequirements((prev) => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [field]:
-          field === "eventParticipation" || field === "guidelines"
-            ? Boolean(value)
-            : typeof value === "string"
-              ? Number(value)
-              : value,
-      },
-    }));
+    setCategoryRequirements((prev) => {
+      const current = prev[category] || {
+        ocupacion: 0,
+        clases: 0,
+        localesEnLima: 0,
+        dobleteos: 0,
+        horariosNoPrime: 0,
+        participacionEventos: false,
+        lineamientos: false,
+      };
+      return {
+        ...prev,
+        [category]: {
+          ...current,
+          [field]:
+            field === "participacionEventos" || field === "lineamientos"
+              ? Boolean(value)
+              : typeof value === "string"
+                ? Number(value)
+                : value,
+        } as CategoryRequirementsES,
+      };
+    });
   };
 
   // Handle payment parameter changes
@@ -243,25 +262,43 @@ export function FormulaDialog({
     if (simpleTariff) {
       // If simple tariff is active, apply the change to all categories
       const newValue = Number(value);
-      const newParameters = { ...paymentParameters };
+      const newParameters: Record<string, PaymentParametersES> = {};
 
       instructorCategories.forEach((cat) => {
-        newParameters[cat] = {
-          ...newParameters[cat],
-          [field]: newValue,
+        const current = paymentParameters[cat] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
         };
+        newParameters[cat] = {
+          ...current,
+          [field]: newValue,
+        } as PaymentParametersES;
       });
 
       setPaymentParameters(newParameters);
     } else {
       // Normal behavior, only update the selected category
-      setPaymentParameters((prev) => ({
-        ...prev,
-        [category]: {
-          ...(prev[category] || {}),
-          [field]: Number(value),
-        },
-      }));
+      setPaymentParameters((prev) => {
+        const current = prev[category] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
+        };
+        return {
+          ...prev,
+          [category]: {
+            ...current,
+            [field]: Number(value),
+          } as PaymentParametersES,
+        };
+      });
     }
   };
 
@@ -275,17 +312,27 @@ export function FormulaDialog({
     if (simpleTariff) {
       // If simple tariff is active, apply the change to all categories
       const newValue = Number(value);
-      const newParameters = { ...paymentParameters };
+      const newParameters: Record<string, PaymentParametersES> = {};
 
       instructorCategories.forEach((cat) => {
-        const newTarifas = [...newParameters[cat].tarifas];
-        newTarifas[index] = {
-          ...newTarifas[index],
-          [field]: newValue,
+        const current = paymentParameters[cat] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
         };
+        const newTarifas = [...current.tarifas];
+        if (newTarifas[index]) {
+          newTarifas[index] = {
+            ...newTarifas[index],
+            [field]: newValue,
+          } as Tariff;
+        }
 
         newParameters[cat] = {
-          ...newParameters[cat],
+          ...current,
           tarifas: newTarifas,
         };
       });
@@ -294,16 +341,26 @@ export function FormulaDialog({
     } else {
       // Normal behavior
       setPaymentParameters((prev) => {
-        const newTarifas = [...prev[category].tarifas];
-        newTarifas[index] = {
-          ...newTarifas[index],
-          [field]: Number(value),
+        const current = prev[category] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
         };
+        const newTarifas = [...current.tarifas];
+        if (newTarifas[index]) {
+          newTarifas[index] = {
+            ...newTarifas[index],
+            [field]: Number(value),
+          } as Tariff;
+        }
 
         return {
           ...prev,
           [category]: {
-            ...prev[category],
+            ...current,
             tarifas: newTarifas,
           },
         };
@@ -315,17 +372,25 @@ export function FormulaDialog({
   const addTariff = (category: string) => {
     if (simpleTariff) {
       // If simple tariff is active, add the tariff to all categories
-      const newParameters = { ...paymentParameters };
+      const newParameters: Record<string, PaymentParametersES> = {};
 
       instructorCategories.forEach((cat) => {
-        const tarifas = newParameters[cat].tarifas || [];
+        const current = paymentParameters[cat] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
+        };
+        const tarifas = current.tarifas || [];
         const maxReservations =
           tarifas.length > 0
-            ? Math.max(...tarifas.map((t: any) => t.numeroReservas))
+            ? Math.max(...tarifas.map((t: Tariff) => t.numeroReservas))
             : 0;
 
         newParameters[cat] = {
-          ...newParameters[cat],
+          ...current,
           tarifas: [
             ...tarifas,
             { tarifa: 0, numeroReservas: maxReservations + 10 },
@@ -337,18 +402,29 @@ export function FormulaDialog({
     } else {
       // Normal behavior
       setPaymentParameters((prev) => {
-        const tarifas = prev[category].tarifas || [];
+        const current = prev[category] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
+        };
+        const tarifas = current.tarifas || [];
         const maxReservations =
           tarifas.length > 0
-            ? Math.max(...tarifas.map((t: any) => t.numeroReservas))
+            ? Math.max(...tarifas.map((t: Tariff) => t.numeroReservas))
             : 0;
 
-        const newTariff = { tarifa: 0, numeroReservas: maxReservations + 10 };
+        const newTariff: Tariff = {
+          tarifa: 0,
+          numeroReservas: maxReservations + 10,
+        };
 
         return {
           ...prev,
           [category]: {
-            ...prev[category],
+            ...current,
             tarifas: [...tarifas, newTariff],
           },
         };
@@ -360,14 +436,22 @@ export function FormulaDialog({
   const removeTariff = (category: string, index: number) => {
     if (simpleTariff) {
       // If simple tariff is active, remove the tariff from all categories
-      const newParameters = { ...paymentParameters };
+      const newParameters: Record<string, PaymentParametersES> = {};
 
       instructorCategories.forEach((cat) => {
-        const newTarifas = [...newParameters[cat].tarifas];
+        const current = paymentParameters[cat] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
+        };
+        const newTarifas = [...current.tarifas];
         newTarifas.splice(index, 1);
 
         newParameters[cat] = {
-          ...newParameters[cat],
+          ...current,
           tarifas: newTarifas,
         };
       });
@@ -376,12 +460,20 @@ export function FormulaDialog({
     } else {
       // Normal behavior
       setPaymentParameters((prev) => {
-        const newTarifas = [...prev[category].tarifas];
+        const current = prev[category] || {
+          cuotaFija: 0,
+          minimoGarantizado: 0,
+          tarifas: [],
+          tarifaFullHouse: 0,
+          maximo: 0,
+          bono: 0,
+        };
+        const newTarifas = [...current.tarifas];
         newTarifas.splice(index, 1);
         return {
           ...prev,
           [category]: {
-            ...prev[category],
+            ...current,
             tarifas: newTarifas,
           },
         };
@@ -424,7 +516,7 @@ export function FormulaDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[96vh] w-full overflow-y-auto p-4">
+      <DialogContent className="max-w-[95vw] sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
           <div>
             <DialogTitle className="text-xl font-semibold">
@@ -456,7 +548,7 @@ export function FormulaDialog({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
+            className="space-y-4 py-4"
           >
             {/* Discipline and Period Selectors */}
             <div className="grid grid-cols-2 gap-4">
@@ -475,7 +567,7 @@ export function FormulaDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {disciplines?.map((discipline: any) => (
+                        {disciplines?.map((discipline: DisciplineListItem) => (
                           <SelectItem
                             key={discipline.id}
                             value={discipline.id}
@@ -506,21 +598,15 @@ export function FormulaDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {periods?.map(
-                          (period: {
-                            id: string;
-                            number: number;
-                            year: number;
-                          }) => (
-                            <SelectItem
-                              key={period.id}
-                              value={period.id}
-                              className="text-xs"
-                            >
-                              {period.number} - {period.year}
-                            </SelectItem>
-                          )
-                        )}
+                        {periods?.map((period: PeriodListItem) => (
+                          <SelectItem
+                            key={period.id}
+                            value={period.id}
+                            className="text-xs"
+                          >
+                            {period.number} - {period.year}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -563,11 +649,13 @@ export function FormulaDialog({
                         variant="outline"
                         size="sm"
                         onClick={() => {
+                          const instructorTarifas =
+                            paymentParameters.INSTRUCTOR?.tarifas;
                           const _maxReservations =
-                            paymentParameters.INSTRUCTOR?.tarifas?.length > 0
+                            instructorTarifas && instructorTarifas.length > 0
                               ? Math.max(
-                                  ...paymentParameters.INSTRUCTOR.tarifas.map(
-                                    (t: any) => t.numeroReservas
+                                  ...instructorTarifas.map(
+                                    (t: Tariff) => t.numeroReservas
                                   )
                                 )
                               : 0;
@@ -642,12 +730,12 @@ export function FormulaDialog({
                           {/* Tariffs by reservation level */}
                           {paymentParameters.INSTRUCTOR?.tarifas
                             ?.sort(
-                              (a: any, b: any) =>
+                              (a: Tariff, b: Tariff) =>
                                 a.numeroReservas - b.numeroReservas
                             )
-                            .map((tariff: any, index: number) => (
+                            .map((tariff: Tariff, index: number) => (
                               <tr
-                                key={`tariff-level-${index}`}
+                                key={`tariff-level-${tariff.numeroReservas}-${index}`}
                                 className={index % 2 === 0 ? "bg-muted/20" : ""}
                               >
                                 <td className="font-medium p-2">
@@ -691,9 +779,12 @@ export function FormulaDialog({
                                         onClick={() => {
                                           instructorCategories.forEach(
                                             (category) => {
+                                              const categoryParams =
+                                                paymentParameters[category];
                                               if (
-                                                paymentParameters[category]
-                                                  ?.tarifas?.length > index
+                                                categoryParams?.tarifas &&
+                                                categoryParams.tarifas.length >
+                                                  index
                                               ) {
                                                 removeTariff(category, index);
                                               }
@@ -710,7 +801,7 @@ export function FormulaDialog({
                                 {instructorCategories.map(
                                   (category, categoryIndex) => (
                                     <td
-                                      key={`${category}-tariff-${index}`}
+                                      key={`${category}-tariff-${tariff.numeroReservas}-${categoryIndex}`}
                                       className="text-center p-2"
                                     >
                                       <Input
@@ -800,7 +891,7 @@ export function FormulaDialog({
                                       type="checkbox"
                                       id={`${category}-has-bonus`}
                                       checked={
-                                        !!paymentParameters[category]?.bonus
+                                        !!paymentParameters[category]?.bono
                                       }
                                       onChange={(e) => {
                                         const newValue = e.target.checked
@@ -808,25 +899,24 @@ export function FormulaDialog({
                                           : 0;
                                         handlePaymentParameterChange(
                                           category,
-                                          "bonus",
+                                          "bono",
                                           newValue.toString()
                                         );
                                       }}
                                       className="h-3 w-3 rounded border-gray-300 mr-1"
                                       disabled={simpleTariff && index > 0}
                                     />
-                                    {paymentParameters[category]?.bonus ? (
+                                    {paymentParameters[category]?.bono ? (
                                       <Input
                                         type="number"
                                         step="0.01"
                                         value={
-                                          paymentParameters[category]?.bonus ||
-                                          0
+                                          paymentParameters[category]?.bono || 0
                                         }
                                         onChange={(e) =>
                                           handlePaymentParameterChange(
                                             category,
-                                            "bonus",
+                                            "bono",
                                             e.target.value
                                           )
                                         }

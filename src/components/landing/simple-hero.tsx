@@ -12,11 +12,12 @@ export function SimpleHero() {
             <span className="text-primary block">Fitness Management</span>
           </h1>
           <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-            La plataforma completa para gestionar instructores, clases, pagos y
-            todo lo necesario para tu centro de fitness de manera eficiente.
+            La plataforma completa para registrar clases, gestionar
+            instructores, calcular pagos automáticos y generar reportes
+            detallados para tu centro de fitness.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
+            <Link href="/signin">
               <Button size="lg" className="px-8 py-3">
                 Iniciar Sesión
               </Button>

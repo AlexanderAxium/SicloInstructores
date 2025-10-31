@@ -1,9 +1,18 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import React from "react";
+import React, { useMemo } from "react";
 import { ParticleNetwork } from "./particle-network";
 
 export function LandingHero() {
+  const gridRectKeys = useMemo(
+    () => Array.from({ length: 35 }, (_, i) => `grid-rect-${i}-${Date.now()}`),
+    []
+  );
+  const starKeys = useMemo(
+    () => Array.from({ length: 5 }, (_, i) => `star-${i}-${Date.now()}`),
+    []
+  );
+
   return (
     <section
       className="relative w-full overflow-visible bg-gradient-to-b from-[#1a2332] via-[#1e2838] to-[#22303f] border-b-4 border-white/5 pb-[280px] md:pb-[380px]"
@@ -49,8 +58,8 @@ export function LandingHero() {
             </mask>
             <g mask="url(#mask0_186_1134)">
               {/* Grid Rectangles */}
-              {[...Array(35)].map((_, i) => (
-                <React.Fragment key={`grid-rect-${i}`}>
+              {gridRectKeys.map((key, i) => (
+                <React.Fragment key={key}>
                   <rect
                     x={-20.0891 + i * 36}
                     y="9.2"
@@ -580,9 +589,9 @@ export function LandingHero() {
         <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/10">
           <span className="text-white text-sm font-medium">Excellent</span>
           <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
+            {starKeys.map((key) => (
               <svg
-                key={`star-icon-${i}`}
+                key={key}
                 className="w-4 h-4 fill-primary"
                 viewBox="0 0 20 20"
                 role="img"

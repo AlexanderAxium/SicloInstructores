@@ -36,6 +36,7 @@ import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
 import type { ThemeRide as ThemeRideType } from "@/types";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -291,7 +292,25 @@ function ThemeRideDialog({
 
 export default function ThemeRidesPage() {
   const { user: _ } = useAuthContext();
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para theme rides
+  const canReadThemeRide = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.THEME_RIDE
+  );
+  const canCreateThemeRide = hasPermission(
+    PermissionAction.CREATE,
+    PermissionResource.THEME_RIDE
+  );
+  const canUpdateThemeRide = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.THEME_RIDE
+  );
+  const canDeleteThemeRide = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.THEME_RIDE
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogThemeRide, setDialogThemeRide] = useState<ThemeRide | null>(
     null
@@ -465,28 +484,31 @@ export default function ThemeRidesPage() {
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<ThemeRide>[] = [
-    {
+  const actions: TableAction<ThemeRide>[] = [];
+
+  if (canReadThemeRide) {
+    actions.push({
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleView,
-    },
-  ];
+    });
+  }
 
-  if (canManageUsers) {
-    actions.push(
-      {
-        label: "Editar",
-        icon: <Edit className="h-4 w-4" />,
-        onClick: handleEdit,
-      },
-      {
-        label: "Eliminar",
-        icon: <Trash2 className="h-4 w-4" />,
-        onClick: handleDelete,
-        variant: "destructive",
-      }
-    );
+  if (canUpdateThemeRide) {
+    actions.push({
+      label: "Editar",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEdit,
+    });
+  }
+
+  if (canDeleteThemeRide) {
+    actions.push({
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDelete,
+      variant: "destructive",
+    });
   }
 
   // Información de paginación
@@ -501,6 +523,11 @@ export default function ThemeRidesPage() {
 
   // Export handler
   const handleExportExcel = async () => {
+    if (!canReadThemeRide) {
+      toast.error("No tienes permisos para exportar theme rides");
+      return;
+    }
+
     if (selectedPeriod === "all") {
       toast.error("Por favor selecciona un período específico para exportar");
       return;
@@ -540,6 +567,19 @@ export default function ThemeRidesPage() {
     });
   };
 
+  if (!canReadThemeRide) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver theme rides.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -560,7 +600,7 @@ export default function ThemeRidesPage() {
             <FileSpreadsheet className="h-4 w-4 mr-1.5" />
             Exportar Excel
           </Button>
-          {canManageUsers && (
+          {canCreateThemeRide && (
             <Button size="sm" variant="edit" onClick={handleCreate}>
               <Plus className="h-4 w-4 mr-1.5" />
               <span>Nuevo Theme Ride</span>

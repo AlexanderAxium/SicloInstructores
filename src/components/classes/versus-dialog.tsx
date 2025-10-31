@@ -136,6 +136,11 @@ export function VersusDialog({
         versusClasses.length > 0 ? versusClasses[0] : classData;
 
       if (referenceClass) {
+        const instructorIds =
+          versusClasses.length > 0
+            ? versusClasses.map((c) => c.instructorId)
+            : [classData.instructorId];
+
         form.reset({
           id: referenceClass.id,
           country: referenceClass.country,
@@ -153,15 +158,12 @@ export function VersusDialog({
           periodId: referenceClass.periodId,
           week: referenceClass.week,
           versusNumber: referenceClass.versusNumber || 1,
-          instructors:
-            versusClasses.length > 0
-              ? versusClasses.map((c) => c.instructorId)
-              : [classData.instructorId],
+          instructors: instructorIds,
         });
 
         // Si hay múltiples clases versus, cargar todos los instructores
         if (versusClasses.length > 0) {
-          setInstructors(versusClasses.map((c) => c.instructorId));
+          setInstructors(instructorIds);
         } else {
           setInstructors([classData.instructorId]);
         }

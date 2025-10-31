@@ -11,7 +11,7 @@ interface TestimonialCardProps {
 const testimonials: TestimonialCardProps[] = [
   {
     quote:
-      "Las sugerencias en tiempo real de MyApp son como tener un experto revisando cada proceso mientras trabajas. La precisión de sus recomendaciones mejoró nuestra eficiencia general, reduciendo el tiempo de gestión.",
+      "Las sugerencias en tiempo real de Siclo Instructores son como tener un experto revisando cada proceso mientras trabajas. La precisión de sus recomendaciones mejoró nuestra eficiencia general, reduciendo el tiempo de gestión.",
     name: "Ana García",
     company: "Tech Solutions",
     avatar: "/images/avatars/annette-black.png",
@@ -19,7 +19,7 @@ const testimonials: TestimonialCardProps[] = [
   },
   {
     quote:
-      "Integrar MyApp en nuestro stack fue sencillo, y las conexiones con servicios externos nos ahorraron días de configuración",
+      "Integrar Siclo Instructores en nuestro stack fue sencillo, y las conexiones con servicios externos nos ahorraron días de configuración",
     name: "Diego Ruiz",
     company: "Digital Agency",
     avatar: "/images/avatars/dianne-russell.png",
@@ -27,7 +27,7 @@ const testimonials: TestimonialCardProps[] = [
   },
   {
     quote:
-      "Configurar MyApp fue simple, se sintió perfecto. Pasamos de desarrollo a ver nuestros cambios en vivo en minutos sin preocuparnos por rendimiento o problemas de configuración.",
+      "Configurar Siclo Instructores fue simple, se sintió perfecto. Pasamos de desarrollo a ver nuestros cambios en vivo en minutos sin preocuparnos por rendimiento o problemas de configuración.",
     name: "Alberto Flores",
     company: "Innovation Hub",
     avatar: "/images/avatars/albert-flores.png",
@@ -35,7 +35,7 @@ const testimonials: TestimonialCardProps[] = [
   },
   {
     quote:
-      "La función de automatización de MyApp cambió las reglas del juego. Estamos escalando operaciones en horas en lugar de gastar semanas enteras.",
+      "La función de automatización de Siclo Instructores cambió las reglas del juego. Estamos escalando operaciones en horas en lugar de gastar semanas enteras.",
     name: "Camila Torres",
     company: "Startup Pro",
     avatar: "/images/avatars/cameron-williamson.png",
@@ -155,7 +155,7 @@ export function TestimonialGrid() {
           <p className="text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mx-auto font-light">
             Escucha cómo profesionales escalan sus operaciones más rápido,
             colaboran sin problemas, y gestionan con confianza usando las
-            poderosas herramientas de MyApp
+            poderosas herramientas de Siclo Instructores
           </p>
         </div>
         <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">

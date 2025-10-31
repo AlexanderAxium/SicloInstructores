@@ -10,6 +10,7 @@ import type { TableColumn } from "@/components/ui/scrollable-table";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePagination } from "@/hooks/usePagination";
 import type { InstructorFromAPI } from "@/types/instructor";
 import { trpc } from "@/utils/trpc";
 import {
@@ -53,10 +54,9 @@ interface InstructorPaymentWithPeriod {
   id: string;
   status: string;
   period: {
+    id: string;
     number: number;
     year: number;
-    startDate: string;
-    endDate: string;
   };
   cover: number;
   comments: string | null;
@@ -91,6 +91,17 @@ export default function InstructorDetailPage() {
     active: false,
   });
 
+  // Paginación para clases y pagos
+  const classesPagination = usePagination({
+    defaultLimit: 10,
+    defaultPage: 1,
+  });
+
+  const paymentsPagination = usePagination({
+    defaultLimit: 10,
+    defaultPage: 1,
+  });
+
   // Obtener datos del instructor desde tRPC
   const {
     data: instructor,
@@ -100,6 +111,22 @@ export default function InstructorDetailPage() {
   } = trpc.instructor.getById.useQuery({
     id: instructorId,
   });
+
+  // Obtener clases del instructor con paginación usando filtros
+  const { data: classesData, isLoading: isLoadingClasses } =
+    trpc.classes.getWithFilters.useQuery({
+      instructorId,
+      limit: classesPagination.limit,
+      offset: (classesPagination.page - 1) * classesPagination.limit,
+    });
+
+  // Obtener pagos del instructor con paginación usando filtros
+  const { data: paymentsData, isLoading: isLoadingPayments } =
+    trpc.payments.getWithFilters.useQuery({
+      instructorId,
+      limit: paymentsPagination.limit,
+      offset: (paymentsPagination.page - 1) * paymentsPagination.limit,
+    });
 
   // Mutación para actualizar instructor
   const updateInstructorMutation = trpc.instructor.update.useMutation();
@@ -218,6 +245,11 @@ export default function InstructorDetailPage() {
     },
   ];
 
+  // Función para navegar a la página de detalle del pago
+  const handleViewPayment = (payment: InstructorPaymentWithPeriod) => {
+    window.location.href = `/dashboard/pagos/${payment.id}`;
+  };
+
   // Definir columnas para la tabla de pagos
   const paymentColumns: TableColumn<InstructorPaymentWithPeriod>[] = [
     {
@@ -284,6 +316,24 @@ export default function InstructorDetailPage() {
           <div className="text-xs text-muted-foreground">
             VS: S/ {record.versusBonus.toFixed(2)}
           </div>
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      title: "Acciones",
+      width: "80px",
+      headerClassName: "text-center",
+      render: (_, record) => (
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleViewPayment(record)}
+            className="h-8 w-8 p-0 hover:bg-muted"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },
@@ -664,20 +714,26 @@ export default function InstructorDetailPage() {
 
             <TabsContent value="clases" className="mt-0 p-4">
               <ScrollableTable<InstructorClass>
-                data={instructor.classes || []}
+                data={classesData?.classes || []}
                 columns={classColumns}
-                loading={false}
+                loading={isLoadingClasses}
                 error={undefined}
                 pagination={{
-                  page: 1,
-                  limit: instructor.classes?.length || 0,
-                  total: instructor.classes?.length || 0,
-                  totalPages: 1,
-                  hasNext: false,
-                  hasPrev: false,
+                  page: classesPagination.page,
+                  limit: classesPagination.limit,
+                  total: classesData?.total || 0,
+                  totalPages: Math.ceil(
+                    (classesData?.total || 0) / classesPagination.limit
+                  ),
+                  hasNext:
+                    classesPagination.page <
+                    Math.ceil(
+                      (classesData?.total || 0) / classesPagination.limit
+                    ),
+                  hasPrev: classesPagination.page > 1,
                 }}
-                onPageChange={() => {}}
-                onPageSizeChange={() => {}}
+                onPageChange={classesPagination.setPage}
+                onPageSizeChange={classesPagination.setLimit}
                 emptyMessage="No hay clases asignadas"
                 emptyIcon={
                   <GraduationCap className="h-12 w-12 text-muted-foreground" />
@@ -687,20 +743,26 @@ export default function InstructorDetailPage() {
 
             <TabsContent value="pagos" className="mt-0 p-4">
               <ScrollableTable<InstructorPaymentWithPeriod>
-                data={instructor.payments || []}
+                data={paymentsData?.payments || []}
                 columns={paymentColumns}
-                loading={false}
+                loading={isLoadingPayments}
                 error={undefined}
                 pagination={{
-                  page: 1,
-                  limit: instructor.payments?.length || 0,
-                  total: instructor.payments?.length || 0,
-                  totalPages: 1,
-                  hasNext: false,
-                  hasPrev: false,
+                  page: paymentsPagination.page,
+                  limit: paymentsPagination.limit,
+                  total: paymentsData?.total || 0,
+                  totalPages: Math.ceil(
+                    (paymentsData?.total || 0) / paymentsPagination.limit
+                  ),
+                  hasNext:
+                    paymentsPagination.page <
+                    Math.ceil(
+                      (paymentsData?.total || 0) / paymentsPagination.limit
+                    ),
+                  hasPrev: paymentsPagination.page > 1,
                 }}
-                onPageChange={() => {}}
-                onPageSizeChange={() => {}}
+                onPageChange={paymentsPagination.setPage}
+                onPageSizeChange={paymentsPagination.setLimit}
                 emptyMessage="No hay pagos registrados"
                 emptyIcon={
                   <DollarSign className="h-12 w-12 text-muted-foreground" />

@@ -114,7 +114,8 @@ export function EstudiosTab({
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase)!;
+      const estudio = estudiosMap.get(estudioBase);
+      if (!estudio) return;
       estudio.clases += venue.count;
       estudio.reservas += venue.totalReservations;
       // Promedio ponderado de ocupación basado en número de clases
@@ -142,7 +143,8 @@ export function EstudiosTab({
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase)!;
+      const estudio = estudiosMap.get(estudioBase);
+      if (!estudio) return;
       estudio.pagoTotal += venue.earnings;
       if (venue.classes > 0 && estudio.clases === 0)
         estudio.clases = venue.classes;
@@ -157,7 +159,8 @@ export function EstudiosTab({
       const estudioBase = venue.name.split(" - ")[0] || venue.name;
 
       if (estudiosMap.has(estudioBase)) {
-        const estudio = estudiosMap.get(estudioBase)!;
+        const estudio = estudiosMap.get(estudioBase);
+        if (!estudio) return;
         venue.disciplines.forEach((d) => {
           estudio.disciplinas.add(d.disciplineId);
         });
@@ -243,7 +246,8 @@ export function EstudiosTab({
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase)!;
+      const estudio = estudiosMap.get(estudioBase);
+      if (!estudio) return;
 
       // Agregar disciplinas de este venue al estudio base
       venue.disciplines.forEach((d) => {
@@ -457,7 +461,8 @@ export function EstudiosTab({
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase)!;
+      const estudio = estudiosMap.get(estudioBase);
+      if (!estudio) return;
       estudio.value += local.count;
     });
 
@@ -492,7 +497,8 @@ export function EstudiosTab({
         });
       }
 
-      const estudio = estudiosMap.get(estudioBase)!;
+      const estudio = estudiosMap.get(estudioBase);
+      if (!estudio) return;
       estudio.clases += salon.classes;
       estudio.ocupacionPonderada += salon.occupation * salon.classes;
     });

@@ -20,7 +20,7 @@ export function CTASection() {
           {/* Subtitle */}
           <p className="text-muted-foreground text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-8 md:mb-12 font-light">
             Únete a profesionales que ya están escalando sus operaciones con
-            MyApp
+            Siclo Instructores
           </p>
 
           {/* CTA Button */}

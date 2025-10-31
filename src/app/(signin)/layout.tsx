@@ -1,3 +1,5 @@
+import { Footer } from "@/components/Footer";
+import GlobalNavbar from "@/components/GlobalNavbar";
 import { generateMetadata as generateSEOMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
@@ -13,5 +15,11 @@ export default function SignInLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <GlobalNavbar />
+      {children}
+      <Footer />
+    </>
+  );
 }

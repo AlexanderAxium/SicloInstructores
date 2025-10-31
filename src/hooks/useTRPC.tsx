@@ -17,10 +17,15 @@ export const TRPCProvider = ({ children }: { children: React.ReactNode }) => {
         httpBatchLink({
           url: "/api/trpc",
           headers() {
-            // Get token from localStorage
+            // Get instructor token from localStorage first (preferred for instructor routes)
+            const instructorToken = localStorage.getItem("instructorToken");
+            // Fall back to regular auth token if no instructor token
             const token = localStorage.getItem("auth_token");
+
+            const tokenToUse = instructorToken || token;
+
             return {
-              authorization: token ? `Bearer ${token}` : "",
+              authorization: tokenToUse ? `Bearer ${tokenToUse}` : "",
             };
           },
         }),

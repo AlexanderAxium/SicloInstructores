@@ -37,6 +37,7 @@ import type {
   UpdateClassData,
   VersusClassData,
 } from "@/types/classes";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import {
   Calendar,
@@ -93,7 +94,25 @@ const _createClassSchema = z.object({
 
 export default function ClasesPage() {
   const { user: _ } = useAuthContext();
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para clases
+  const canReadClass = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.CLASE
+  );
+  const canCreateClass = hasPermission(
+    PermissionAction.CREATE,
+    PermissionResource.CLASE
+  );
+  const canUpdateClass = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.CLASE
+  );
+  const canDeleteClass = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.CLASE
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isVersusDialogOpen, setIsVersusDialogOpen] = useState(false);
   const [dialogClass, setDialogClass] = useState<ClassFromAPI | null>(null);
@@ -348,6 +367,16 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
   // Configuración de columnas para la tabla
   const columns: TableColumn<ClassFromAPI>[] = [
     {
+      key: "id",
+      title: "ID",
+      width: "80px",
+      render: (_, record) => (
+        <span className="text-xs font-mono text-muted-foreground">
+          {record.id}
+        </span>
+      ),
+    },
+    {
       key: "date",
       title: "Fecha",
       width: "120px",
@@ -424,28 +453,33 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
   ];
 
   // Acciones de la tabla
-  const actions: TableAction<ClassFromAPI>[] = [
-    {
+  const actions: TableAction<ClassFromAPI>[] = [];
+
+  // Ver solo si tiene permiso de lectura
+  if (canReadClass) {
+    actions.push({
       label: "Ver",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleView,
-    },
-  ];
+    });
+  }
 
-  if (canManageUsers) {
-    actions.push(
-      {
-        label: "Editar",
-        icon: <Edit className="h-4 w-4" />,
-        onClick: handleEdit,
-      },
-      {
-        label: "Eliminar",
-        icon: <Trash2 className="h-4 w-4" />,
-        onClick: handleDelete,
-        variant: "destructive",
-      }
-    );
+  // Editar y eliminar solo si tiene permisos
+  if (canUpdateClass) {
+    actions.push({
+      label: "Editar",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEdit,
+    });
+  }
+
+  if (canDeleteClass) {
+    actions.push({
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDelete,
+      variant: "destructive",
+    });
   }
 
   // Información de paginación
@@ -458,8 +492,13 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
     hasPrev: pagination.page > 1,
   };
 
-  // Export handlers
+  // Export handlers - Solo si tiene permiso de lectura
   const handleExportExcel = async () => {
+    if (!canReadClass) {
+      toast.error("No tienes permisos para exportar clases");
+      return;
+    }
+
     if (selectedPeriod === "all") {
       toast.error("Por favor selecciona un período específico para exportar");
       return;
@@ -525,6 +564,11 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
   };
 
   const handleExportPDF = async () => {
+    if (!canReadClass) {
+      toast.error("No tienes permisos para exportar clases");
+      return;
+    }
+
     if (selectedPeriod === "all") {
       toast.error("Por favor selecciona un período específico para exportar");
       return;
@@ -572,6 +616,20 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
     );
   };
 
+  // Si no tiene permiso de lectura, no mostrar nada (el sidebar ya lo oculta)
+  if (!canReadClass) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver clases.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -583,30 +641,32 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={selectedPeriod === "all"}
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
-                Exportar
-                <ChevronDown className="h-4 w-4 ml-1.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportExcel}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Exportar a Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF}>
-                <FileText className="mr-2 h-4 w-4" />
-                Exportar a PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {canManageUsers && (
+          {canReadClass && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={selectedPeriod === "all"}
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                  Exportar
+                  <ChevronDown className="h-4 w-4 ml-1.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportExcel}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Exportar a Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exportar a PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {canCreateClass && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" variant="edit">

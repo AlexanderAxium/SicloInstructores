@@ -8,11 +8,27 @@ export enum PermissionAction {
 }
 
 export enum PermissionResource {
+  // System resources
   USER = "USER",
   ROLE = "ROLE",
   PERMISSION = "PERMISSION",
   DASHBOARD = "DASHBOARD",
   ADMIN = "ADMIN",
+
+  // Fitness/Gym Management resources
+  INSTRUCTOR = "INSTRUCTOR",
+  DISCIPLINA = "DISCIPLINA",
+  PERIODO = "PERIODO",
+  FORMULA = "FORMULA",
+  CATEGORIA_INSTRUCTOR = "CATEGORIA_INSTRUCTOR",
+  CLASE = "CLASE",
+  COVER = "COVER",
+  PENALIZACION = "PENALIZACION",
+  PAGO_INSTRUCTOR = "PAGO_INSTRUCTOR",
+  ARCHIVO = "ARCHIVO",
+  BRANDEO = "BRANDEO",
+  THEME_RIDE = "THEME_RIDE",
+  WORKSHOP = "WORKSHOP",
 }
 
 export interface Role {

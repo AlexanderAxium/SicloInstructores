@@ -1,6 +1,7 @@
 import {
   PermissionAction,
   PermissionResource,
+  type Prisma,
   PrismaClient,
 } from "@prisma/client";
 import { betterAuth } from "better-auth";
@@ -138,47 +139,45 @@ async function main() {
   // ================================
   console.log("👥 Creating roles and permissions...");
 
+  // Helper function to create all permissions for a resource
+  const createResourcePermissions = (resource: PermissionResource) => {
+    return [
+      { action: PermissionAction.CREATE, resource },
+      { action: PermissionAction.READ, resource },
+      { action: PermissionAction.UPDATE, resource },
+      { action: PermissionAction.DELETE, resource },
+      { action: PermissionAction.MANAGE, resource },
+    ];
+  };
+
   // Create all permissions
   const permissions = [
     // Dashboard permissions
     { action: PermissionAction.READ, resource: PermissionResource.DASHBOARD },
 
-    // User management permissions
-    { action: PermissionAction.CREATE, resource: PermissionResource.USER },
-    { action: PermissionAction.READ, resource: PermissionResource.USER },
-    { action: PermissionAction.UPDATE, resource: PermissionResource.USER },
-    { action: PermissionAction.DELETE, resource: PermissionResource.USER },
-    { action: PermissionAction.MANAGE, resource: PermissionResource.USER },
-
-    // Role management permissions
-    { action: PermissionAction.CREATE, resource: PermissionResource.ROLE },
-    { action: PermissionAction.READ, resource: PermissionResource.ROLE },
-    { action: PermissionAction.UPDATE, resource: PermissionResource.ROLE },
-    { action: PermissionAction.DELETE, resource: PermissionResource.ROLE },
-    { action: PermissionAction.MANAGE, resource: PermissionResource.ROLE },
-
-    // Permission management
-    {
-      action: PermissionAction.CREATE,
-      resource: PermissionResource.PERMISSION,
-    },
-    { action: PermissionAction.READ, resource: PermissionResource.PERMISSION },
-    {
-      action: PermissionAction.UPDATE,
-      resource: PermissionResource.PERMISSION,
-    },
-    {
-      action: PermissionAction.DELETE,
-      resource: PermissionResource.PERMISSION,
-    },
-    {
-      action: PermissionAction.MANAGE,
-      resource: PermissionResource.PERMISSION,
-    },
+    // System resources - Full CRUD + MANAGE
+    ...createResourcePermissions(PermissionResource.USER),
+    ...createResourcePermissions(PermissionResource.ROLE),
+    ...createResourcePermissions(PermissionResource.PERMISSION),
 
     // Admin permissions
     { action: PermissionAction.READ, resource: PermissionResource.ADMIN },
     { action: PermissionAction.MANAGE, resource: PermissionResource.ADMIN },
+
+    // Fitness/Gym Management resources - Full CRUD + MANAGE
+    ...createResourcePermissions(PermissionResource.INSTRUCTOR),
+    ...createResourcePermissions(PermissionResource.DISCIPLINA),
+    ...createResourcePermissions(PermissionResource.PERIODO),
+    ...createResourcePermissions(PermissionResource.FORMULA),
+    ...createResourcePermissions(PermissionResource.CATEGORIA_INSTRUCTOR),
+    ...createResourcePermissions(PermissionResource.CLASE),
+    ...createResourcePermissions(PermissionResource.COVER),
+    ...createResourcePermissions(PermissionResource.PENALIZACION),
+    ...createResourcePermissions(PermissionResource.PAGO_INSTRUCTOR),
+    ...createResourcePermissions(PermissionResource.ARCHIVO),
+    ...createResourcePermissions(PermissionResource.BRANDEO),
+    ...createResourcePermissions(PermissionResource.THEME_RIDE),
+    ...createResourcePermissions(PermissionResource.WORKSHOP),
   ];
 
   // Create permissions for each tenant
@@ -749,116 +748,434 @@ async function main() {
     createdDisciplines.push(createdDiscipline);
   }
 
-  // Create formulas for each discipline and period
-  console.log("📊 Creating formulas...");
+  // Create formulas for each discipline and period (only periods 10 and 11)
+  console.log("📊 Creating formulas for periods 10 and 11...");
 
-  // Requisitos de categoría (igual que SilcoAdmin)
-  const categoryRequirements = {
-    INSTRUCTOR: {
-      ocupacion: 0.0,
-      clases: 0,
-      localesEnLima: 1,
-      dobleteos: 0,
-      horariosNoPrime: 0,
-      participacionEventos: false,
-      lineamientos: true,
-    },
-    JUNIOR_AMBASSADOR: {
-      ocupacion: 40.0,
-      clases: 4,
-      localesEnLima: 2,
-      dobleteos: 1,
-      horariosNoPrime: 1,
-      participacionEventos: false,
-      lineamientos: true,
-    },
-    AMBASSADOR: {
-      ocupacion: 60.0,
-      clases: 6,
-      localesEnLima: 3,
-      dobleteos: 2,
-      horariosNoPrime: 2,
-      participacionEventos: true,
-      lineamientos: true,
-    },
-    SENIOR_AMBASSADOR: {
-      ocupacion: 80.0,
-      clases: 9,
-      localesEnLima: 4,
-      dobleteos: 3,
-      horariosNoPrime: 3,
-      participacionEventos: true,
-      lineamientos: true,
-    },
-  };
+  // Define formulas by discipline
+  // Note: Using a more flexible type for seed data that may have varying structures
+  interface SeedCategoryRequirement {
+    clases: number;
+    dobleteos: number;
+    ocupacion: number;
+    lineamientos: boolean;
+    localesEnLima: number;
+    horariosNoPrime: number;
+    participacionEventos: boolean;
+    antiguedadMinima?: number;
+    evaluacionPromedio?: number;
+    capacitacionesCompletadas?: number;
+  }
 
-  // Parámetros de pago (igual que SilcoAdmin)
-  const paymentParameters = {
-    INSTRUCTOR: {
-      cuotaFija: 0.0,
-      minimoGarantizado: 0.0,
-      tarifas: [
-        { tarifa: 3.25, numeroReservas: 19 },
-        { tarifa: 4.25, numeroReservas: 49 },
-      ],
-      tarifaFullHouse: 5.25,
-      maximo: 262.5,
-      bono: 0.0,
-      retencionPorcentaje: 8.0,
-      ajustePorDobleteo: 0.0,
-    },
-    JUNIOR_AMBASSADOR: {
-      cuotaFija: 0.0,
-      minimoGarantizado: 60.0,
-      tarifas: [
-        { tarifa: 3.5, numeroReservas: 19 },
-        { tarifa: 4.5, numeroReservas: 49 },
-      ],
-      tarifaFullHouse: 5.5,
-      maximo: 275.0,
-      bono: 0.5,
-      retencionPorcentaje: 8.0,
-      ajustePorDobleteo: 0.25,
-    },
-    AMBASSADOR: {
-      cuotaFija: 0.0,
-      minimoGarantizado: 80.0,
-      tarifas: [
-        { tarifa: 4.0, numeroReservas: 19 },
-        { tarifa: 5.0, numeroReservas: 49 },
-      ],
-      tarifaFullHouse: 6.0,
-      maximo: 300.0,
-      bono: 1.0,
-      retencionPorcentaje: 8.0,
-      ajustePorDobleteo: 0.5,
-    },
-    SENIOR_AMBASSADOR: {
-      cuotaFija: 0.0,
-      minimoGarantizado: 100.0,
-      tarifas: [
-        { tarifa: 4.0, numeroReservas: 19 },
-        { tarifa: 5.0, numeroReservas: 49 },
-      ],
-      tarifaFullHouse: 6.0,
-      maximo: 325.0,
-      bono: 1.5,
-      retencionPorcentaje: 8.0,
-      ajustePorDobleteo: 1.0,
-    },
-  };
+  interface SeedPaymentParameter {
+    bono: number;
+    maximo: number;
+    tarifas: Array<{ tarifa: number; numeroReservas: number }>;
+    cuotaFija: number;
+    tarifaFullHouse: number;
+    ajustePorDobleteo: number;
+    minimoGarantizado: number;
+    retencionPorcentaje: number;
+  }
 
-  for (const discipline of createdDisciplines) {
-    for (const period of createdPeriods) {
-      await prisma.formula.create({
-        data: {
-          disciplineId: discipline.id,
-          periodId: period.id,
-          categoryRequirements,
-          paymentParameters,
-          tenantId: sicloTenant.id,
+  const formulasByDiscipline: Record<
+    string,
+    {
+      categoryRequirements: Record<string, SeedCategoryRequirement>;
+      paymentParameters: Record<string, SeedPaymentParameter>;
+    }
+  > = {
+    Síclo: {
+      categoryRequirements: {
+        INSTRUCTOR: {
+          clases: 0,
+          dobleteos: 0,
+          ocupacion: 0,
+          lineamientos: true,
+          localesEnLima: 1,
+          horariosNoPrime: 0,
+          participacionEventos: false,
         },
-      });
+        EMBAJADOR_JUNIOR: {
+          clases: 4,
+          dobleteos: 0,
+          ocupacion: 40,
+          lineamientos: true,
+          localesEnLima: 2,
+          horariosNoPrime: 0,
+          participacionEventos: false,
+        },
+        EMBAJADOR: {
+          clases: 6,
+          dobleteos: 0,
+          ocupacion: 60,
+          lineamientos: true,
+          localesEnLima: 3,
+          horariosNoPrime: 0,
+          participacionEventos: true,
+        },
+        EMBAJADOR_SENIOR: {
+          clases: 9,
+          dobleteos: 10,
+          ocupacion: 80,
+          lineamientos: true,
+          localesEnLima: 4,
+          horariosNoPrime: 10,
+          participacionEventos: true,
+        },
+      },
+      paymentParameters: {
+        INSTRUCTOR: {
+          bono: 0,
+          maximo: 450,
+          tarifas: [
+            { tarifa: 3.25, numeroReservas: 19 },
+            { tarifa: 4.25, numeroReservas: 49 },
+            { tarifa: 5.25, numeroReservas: 59 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 5.25,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 0,
+          retencionPorcentaje: 8,
+        },
+        JUNIOR_AMBASSADOR: {
+          bono: 0,
+          maximo: 450,
+          tarifas: [
+            { tarifa: 3.5, numeroReservas: 19 },
+            { tarifa: 4.5, numeroReservas: 49 },
+            { tarifa: 5.5, numeroReservas: 59 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 5.5,
+          ajustePorDobleteo: 0.25,
+          minimoGarantizado: 60,
+          retencionPorcentaje: 8,
+        },
+        AMBASSADOR: {
+          bono: 0,
+          maximo: 450,
+          tarifas: [
+            { tarifa: 4, numeroReservas: 19 },
+            { tarifa: 5, numeroReservas: 49 },
+            { tarifa: 6, numeroReservas: 59 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 6,
+          ajustePorDobleteo: 0.5,
+          minimoGarantizado: 80,
+          retencionPorcentaje: 8,
+        },
+        SENIOR_AMBASSADOR: {
+          bono: 0.5,
+          maximo: 450,
+          tarifas: [
+            { tarifa: 4, numeroReservas: 19 },
+            { tarifa: 5, numeroReservas: 49 },
+            { tarifa: 6, numeroReservas: 59 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 6,
+          ajustePorDobleteo: 1,
+          minimoGarantizado: 100,
+          retencionPorcentaje: 8,
+        },
+      },
+    },
+    Barre: {
+      categoryRequirements: {
+        INSTRUCTOR: {
+          clases: 0,
+          dobleteos: 0,
+          ocupacion: 0,
+          lineamientos: true,
+          localesEnLima: 1,
+          horariosNoPrime: 0,
+          participacionEventos: false,
+        },
+        EMBAJADOR_JUNIOR: {
+          clases: 4,
+          dobleteos: 1,
+          ocupacion: 40,
+          lineamientos: true,
+          localesEnLima: 2,
+          horariosNoPrime: 1,
+          participacionEventos: false,
+        },
+        EMBAJADOR: {
+          clases: 6,
+          dobleteos: 2,
+          ocupacion: 60,
+          lineamientos: true,
+          localesEnLima: 3,
+          horariosNoPrime: 2,
+          participacionEventos: true,
+        },
+        EMBAJADOR_SENIOR: {
+          clases: 9,
+          dobleteos: 3,
+          ocupacion: 80,
+          lineamientos: true,
+          localesEnLima: 4,
+          horariosNoPrime: 3,
+          participacionEventos: true,
+        },
+      },
+      paymentParameters: {
+        INSTRUCTOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 8 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+        JUNIOR_AMBASSADOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 8 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+        AMBASSADOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 8 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+        SENIOR_AMBASSADOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 8 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+      },
+    },
+    Yoga: {
+      categoryRequirements: {
+        INSTRUCTOR: {
+          clases: 0,
+          dobleteos: 0,
+          ocupacion: 0,
+          lineamientos: true,
+          localesEnLima: 1,
+          horariosNoPrime: 0,
+          participacionEventos: false,
+        },
+        EMBAJADOR_JUNIOR: {
+          clases: 4,
+          dobleteos: 1,
+          ocupacion: 40,
+          lineamientos: true,
+          localesEnLima: 2,
+          horariosNoPrime: 1,
+          participacionEventos: false,
+        },
+        EMBAJADOR: {
+          clases: 6,
+          dobleteos: 2,
+          ocupacion: 60,
+          lineamientos: true,
+          localesEnLima: 3,
+          horariosNoPrime: 2,
+          participacionEventos: true,
+        },
+        EMBAJADOR_SENIOR: {
+          clases: 9,
+          dobleteos: 3,
+          ocupacion: 80,
+          lineamientos: true,
+          localesEnLima: 4,
+          horariosNoPrime: 3,
+          participacionEventos: true,
+        },
+      },
+      paymentParameters: {
+        INSTRUCTOR: {
+          bono: 0,
+          maximo: 256,
+          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
+          cuotaFija: 40,
+          tarifaFullHouse: 8,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 0,
+          retencionPorcentaje: 8,
+        },
+        JUNIOR_AMBASSADOR: {
+          bono: 0,
+          maximo: 256,
+          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
+          cuotaFija: 40,
+          tarifaFullHouse: 8,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 0,
+          retencionPorcentaje: 8,
+        },
+        AMBASSADOR: {
+          bono: 0,
+          maximo: 256,
+          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
+          cuotaFija: 40,
+          tarifaFullHouse: 8,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 0,
+          retencionPorcentaje: 8,
+        },
+        SENIOR_AMBASSADOR: {
+          bono: 0,
+          maximo: 256,
+          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
+          cuotaFija: 40,
+          tarifaFullHouse: 8,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 0,
+          retencionPorcentaje: 8,
+        },
+      },
+    },
+    Ejercito: {
+      categoryRequirements: {
+        INSTRUCTOR: {
+          clases: 0,
+          dobleteos: 0,
+          ocupacion: 0,
+          lineamientos: true,
+          localesEnLima: 1,
+          horariosNoPrime: 0,
+          participacionEventos: false,
+        },
+        EMBAJADOR_JUNIOR: {
+          clases: 4,
+          dobleteos: 1,
+          ocupacion: 40,
+          lineamientos: true,
+          localesEnLima: 2,
+          horariosNoPrime: 1,
+          participacionEventos: false,
+        },
+        EMBAJADOR: {
+          clases: 6,
+          dobleteos: 2,
+          ocupacion: 60,
+          lineamientos: true,
+          localesEnLima: 3,
+          horariosNoPrime: 2,
+          participacionEventos: true,
+        },
+        EMBAJADOR_SENIOR: {
+          clases: 9,
+          dobleteos: 3,
+          ocupacion: 80,
+          lineamientos: true,
+          localesEnLima: 4,
+          horariosNoPrime: 3,
+          participacionEventos: true,
+        },
+      },
+      paymentParameters: {
+        INSTRUCTOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 9 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+        JUNIOR_AMBASSADOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 9 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+        AMBASSADOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 9 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+        SENIOR_AMBASSADOR: {
+          bono: 0,
+          maximo: 300,
+          tarifas: [
+            { tarifa: 0, numeroReservas: 9 },
+            { tarifa: 6, numeroReservas: 49 },
+          ],
+          cuotaFija: 0,
+          tarifaFullHouse: 7,
+          ajustePorDobleteo: 0,
+          minimoGarantizado: 50,
+          retencionPorcentaje: 8,
+        },
+      },
+    },
+  };
+
+  // Get periods 10 and 11
+  const periods10and11 = createdPeriods.filter(
+    (p) => p.number === 10 || p.number === 11
+  );
+
+  // Create formulas for each discipline and periods 10 and 11
+  for (const discipline of createdDisciplines) {
+    const formulaData = formulasByDiscipline[discipline.name];
+    if (formulaData) {
+      for (const period of periods10and11) {
+        await prisma.formula.create({
+          data: {
+            disciplineId: discipline.id,
+            periodId: period.id,
+            categoryRequirements:
+              formulaData.categoryRequirements as unknown as Prisma.InputJsonValue,
+            paymentParameters:
+              formulaData.paymentParameters as unknown as Prisma.InputJsonValue,
+            tenantId: sicloTenant.id,
+          },
+        });
+      }
     }
   }
 
@@ -892,11 +1209,12 @@ async function main() {
 🏋️ Basic Data Created:
 - Disciplines: Síclo, Barre, Yoga, Ejercito (4 disciplines total)
 - Periods: 13 periods for 2025 (complete year)
-- Formulas: Complete payment structure with:
-  * Category requirements (INSTRUCTOR, JUNIOR_AMBASSADOR, AMBASSADOR, SENIOR_AMBASSADOR)
-  * Payment parameters with dynamic tariffs
-  * Retention percentages and bonus calculations
+- Formulas: Complete payment structure for periods 10 and 11 with:
+  * Category requirements (INSTRUCTOR, EMBAJADOR_JUNIOR, EMBAJADOR, EMBAJADOR_SENIOR)
+  * Payment parameters with dynamic tariffs customized per discipline
+  * Retention percentages (8%) and bonus calculations
   * Full house payments and adjustments
+  * Only 8 formulas created (4 disciplines × 2 periods)
 
 🎯 Ready for Development:
 The platform now includes the basic structure needed for fitness management with proper formulas and user authentication!

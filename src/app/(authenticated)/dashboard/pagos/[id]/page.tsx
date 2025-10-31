@@ -29,16 +29,8 @@ import { PageHeader } from "../../../../../components/payments/detail/page-heade
 import { PaymentDetails } from "../../../../../components/payments/detail/payment-detail";
 import { PenalizacionesCoversTab } from "../../../../../components/payments/detail/penalizacion-cover-tab";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 // UI Components
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Award, Calendar, FileText } from "lucide-react";
 
 // Helper functions to convert API types to regular types
@@ -108,6 +100,7 @@ export default function PaymentDetailPage() {
   );
   const [isUpdatingAdjustment, setIsUpdatingAdjustment] =
     useState<boolean>(false);
+  const [isRecalculating, setIsRecalculating] = useState<boolean>(false);
 
   // Queries
   const {
@@ -140,18 +133,21 @@ export default function PaymentDetailPage() {
   ) as { data: { classes: Class[] } | undefined };
 
   const { data: disciplinesData } = trpc.disciplines.getAll.useQuery() as {
-    data: DisciplineFromAPI[] | undefined;
+    data: { disciplines: DisciplineFromAPI[]; total: number } | undefined;
   };
-  const { data: formulasData } = trpc.formulas.getAll.useQuery() as {
-    data: FormulaFromAPI[] | undefined;
+  const { data: formulasData } = trpc.formulas.getByPeriod.useQuery(
+    { periodId: periodId },
+    { enabled: !!periodId }
+  ) as {
+    data: { formulas: FormulaFromAPI[] } | undefined;
   };
 
   // Extract data and convert API types to regular types
   const instructor = convertInstructorFromAPI(instructorData);
   const period = convertPeriodFromAPI(periodData);
   const classes = classesData?.classes || [];
-  const disciplines = convertDisciplinesFromAPI(disciplinesData);
-  const formulas = formulasData || [];
+  const disciplines = convertDisciplinesFromAPI(disciplinesData?.disciplines);
+  const formulas = formulasData?.formulas || [];
   const paymentDetails = payment?.details || {};
 
   // Set initial values when payment loads
@@ -189,9 +185,7 @@ export default function PaymentDetailPage() {
 
     const disciplineStats = Object.entries(classesByDiscipline).map(
       ([disciplineId, classes]) => {
-        const discipline = disciplinesData?.find(
-          (d: DisciplineFromAPI) => d.id === disciplineId
-        );
+        const discipline = disciplines.find((d) => d.id === disciplineId);
         const reservations = classes.reduce(
           (sum, c) => sum + (c.totalReservations || 0),
           0
@@ -218,7 +212,7 @@ export default function PaymentDetailPage() {
         payment={payment}
         instructor={instructorData}
         period={periodData}
-        disciplines={disciplinesData || []}
+        disciplines={disciplinesData?.disciplines || []}
         instructorClasses={instructorClasses}
         disciplineStats={disciplineStats}
         details={paymentDetails}
@@ -231,10 +225,25 @@ export default function PaymentDetailPage() {
     window.print();
   };
 
-  const handleStatusToggle = async () => {
+  const utils = trpc.useUtils();
+  const toggleStatusMutation = trpc.payments.toggleStatus.useMutation();
+
+  const handleStatusChange = async (newStatus: string) => {
     if (!payment) return;
 
-    toast.info("Cambio de estado en desarrollo");
+    try {
+      await toggleStatusMutation.mutateAsync({
+        id: payment.id,
+        status: newStatus as "PENDING" | "APPROVED" | "PAID" | "CANCELLED",
+      });
+
+      await utils.payments.getById.invalidate({ id: paymentId });
+      toast.success("Estado actualizado exitosamente");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Error al actualizar el estado"
+      );
+    }
   };
 
   const updateAdjustment = async () => {
@@ -243,14 +252,48 @@ export default function PaymentDetailPage() {
     setIsUpdatingAdjustment(true);
 
     try {
-      // Lógica de actualización de reajuste
+      // Actualizar el reajuste usando la mutación de tRPC
+      await utils.client.payments.update.mutate({
+        id: payment.id,
+        adjustment: newAdjustment,
+        adjustmentType: adjustmentType === "FIJO" ? "FIXED" : "PERCENTAGE",
+      });
+
       toast.success("Reajuste actualizado exitosamente");
       setIsEditingAdjustment(false);
       await refetchPayment();
-    } catch (_error) {
+    } catch (error) {
+      console.error("Error al actualizar reajuste:", error);
       toast.error("Error al actualizar reajuste");
     } finally {
       setIsUpdatingAdjustment(false);
+    }
+  };
+
+  const recalculatePayment = async () => {
+    if (!payment) return;
+
+    setIsRecalculating(true);
+
+    try {
+      // Recalcular el pago usando la mutación de tRPC
+      const result =
+        await utils.client.payments.calculateInstructorPayment.mutate({
+          instructorId: payment.instructorId,
+          periodId: payment.periodId,
+        });
+
+      if (result.success) {
+        toast.success("Pago recalculado exitosamente");
+        await refetchPayment();
+      } else {
+        toast.error(result.message || "Error al recalcular el pago");
+      }
+    } catch (error) {
+      console.error("Error al recalcular pago:", error);
+      toast.error("Error al recalcular el pago");
+    } finally {
+      setIsRecalculating(false);
     }
   };
 
@@ -260,17 +303,6 @@ export default function PaymentDetailPage() {
       currency: "PEN",
       minimumFractionDigits: 2,
     }).format(amount);
-  };
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "PAID":
-        return "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/50 dark:text-green-300 dark:hover:bg-green-800/50";
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:hover:bg-yellow-800/50";
-      default:
-        return "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700";
-    }
   };
 
   // Helper functions
@@ -333,47 +365,18 @@ export default function PaymentDetailPage() {
         instructor={instructorData || ({} as InstructorFromAPI)}
         period={periodData || ({} as PeriodFromAPI)}
         payment={payment}
-        getStatusColor={getStatusColor}
-        togglePaymentStatus={handleStatusToggle}
         handleExportPDF={handleExportPDF}
         handlePrint={handlePrint}
+        handleStatusChange={handleStatusChange}
+        handleRecalculate={recalculatePayment}
+        isChangingStatus={toggleStatusMutation.isPending}
+        isRecalculating={isRecalculating}
         router={router}
       />
 
       {/* Main Content */}
       <Card className="border border-border overflow-hidden bg-card">
-        <CardHeader className="border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 bg-card">
-          <div className="space-y-1">
-            <CardTitle className="text-lg sm:text-xl text-foreground">
-              Información del Pago
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
-              Detalles para {instructor.name}
-            </CardDescription>
-          </div>
-
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="flex items-center bg-muted/10 rounded-md px-2 py-1 sm:px-3 sm:py-1.5 border border-border text-xs sm:text-sm">
-              <span className="text-muted-foreground mr-1">Estado:</span>
-              <Badge
-                variant="outline"
-                className={`${getStatusColor(payment.status)} px-1 sm:px-2 text-xs`}
-              >
-                {payment.status === "PAID" ? "APROBADO" : "PENDIENTE"}
-              </Badge>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleStatusToggle}
-              className="bg-card border border-border hover:bg-muted/10 hover:text-foreground h-8 px-2 sm:px-3 text-xs"
-            >
-              {payment.status === "PENDING" ? "Aprobar" : "Pendiente"}
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-4 p-2 sm:pt-6">
+        <CardContent className="p-2 sm:p-4">
           {/* Custom Tabs */}
           <div className="w-full mb-4 sm:mb-6 overflow-x-auto">
             <div className="flex border-b border-border min-w-max sm:min-w-0">
@@ -487,6 +490,7 @@ export default function PaymentDetailPage() {
               <ClassesTab
                 instructorClasses={instructorClasses}
                 disciplines={disciplines}
+                payment={payment}
               />
             )}
 
@@ -496,7 +500,7 @@ export default function PaymentDetailPage() {
                 instructor={instructorData}
                 payment={payment}
                 period={periodData}
-                disciplines={disciplinesData || []}
+                disciplines={disciplinesData?.disciplines || []}
                 instructorClasses={instructorClasses}
                 formulas={formulas}
               />

@@ -27,11 +27,24 @@ import type {
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Eye, Plus, Trash2, UserCheck, UserX, Users } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Edit,
+  Eye,
+  Link as LinkIcon,
+  Plus,
+  Trash2,
+  UserCheck,
+  UserX,
+  Users,
+} from "lucide-react";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const updateUserSchema = z.object({
@@ -118,6 +131,8 @@ function UserDialog({
   onClose,
   onSubmit,
   isLoading,
+  canUpdateUser,
+  canCreateUser,
 }: {
   user: Partial<User> | null;
   isOpen: boolean;
@@ -130,11 +145,12 @@ function UserDialog({
     selectedRoles?: string[];
   }) => void;
   isLoading: boolean;
+  canUpdateUser: boolean;
+  canCreateUser: boolean;
 }) {
   const [selectedInitialRoles, setSelectedInitialRoles] = useState<string[]>(
     []
   );
-  const { canManageUsers } = useRBAC();
 
   const isEdit = !!user?.id;
 
@@ -291,7 +307,7 @@ function UserDialog({
               </div>
 
               {/* Right Column - Roles Management */}
-              {canManageUsers && (
+              {(canUpdateUser || canCreateUser) && (
                 <div className="space-y-4">
                   <h4 className="text-md font-medium text-foreground border-b border-border pb-2">
                     {isEdit ? "Gestión de Roles" : "Roles Iniciales"}
@@ -608,8 +624,26 @@ function UserRolesManager({ userId }: { userId: string }) {
 export default function UsersPage() {
   const [dialogUser, setDialogUser] = useState<Partial<User> | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
   const { user: currentUser } = useAuthContext();
+
+  // Permisos específicos para usuarios
+  const canReadUser = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.USER
+  );
+  const canCreateUser = hasPermission(
+    PermissionAction.CREATE,
+    PermissionResource.USER
+  );
+  const canUpdateUser = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.USER
+  );
+  const canDeleteUser = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.USER
+  );
 
   const pagination = usePagination({ defaultLimit: 10 });
   const queryParams = pagination.getQueryParams();
@@ -652,11 +686,12 @@ export default function UsersPage() {
   const deleteUser = trpc.user.delete.useMutation({
     onSuccess: () => {
       refetch();
-      // TODO: Add toast notification for success
+      toast.success("Usuario eliminado exitosamente");
     },
     onError: (error) => {
-      // TODO: Add toast notification for error
-      console.error("Error deleting user:", error.message);
+      toast.error("Error al eliminar usuario", {
+        description: error.message,
+      });
     },
   });
 
@@ -790,32 +825,177 @@ export default function UsersPage() {
     window.location.href = `/dashboard/users/${user.id}`;
   };
 
+  // Obtener utils de tRPC para hacer fetch
+  const utils = trpc.useUtils();
+
+  // Estados para el diálogo de invitación
+  const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
+  const [invitationLink, setInvitationLink] = useState<string | null>(null);
+  const [invitationUser, setInvitationUser] = useState<User | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+
+  // Función para generar y mostrar link de invitación
+  const handleCopyInvitationLink = async (user: User) => {
+    try {
+      if (user.emailVerified) {
+        toast.error("Este usuario ya tiene el email verificado");
+        return;
+      }
+
+      setIsGeneratingLink(true);
+      setInvitationUser(user);
+
+      // Obtener el link de verificación desde el servidor
+      const verificationLink = await utils.user.getVerificationLink.fetch({
+        userId: user.id,
+      });
+
+      setInvitationLink(verificationLink.url);
+      setInvitationDialogOpen(true);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Intenta nuevamente";
+      toast.error("Error al generar link de invitación", {
+        description: errorMessage,
+      });
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  // Función para copiar el link desde el diálogo
+  const handleCopyLink = async () => {
+    if (!invitationLink) return;
+
+    try {
+      await navigator.clipboard.writeText(invitationLink);
+      toast.success("Link copiado al portapapeles");
+    } catch (_error) {
+      // Fallback: seleccionar el texto manualmente
+      const textArea = document.createElement("textarea");
+      textArea.value = invitationLink;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        toast.success("Link copiado al portapapeles");
+      } catch (_err) {
+        toast.error(
+          "No se pudo copiar automáticamente. Por favor, selecciona y copia manualmente."
+        );
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  // Mutación para activar usuario
+  const activateUser = trpc.user.activateUser.useMutation({
+    onSuccess: () => {
+      refetch();
+      toast.success("Usuario activado exitosamente");
+    },
+    onError: (error) => {
+      toast.error("Error al activar usuario", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Función para activar usuario sin verificación
+  const handleActivateUser = async (user: User) => {
+    if (user.emailVerified) {
+      toast.error("Este usuario ya está activado");
+      return;
+    }
+
+    if (
+      !confirm(
+        `¿Estás seguro de activar al usuario "${user.name}" sin verificación de email?`
+      )
+    ) {
+      return;
+    }
+
+    activateUser.mutate({ userId: user.id });
+  };
+
   // Definir acciones de la tabla
-  const actions: TableAction<User>[] = [
-    {
+  const actions: TableAction<User>[] = [];
+
+  // Ver Detalles solo si tiene permiso de lectura
+  if (canReadUser) {
+    actions.push({
       label: "Ver Detalles",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleViewUser,
       variant: "edit",
-    },
-    {
+    });
+  }
+
+  // Activar usuario sin verificación - solo para usuarios no verificados
+  if (canUpdateUser) {
+    actions.push({
+      label: "Activar Usuario",
+      icon: <Check className="h-4 w-4" />,
+      onClick: handleActivateUser,
+      variant: "edit-secondary",
+      // Solo mostrar si el usuario no tiene el email verificado
+      hidden: (user: User) => user.emailVerified,
+    });
+  }
+
+  // Link de invitación solo para usuarios no verificados y si tiene permiso de actualizar
+  if (canUpdateUser) {
+    actions.push({
+      label: "Copiar Link de Invitación",
+      icon: <LinkIcon className="h-4 w-4" />,
+      onClick: handleCopyInvitationLink,
+      variant: "edit",
+      // Solo mostrar si el usuario no tiene el email verificado
+      hidden: (user: User) => user.emailVerified,
+    });
+  }
+
+  // Editar solo si tiene permiso de actualizar usuarios o si es su propio usuario
+  if (canUpdateUser) {
+    actions.push({
       label: "Editar",
       icon: <Edit className="h-4 w-4" />,
       onClick: handleEdit,
       variant: "edit-secondary",
-      // Solo mostrar si es administrador o si es el usuario actual
-      hidden: (user: User) => !(canManageUsers || user.id === currentUser?.id),
-    },
-    {
+      // Mostrar también si es su propio usuario
+      hidden: (user: User) =>
+        user.id === currentUser?.id ? false : !canUpdateUser,
+    });
+  }
+
+  // Eliminar solo si tiene permiso de eliminar usuarios (no puede eliminar su propio usuario)
+  if (canDeleteUser) {
+    actions.push({
       label: "Eliminar",
       icon: <Trash2 className="h-4 w-4" />,
       onClick: handleDelete,
       variant: "destructive",
       separator: true,
-      // Solo mostrar si es administrador o si es el usuario actual
-      hidden: (user: User) => !(canManageUsers || user.id === currentUser?.id),
-    },
-  ];
+      // No puede eliminar su propio usuario
+      hidden: (user: User) => user.id === currentUser?.id,
+    });
+  }
+
+  if (!canReadUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver usuarios.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -829,10 +1009,12 @@ export default function UsersPage() {
             Administra usuarios del sistema y asigna roles y permisos
           </p>
         </div>
-        <Button size="sm" variant="edit-secondary" onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-1.5" />
-          <span>Nuevo Usuario</span>
-        </Button>
+        {canCreateUser && (
+          <Button size="sm" variant="edit-secondary" onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            <span>Nuevo Usuario</span>
+          </Button>
+        )}
       </div>
 
       {/* Tabla con ScrollableTable */}
@@ -856,7 +1038,101 @@ export default function UsersPage() {
         onClose={handleDialogClose}
         onSubmit={handleDialogSubmit}
         isLoading={updateUser.isPending || createUser.isPending}
+        canUpdateUser={canUpdateUser}
+        canCreateUser={canCreateUser}
       />
+
+      {/* Dialog para mostrar link de invitación */}
+      <Dialog
+        open={invitationDialogOpen}
+        onOpenChange={setInvitationDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Link de Invitación</DialogTitle>
+            <DialogDescription>
+              Envía este link al usuario para que pueda verificar su email
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {isGeneratingLink ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">
+                    Generando link...
+                  </p>
+                </div>
+              </div>
+            ) : invitationLink ? (
+              <>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="invitation-link-input"
+                    className="text-sm font-medium"
+                  >
+                    Link de verificación
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="invitation-link-input"
+                      value={invitationLink}
+                      readOnly
+                      className="font-mono text-sm"
+                      onClick={(e) => e.currentTarget.select()}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyLink}
+                      className="flex-shrink-0"
+                    >
+                      <Copy className="h-4 w-4 mr-1.5" />
+                      Copiar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="bg-muted p-3 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">Información:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>
+                      Usuario: <strong>{invitationUser?.name}</strong> (
+                      {invitationUser?.email})
+                    </li>
+                    <li>
+                      El link expira en <strong>24 horas</strong>
+                    </li>
+                    <li>Una vez usado, el usuario podrá acceder al sistema</li>
+                  </ul>
+                </div>
+              </>
+            ) : null}
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setInvitationDialogOpen(false);
+                setInvitationLink(null);
+                setInvitationUser(null);
+              }}
+            >
+              Cerrar
+            </Button>
+            {invitationLink && (
+              <Button type="button" onClick={handleCopyLink}>
+                <Copy className="h-4 w-4 mr-1.5" />
+                Copiar Link
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

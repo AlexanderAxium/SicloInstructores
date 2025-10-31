@@ -15,7 +15,7 @@ import type {
 } from "@/types";
 import { BookOpen, Check, CreditCard, Edit, Loader2, X } from "lucide-react";
 
-const RETENTION_VALUE = 0.08; // 8% retención
+import { RETENTION_VALUE } from "@/lib/config";
 
 interface PaymentDetailsProps {
   payment: InstructorPayment;

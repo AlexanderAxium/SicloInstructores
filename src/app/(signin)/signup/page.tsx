@@ -151,11 +151,11 @@ export default function SignUpPage() {
             Volver al inicio
           </Link>
 
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-2xl">M</span>
+          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-2xl">S</span>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Únete a MyApp
+            Únete a Siclo Instructores
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             ¿Ya tienes cuenta?{" "}

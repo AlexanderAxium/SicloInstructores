@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, FileText, X } from "lucide-react";
+import { Check, FileText, Loader2, X } from "lucide-react";
 import { useState } from "react";
 
 interface ReajusteEditorProps {
@@ -19,7 +19,11 @@ interface ReajusteEditorProps {
   setTipoReajuste: (value: "FIJO" | "PORCENTAJE") => void;
   isActualizandoReajuste: boolean;
   pagoId: string;
-  actualizarReajuste: (pagoId: string) => void;
+  actualizarReajuste: (
+    pagoId: string,
+    valor: number,
+    tipo: "FIJO" | "PORCENTAJE"
+  ) => void;
   cancelarEdicionReajuste: () => void;
 }
 
@@ -41,7 +45,7 @@ export function ReajusteEditor({
     if (!Number.isNaN(numericValue)) {
       setNuevoReajuste(numericValue);
       setTipoReajuste(localTipo);
-      actualizarReajuste(pagoId);
+      actualizarReajuste(pagoId, numericValue, localTipo);
     }
   };
 
@@ -88,7 +92,11 @@ export function ReajusteEditor({
           onClick={handleSave}
           disabled={isActualizandoReajuste}
         >
-          <Check className="h-3 w-3" />
+          {isActualizandoReajuste ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Check className="h-3 w-3" />
+          )}
         </Button>
         <Button
           size="sm"

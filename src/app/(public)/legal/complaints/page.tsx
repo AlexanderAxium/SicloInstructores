@@ -84,9 +84,9 @@ export default function ComplaintsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              De acuerdo con la normativa peruana, MyApp mantiene un Libro de
-              Reclamaciones para registrar y resolver las quejas de nuestros
-              usuarios.
+              De acuerdo con la normativa peruana, Siclo Instructores mantiene
+              un Libro de Reclamaciones para registrar y resolver las quejas de
+              nuestros usuarios.
             </p>
             <div className="bg-blue-50 p-4 rounded-lg">
               <h4 className="font-semibold text-blue-900 mb-2">

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReajusteEditor } from "@/components/payments/reajuste-editor";
+import { RecalcularDialog } from "@/components/payments/recalcular-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { usePeriodFilter } from "@/hooks/usePeriodFilter";
 import { useRBAC } from "@/hooks/useRBAC";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import {
   Calculator,
@@ -53,6 +55,7 @@ type InstructorPayment = {
   periodId: string;
   retention: number;
   adjustment: number;
+  adjustmentType: string;
   penalty: number;
   cover: number;
   branding: number;
@@ -77,7 +80,21 @@ type InstructorPayment = {
 };
 
 export default function PagosPage() {
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para pagos
+  const canReadPayment = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.PAGO_INSTRUCTOR
+  );
+  const canUpdatePayment = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.PAGO_INSTRUCTOR
+  );
+  const _canManagePayment = hasPermission(
+    PermissionAction.MANAGE,
+    PermissionResource.PAGO_INSTRUCTOR
+  );
 
   // Hook para filtro de periodo compartido
   const { selectedPeriod, setSelectedPeriod } = usePeriodFilter();
@@ -100,6 +117,15 @@ export default function PagosPage() {
   const [_recalculandoPagoId, setRecalculandoPagoId] = useState<string | null>(
     null
   );
+
+  // Diálogo de recálculo
+  const [recalcDialogOpen, setRecalcDialogOpen] = useState(false);
+  const [recalcTarget, setRecalcTarget] = useState<{
+    instructorId: string;
+    periodId: string;
+    instructorName?: string;
+    periodLabel?: string;
+  } | null>(null);
 
   const router = useRouter();
   const { exportToExcel } = useExcelExport();
@@ -266,11 +292,16 @@ export default function PagosPage() {
               <div className="flex items-center gap-1">
                 {payment.adjustment > 0 ? (
                   <span className="text-green-600">
-                    +S/ {payment.adjustment.toFixed(2)}
+                    +
+                    {payment.adjustmentType === "PERCENTAGE"
+                      ? `${payment.adjustment}%`
+                      : `S/ ${payment.adjustment.toFixed(2)}`}
                   </span>
                 ) : payment.adjustment < 0 ? (
                   <span className="text-red-600">
-                    S/ {payment.adjustment.toFixed(2)}
+                    {payment.adjustmentType === "PERCENTAGE"
+                      ? `${payment.adjustment}%`
+                      : `S/ ${payment.adjustment.toFixed(2)}`}
                   </span>
                 ) : (
                   <span className="text-muted-foreground">-</span>
@@ -389,39 +420,52 @@ export default function PagosPage() {
     },
   ];
 
-  // Acciones de la tabla (siguiendo el sistema antiguo)
-  const actions: TableAction<InstructorPayment>[] = [
-    {
+  // Acciones de la tabla
+  const actions: TableAction<InstructorPayment>[] = [];
+
+  if (canUpdatePayment) {
+    actions.push({
       label: "Recalcular",
       icon: <Calculator className="h-3 w-3" />,
       onClick: (payment) => {
-        recalcularPago(payment);
+        setRecalcTarget({
+          instructorId: payment.instructorId,
+          periodId: payment.periodId,
+          instructorName: payment.instructor.name,
+          periodLabel: `P${payment.period.number} - ${payment.period.year}`,
+        });
+        setRecalcDialogOpen(true);
       },
-      hidden: () => !canManageUsers,
-    },
-    {
+    });
+  }
+
+  if (canReadPayment) {
+    actions.push({
       label: "Exportar",
       icon: <FileText className="h-3 w-3" />,
       onClick: (payment) => {
         router.push(`/dashboard/pagos/${payment.id}`);
       },
-    },
-    {
+    });
+
+    actions.push({
       label: "Ver Detalles",
       icon: <Eye className="h-3 w-3" />,
       onClick: (payment) => {
         router.push(`/dashboard/pagos/${payment.id}`);
       },
-    },
-    {
+    });
+  }
+
+  if (canUpdatePayment) {
+    actions.push({
       label: "Editar Reajuste",
       icon: <FileText className="h-3 w-3" />,
       onClick: (payment) => {
         iniciarEdicionReajuste(payment);
       },
-      hidden: () => !canManageUsers,
-    },
-  ];
+    });
+  }
 
   // Información de paginación
   const paginationInfo = {
@@ -445,7 +489,9 @@ export default function PagosPage() {
   const iniciarEdicionReajuste = (payment: InstructorPayment) => {
     setEditandoPagoId(payment.id);
     setNuevoReajuste(payment.adjustment);
-    setTipoReajuste("FIJO"); // Por defecto, se puede mejorar para detectar el tipo actual
+    setTipoReajuste(
+      payment.adjustmentType === "PERCENTAGE" ? "PORCENTAJE" : "FIJO"
+    );
   };
 
   const cancelarEdicionReajuste = () => {
@@ -454,53 +500,52 @@ export default function PagosPage() {
     setTipoReajuste("FIJO");
   };
 
-  const actualizarReajuste = async (pagoId: string) => {
+  const actualizarReajuste = async (
+    pagoId: string,
+    valor: number,
+    tipo: "FIJO" | "PORCENTAJE"
+  ) => {
     setIsActualizandoReajuste(true);
     try {
-      // TODO: Implementar la llamada a la API para actualizar el reajuste
-      console.log(
-        "Actualizando reajuste para pago:",
-        pagoId,
-        "Valor:",
-        nuevoReajuste,
-        "Tipo:",
-        tipoReajuste
-      );
+      const _result = await utils.client.payments.update.mutate({
+        id: pagoId,
+        adjustment: valor,
+        adjustmentType: tipo === "FIJO" ? "FIXED" : "PERCENTAGE",
+      });
 
-      // Simular llamada a API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await utils.payments.getWithFilters.invalidate();
 
-      // Cerrar edición
+      toast.success("Reajuste actualizado exitosamente");
       cancelarEdicionReajuste();
-    } catch (error) {
-      console.error("Error al actualizar reajuste:", error);
+    } catch (_error) {
+      toast.error("Error al actualizar el reajuste");
     } finally {
       setIsActualizandoReajuste(false);
     }
   };
 
   // Función para recalcular un pago específico
-  const recalcularPago = async (payment: InstructorPayment) => {
+  const _recalcularPago = async (payment: InstructorPayment) => {
     setRecalculandoPagoId(payment.id);
 
     try {
-      // TODO: Implementar la llamada a la API para recalcular el pago
-      console.log(
-        "Recalculando pago:",
-        payment.id,
-        "Instructor:",
-        payment.instructorId,
-        "Período:",
-        payment.periodId
-      );
+      // Recalcular el pago usando la mutación de tRPC
+      const result =
+        await utils.client.payments.calculateInstructorPayment.mutate({
+          instructorId: payment.instructorId,
+          periodId: payment.periodId,
+        });
 
-      // Simular llamada a API
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // TODO: Refrescar la lista de pagos después del recálculo
-      console.log("Pago recalculado exitosamente");
+      if (result.success) {
+        // Invalidar y refrescar los datos
+        await utils.payments.getWithFilters.invalidate();
+        toast.success("Pago recalculado exitosamente");
+      } else {
+        toast.error(result.message || "Error al recalcular el pago");
+      }
     } catch (error) {
       console.error("Error al recalcular pago:", error);
+      toast.error("Error al recalcular el pago");
     } finally {
       setRecalculandoPagoId(null);
     }
@@ -508,6 +553,11 @@ export default function PagosPage() {
 
   // Función para exportar todos los pagos a Excel
   const handleExportAllPayments = async () => {
+    if (!canReadPayment) {
+      toast.error("No tienes permisos para exportar pagos");
+      return;
+    }
+
     if (selectedPeriod === "all") {
       toast.error("Por favor selecciona un período específico para exportar");
       return;
@@ -568,6 +618,19 @@ export default function PagosPage() {
     });
   };
 
+  if (!canReadPayment) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver pagos.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -588,13 +651,15 @@ export default function PagosPage() {
             <FileSpreadsheet className="h-4 w-4" />
             Exportar Excel
           </Button>
-          <Button
-            onClick={() => router.push("/dashboard/pagos/calcular")}
-            className="flex items-center gap-2"
-          >
-            <Calculator className="h-4 w-4" />
-            Calcular Pagos
-          </Button>
+          {canUpdatePayment && (
+            <Button
+              onClick={() => router.push("/dashboard/pagos/calcular")}
+              className="flex items-center gap-2"
+            >
+              <Calculator className="h-4 w-4" />
+              Calcular Pagos
+            </Button>
+          )}
         </div>
       </div>
 
@@ -735,6 +800,18 @@ export default function PagosPage() {
         emptyMessage="No se encontraron pagos"
         emptyIcon={<DollarSign className="h-12 w-12 text-muted-foreground" />}
         tableClassName="compact-table"
+      />
+
+      <RecalcularDialog
+        isOpen={recalcDialogOpen}
+        onClose={() => setRecalcDialogOpen(false)}
+        instructorId={recalcTarget?.instructorId || ""}
+        periodId={recalcTarget?.periodId || ""}
+        instructorName={recalcTarget?.instructorName}
+        periodLabel={recalcTarget?.periodLabel}
+        onDone={async () => {
+          await utils.payments.getWithFilters.invalidate();
+        }}
       />
     </div>
   );

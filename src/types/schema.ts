@@ -79,4 +79,77 @@ export interface FormulaFromAPI
   penaltyDiscountRules?: unknown;
 }
 
+// Response types for queries
+export interface FormulasListResponse {
+  formulas: FormulaFromAPI[];
+  total: number;
+  hasMore?: boolean;
+}
+
+// Spanish-named types (matching the form structure)
+export interface CategoryRequirementsES {
+  ocupacion: number;
+  clases: number;
+  localesEnLima: number;
+  dobleteos: number;
+  horariosNoPrime: number;
+  participacionEventos: boolean;
+  antiguedadMinima?: number;
+  evaluacionPromedio?: number;
+  capacitacionesCompletadas?: number;
+  lineamientos: boolean;
+  [key: string]: string | number | boolean | undefined;
+}
+
+export interface Tariff {
+  tarifa: number;
+  numeroReservas: number;
+}
+
+export interface PaymentParametersES {
+  cuotaFija: number;
+  minimoGarantizado: number;
+  tarifas: Tariff[];
+  tarifaFullHouse: number;
+  maximo: number;
+  bono: number;
+  retencionPorcentaje?: number;
+  ajustePorDobleteo?: number;
+}
+
+// Formula data structure for database (with JSON fields as string or parsed)
+export interface FormulaDataFromDB {
+  id: string;
+  disciplineId: string;
+  periodId: string;
+  categoryRequirements: string | Record<string, CategoryRequirementsES>;
+  paymentParameters: string | Record<string, PaymentParametersES>;
+  createdAt: string;
+  updatedAt: string;
+  tenantId: string;
+  discipline?: {
+    id: string;
+    name: string;
+    color?: string | null;
+  };
+  period?: {
+    id: string;
+    number: number;
+    year: number;
+  };
+}
+
+// Types for select/list items
+export interface DisciplineListItem {
+  id: string;
+  name: string;
+  color?: string | null;
+}
+
+export interface PeriodListItem {
+  id: string;
+  number: number;
+  year: number;
+}
+
 // Discipline and Period are now exported from instructor.ts to avoid duplication

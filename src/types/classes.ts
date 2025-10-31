@@ -187,3 +187,10 @@ export interface ClassFromAPI
   createdAt: string;
   updatedAt: string;
 }
+
+// Response types for queries
+export interface ClassesListResponse {
+  classes: ClassFromAPI[];
+  total: number;
+  hasMore?: boolean;
+}

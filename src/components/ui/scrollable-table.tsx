@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import type { PaginationInfo } from "../../lib/pagination";
 import { Alert, AlertDescription } from "./alert";
 import { Badge } from "./badge";
@@ -183,6 +184,12 @@ export function ScrollableTable<T = Record<string, unknown>>({
     data.every((record) => selectedRows.includes(getRowKey(record)));
   const someSelected = selectable && selectedRows.length > 0 && !allSelected;
 
+  const skeletonRowKeys = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, i) => `skeleton-row-${i}-${Date.now()}`),
+    []
+  );
+
   return (
     <div className={`space-y-4 ${className} `}>
       {/* Header Actions */}
@@ -216,9 +223,9 @@ export function ScrollableTable<T = Record<string, unknown>>({
               </div>
 
               {/* Rows skeleton */}
-              {Array.from({ length: 5 }).map((_, rowIndex) => (
+              {skeletonRowKeys.map((rowKey, rowIndex) => (
                 <div
-                  key={`skeleton-row-${rowIndex}`}
+                  key={rowKey}
                   className="px-6 py-4 border-b border-border/30 last:border-b-0 hover:bg-muted/15 transition-colors duration-200"
                 >
                   <div className="flex space-x-6 items-center">

@@ -16,7 +16,8 @@ export default function ConfirmEmailPage() {
   const confirmEmail = useCallback(
     async (token: string) => {
       try {
-        const response = await fetch("/api/trpc/auth.confirmEmail", {
+        // Try Better Auth endpoint first
+        const authResponse = await fetch("/api/auth/verify-email", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -24,9 +25,35 @@ export default function ConfirmEmailPage() {
           body: JSON.stringify({ token }),
         });
 
+        if (authResponse.ok) {
+          setSuccess(true);
+          toast.success("¡Email confirmado exitosamente!");
+          setTimeout(() => {
+            router.push("/");
+          }, 3000);
+          setLoading(false);
+          return;
+        }
+
+        // Fallback to tRPC endpoint
+        const response = await fetch("/api/trpc/user.confirmEmail", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            0: {
+              json: { token },
+            },
+          }),
+        });
+
         const result = await response.json();
 
-        if (response.ok && result.result?.data === true) {
+        if (
+          response.ok &&
+          (result.result?.data?.json === true || result.result?.data === true)
+        ) {
           setSuccess(true);
           toast.success("¡Email confirmado exitosamente!");
 
@@ -38,9 +65,13 @@ export default function ConfirmEmailPage() {
           setError("Token inválido o expirado");
           toast.error("Error al confirmar el email");
         }
-      } catch (_err) {
+      } catch (err: unknown) {
         setError("Error de conexión");
-        toast.error("Error de conexión al confirmar el email");
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Error de conexión al confirmar el email";
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }

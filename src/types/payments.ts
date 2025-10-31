@@ -96,3 +96,29 @@ export interface PenaltyFromAPI
   createdAt: string;
   updatedAt: string;
 }
+
+// Payment with relations from API
+export interface InstructorPaymentWithRelationsFromAPI
+  extends InstructorPaymentFromAPI {
+  instructor?: {
+    id: string;
+    name: string;
+    fullName?: string | null;
+    phone?: string | null;
+    DNI?: string | null;
+  };
+  period?: {
+    id: string;
+    number: number;
+    year: number;
+    startDate?: string;
+    endDate?: string;
+  };
+}
+
+// Response types for queries
+export interface PaymentsListResponse {
+  payments: InstructorPaymentWithRelationsFromAPI[];
+  total: number;
+  hasMore: boolean;
+}

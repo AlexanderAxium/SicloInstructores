@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuthContext } from "@/AuthContext";
 import { InstructorListPDF } from "@/components/instructors/pdf/instructor-list-pdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,10 +42,10 @@ import { usePDFExport } from "@/hooks/usePDFExport";
 import { usePagination } from "@/hooks/usePagination";
 import { useRBAC } from "@/hooks/useRBAC";
 import type { Instructor as InstructorType } from "@/types";
+import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Calendar,
   ChevronDown,
   ChevronUp,
   Edit,
@@ -55,7 +54,6 @@ import {
   FileText,
   Filter,
   GraduationCap,
-  Plus,
   Search,
   Trash2,
 } from "lucide-react";
@@ -69,15 +67,6 @@ const updateInstructorSchema = z.object({
   fullName: z.string().optional(),
   phone: z.string().optional(),
   DNI: z.string().optional(),
-  active: z.boolean().optional(),
-});
-
-const createInstructorSchema = z.object({
-  name: z.string().min(2, "Nombre debe tener al menos 2 caracteres"),
-  fullName: z.string().optional(),
-  phone: z.string().optional(),
-  DNI: z.string().optional(),
-  password: z.string().optional(),
   active: z.boolean().optional(),
 });
 
@@ -100,14 +89,10 @@ type Instructor = Omit<
 };
 
 interface InstructorDialogProps {
-  instructor: Instructor | null;
+  instructor: Instructor;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (
-    data:
-      | z.infer<typeof updateInstructorSchema>
-      | z.infer<typeof createInstructorSchema>
-  ) => void;
+  onSubmit: (data: z.infer<typeof updateInstructorSchema>) => void;
   isLoading: boolean;
 }
 
@@ -118,51 +103,34 @@ function InstructorDialog({
   onSubmit,
   isLoading,
 }: InstructorDialogProps) {
-  const isEdit = !!instructor;
-  const schema = isEdit ? updateInstructorSchema : createInstructorSchema;
-
   const form = useForm({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(updateInstructorSchema),
     defaultValues: {
-      name: instructor?.name || "",
-      fullName: instructor?.fullName || "",
-      phone: instructor?.phone || "",
-      DNI: instructor?.DNI || "",
-      active: instructor?.active ?? true,
+      name: instructor.name,
+      fullName: instructor.fullName || "",
+      phone: instructor.phone || "",
+      DNI: instructor.DNI || "",
+      active: instructor.active,
     },
   });
 
   React.useEffect(() => {
-    if (instructor) {
-      form.reset({
-        name: instructor.name,
-        fullName: instructor.fullName || "",
-        phone: instructor.phone || "",
-        DNI: instructor.DNI || "",
-        active: instructor.active,
-      });
-    } else {
-      form.reset({
-        name: "",
-        fullName: "",
-        phone: "",
-        DNI: "",
-        active: true,
-      });
-    }
+    form.reset({
+      name: instructor.name,
+      fullName: instructor.fullName || "",
+      phone: instructor.phone || "",
+      DNI: instructor.DNI || "",
+      active: instructor.active,
+    });
   }, [instructor, form]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Editar Instructor" : "Nuevo Instructor"}
-          </DialogTitle>
+          <DialogTitle>Editar Instructor</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Modifica la información del instructor."
-              : "Agrega un nuevo instructor al sistema."}
+            Modifica la información del instructor.
           </DialogDescription>
         </DialogHeader>
 
@@ -232,13 +200,7 @@ function InstructorDialog({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? isEdit
-                    ? "Actualizando..."
-                    : "Creando..."
-                  : isEdit
-                    ? "Actualizar"
-                    : "Crear"}
+                {isLoading ? "Actualizando..." : "Actualizar"}
               </Button>
             </div>
           </form>
@@ -249,7 +211,21 @@ function InstructorDialog({
 }
 
 export default function InstructoresPage() {
-  const { canManageUsers } = useRBAC();
+  const { hasPermission } = useRBAC();
+
+  // Permisos específicos para instructores
+  const canReadInstructor = hasPermission(
+    PermissionAction.READ,
+    PermissionResource.INSTRUCTOR
+  );
+  const canUpdateInstructor = hasPermission(
+    PermissionAction.UPDATE,
+    PermissionResource.INSTRUCTOR
+  );
+  const canDeleteInstructor = hasPermission(
+    PermissionAction.DELETE,
+    PermissionResource.INSTRUCTOR
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogInstructor, setDialogInstructor] = useState<Instructor | null>(
     null
@@ -296,13 +272,6 @@ export default function InstructoresPage() {
   const totalInstructors = instructorsData?.total || 0;
 
   // Mutaciones tRPC
-  const createInstructor = trpc.instructor.create.useMutation({
-    onSuccess: () => {
-      utils.instructor.getWithFilters.invalidate();
-      handleDialogClose();
-    },
-  });
-
   const updateInstructor = trpc.instructor.update.useMutation({
     onSuccess: () => {
       utils.instructor.getWithFilters.invalidate();
@@ -317,11 +286,6 @@ export default function InstructoresPage() {
   });
 
   // Handlers
-  const handleCreate = () => {
-    setDialogInstructor(null);
-    setIsDialogOpen(true);
-  };
-
   const handleEdit = (instructor: Instructor) => {
     setDialogInstructor(instructor);
     setIsDialogOpen(true);
@@ -345,21 +309,14 @@ export default function InstructoresPage() {
     setDialogInstructor(null);
   };
 
-  const handleDialogSubmit = (
-    data:
-      | z.infer<typeof updateInstructorSchema>
-      | z.infer<typeof createInstructorSchema>
-  ) => {
-    if (dialogInstructor) {
-      // Actualizar instructor existente
-      updateInstructor.mutate({
-        id: dialogInstructor.id,
-        ...data,
-      });
-    } else {
-      // Crear nuevo instructor
-      createInstructor.mutate(data);
-    }
+  const handleDialogSubmit = (data: z.infer<typeof updateInstructorSchema>) => {
+    if (!dialogInstructor) return;
+
+    // Actualizar instructor existente
+    updateInstructor.mutate({
+      id: dialogInstructor.id,
+      ...data,
+    });
   };
 
   // Limpiar filtros
@@ -444,31 +401,35 @@ export default function InstructoresPage() {
   ];
 
   // Definir acciones de la tabla
-  const actions: TableAction<Instructor>[] = [
-    {
+  const actions: TableAction<Instructor>[] = [];
+
+  if (canReadInstructor) {
+    actions.push({
       label: "Ver Detalles",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleView,
       variant: "edit-secondary",
-    },
-    {
+    });
+  }
+
+  if (canUpdateInstructor) {
+    actions.push({
       label: "Editar",
       icon: <Edit className="h-4 w-4" />,
       onClick: handleEdit,
       variant: "edit",
-      // Solo mostrar si puede gestionar usuarios
-      hidden: (_instructor: Instructor) => !canManageUsers,
-    },
-    {
+    });
+  }
+
+  if (canDeleteInstructor) {
+    actions.push({
       label: "Eliminar",
       icon: <Trash2 className="h-4 w-4" />,
       onClick: handleDelete,
       variant: "destructive",
       separator: true,
-      // Solo mostrar si puede gestionar usuarios
-      hidden: (_instructor: Instructor) => !canManageUsers,
-    },
-  ];
+    });
+  }
 
   // Información de paginación
   const paginationInfo = {
@@ -558,6 +519,19 @@ export default function InstructoresPage() {
     );
   };
 
+  if (!canReadInstructor) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-2">Acceso Denegado</h2>
+          <p className="text-muted-foreground">
+            No tienes permisos para ver instructores.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -569,33 +543,29 @@ export default function InstructoresPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={instructors.length === 0}
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
-                Exportar
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportExcel}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Exportar a Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF}>
-                <FileText className="mr-2 h-4 w-4" />
-                Exportar a PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {canManageUsers && (
-            <Button size="sm" variant="edit" onClick={handleCreate}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              <span>Nuevo Instructor</span>
-            </Button>
+          {canReadInstructor && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={instructors.length === 0}
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportExcel}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Exportar a Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exportar a PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
@@ -720,14 +690,16 @@ export default function InstructoresPage() {
         }
       />
 
-      {/* Dialog para crear/editar instructor */}
-      <InstructorDialog
-        instructor={dialogInstructor}
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        onSubmit={handleDialogSubmit}
-        isLoading={createInstructor.isPending || updateInstructor.isPending}
-      />
+      {/* Dialog para editar instructor */}
+      {dialogInstructor && (
+        <InstructorDialog
+          instructor={dialogInstructor}
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
+          onSubmit={handleDialogSubmit}
+          isLoading={updateInstructor.isPending}
+        />
+      )}
     </div>
   );
 }

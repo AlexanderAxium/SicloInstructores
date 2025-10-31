@@ -1,4 +1,6 @@
 import type { Prisma } from "@prisma/client";
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import { z } from "zod";
 import { prisma } from "../../lib/db";
 import {
@@ -11,7 +13,28 @@ import {
 import { hasPermission } from "../../services/rbacService";
 import { PermissionAction, PermissionResource } from "../../types/rbac";
 import { validateEmail } from "../../utils/validate";
-import { protectedProcedure, router } from "../trpc";
+import { protectedProcedure, publicProcedure, router } from "../trpc";
+
+// Create a better-auth instance for admin user creation that doesn't send emails
+const adminAuth = betterAuth({
+  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false, // Disable email verification for admin-created users
+  },
+  emailVerification: {
+    sendOnSignUp: false, // Don't send emails when creating users from admin
+    autoSignInAfterVerification: true,
+  },
+  session: {
+    strategy: "jwt",
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
+  },
+  logger: {
+    level: "error", // Reduce logging
+  },
+});
 
 export const userRouter = router({
   getAll: protectedProcedure
@@ -94,6 +117,9 @@ export const userRouter = router({
     }),
 
   getProfile: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user) {
+      throw new Error("Usuario no autenticado");
+    }
     const user = await prisma.user.findUnique({
       where: { id: ctx.user.id },
       select: {
@@ -288,19 +314,33 @@ export const userRouter = router({
         throw new Error("Email ya registrado en este tenant");
       }
 
-      // Hash password
-      const bcrypt = await import("bcryptjs");
-      const hashedPassword = await bcrypt.hash(input.password, 10);
-
-      // Create user
-      const newUser = await prisma.user.create({
-        data: {
+      // Use better-auth API to create user (without sending verification email)
+      // Using adminAuth instance that doesn't send emails, similar to seed
+      const result = await adminAuth.api.signUpEmail({
+        body: {
           email: input.email,
+          password: input.password,
           name: input.name,
+        },
+      });
+
+      if (!result.user) {
+        throw new Error(
+          `Error al crear usuario: ${
+            (result as { error?: { message?: string } }).error?.message ||
+            "Error desconocido"
+          }`
+        );
+      }
+
+      // Update user with additional fields and tenantId (same pattern as seed)
+      const newUser = await prisma.user.update({
+        where: { id: result.user.id },
+        data: {
           phone: input.phone,
           language: input.language || "ES",
           emailVerified: false, // Admin-created users need to verify email
-          tenantId: ctx.user.tenantId,
+          tenantId: ctx.user.tenantId, // Assign tenantId after creation
         },
         select: {
           id: true,
@@ -313,16 +353,6 @@ export const userRouter = router({
           tenantId: true,
           createdAt: true,
           updatedAt: true,
-        },
-      });
-
-      // Create account record for Better Auth compatibility
-      await prisma.account.create({
-        data: {
-          userId: newUser.id,
-          accountId: newUser.email,
-          providerId: "credential",
-          password: hashedPassword,
         },
       });
 
@@ -514,5 +544,202 @@ export const userRouter = router({
         assignedBy: ur.assignedBy,
         expiresAt: ur.expiresAt,
       }));
+    }),
+
+  // Get verification link for a user
+  getVerificationLink: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
+      // Check permissions: only admins can get verification links
+      const canManageUsers = await hasPermission(
+        ctx.user.id,
+        PermissionAction.MANAGE,
+        PermissionResource.USER,
+        ctx.user.tenantId
+      );
+
+      if (!canManageUsers) {
+        throw new Error(
+          "No tienes permisos para obtener enlaces de verificación"
+        );
+      }
+
+      // Verify user exists and belongs to the same tenant
+      const user = await prisma.user.findUnique({
+        where: {
+          id: input.userId,
+          tenantId: ctx.user.tenantId,
+        },
+      });
+
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      if (user.emailVerified) {
+        throw new Error("El usuario ya tiene el email verificado");
+      }
+
+      // Generate verification token using Better Auth's internal method
+      // Better Auth stores verification tokens in the Verification table
+      const crypto = await import("node:crypto");
+      const token = crypto.randomBytes(32).toString("hex");
+
+      // Set expiration to 24 hours from now
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      // Delete any existing verification tokens for this user
+      await prisma.verification.deleteMany({
+        where: {
+          identifier: user.email,
+        },
+      });
+
+      // Create new verification token
+      await prisma.verification.create({
+        data: {
+          identifier: user.email,
+          value: token,
+          expiresAt,
+        },
+      });
+
+      // Build the verification URL
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.SITE_URL ||
+        "http://localhost:3000";
+      const verificationUrl = `${baseUrl}/confirm-email?token=${token}`;
+
+      return {
+        url: verificationUrl,
+        token,
+        expiresAt,
+      };
+    }),
+
+  // Confirm email using token (Better Auth compatible)
+  // This should be public as unverified users may not have a session
+  confirmEmail: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ input }) => {
+      // Find verification token
+      const verification = await prisma.verification.findFirst({
+        where: {
+          value: input.token,
+          expiresAt: {
+            gt: new Date(), // Token not expired
+          },
+        },
+      });
+
+      if (!verification) {
+        throw new Error("Token inválido o expirado");
+      }
+
+      // Find user by email (identifier)
+      const user = await prisma.user.findUnique({
+        where: {
+          email: verification.identifier,
+        },
+      });
+
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      if (user.emailVerified) {
+        // Token already used, but user is verified
+        await prisma.verification.delete({
+          where: {
+            id: verification.id,
+          },
+        });
+        return true;
+      }
+
+      // Verify email
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true },
+      });
+
+      // Delete used verification token
+      await prisma.verification.delete({
+        where: {
+          id: verification.id,
+        },
+      });
+
+      return true;
+    }),
+
+  // Activate user without email verification
+  activateUser: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
+      // Check permissions: only admins can activate users
+      const canManageUsers = await hasPermission(
+        ctx.user.id,
+        PermissionAction.MANAGE,
+        PermissionResource.USER,
+        ctx.user.tenantId
+      );
+
+      if (!canManageUsers) {
+        throw new Error("No tienes permisos para activar usuarios");
+      }
+
+      // Verify user exists and belongs to the same tenant
+      const user = await prisma.user.findUnique({
+        where: {
+          id: input.userId,
+          tenantId: ctx.user.tenantId,
+        },
+      });
+
+      if (!user) {
+        throw new Error("Usuario no encontrado");
+      }
+
+      if (user.emailVerified) {
+        throw new Error("El usuario ya está activado");
+      }
+
+      // Activate user by setting emailVerified to true
+      const updatedUser = await prisma.user.update({
+        where: { id: input.userId },
+        data: { emailVerified: true },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          emailVerified: true,
+          image: true,
+          phone: true,
+          language: true,
+          tenantId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      // Delete any existing verification tokens for this user
+      await prisma.verification.deleteMany({
+        where: {
+          identifier: user.email,
+        },
+      });
+
+      return updatedUser;
     }),
 });
