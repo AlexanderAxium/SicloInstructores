@@ -499,7 +499,8 @@ export const coversRouter = router({
   getStats: protectedProcedure
     .input(z.object({ coverId: z.string() }))
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
         throw new Error("User tenant not found");
       }
 
@@ -556,7 +557,8 @@ export const coversRouter = router({
   getByInstructor: protectedProcedure
     .input(z.object({ instructorId: z.string() }))
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
         throw new Error("User tenant not found");
       }
 
@@ -633,7 +635,8 @@ export const coversRouter = router({
   getByPeriod: protectedProcedure
     .input(z.object({ periodId: z.string() }))
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
         throw new Error("User tenant not found");
       }
 

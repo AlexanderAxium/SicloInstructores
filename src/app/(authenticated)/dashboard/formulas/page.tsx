@@ -9,7 +9,13 @@ import { Card } from "@/components/ui/card";
 import { useExcelExport } from "@/hooks/useExcelExport";
 import { useRBAC } from "@/hooks/useRBAC";
 import { PermissionAction, PermissionResource } from "@/types/rbac";
-import type { CategoryRequirements, PaymentParameters } from "@/types/schema";
+import type {
+  CategoryRequirements,
+  CategoryRequirementsES,
+  FormulaDataFromDB,
+  PaymentParameters,
+  PaymentParametersES,
+} from "@/types/schema";
 import { trpc } from "@/utils/trpc";
 import {
   Calculator,
@@ -51,6 +57,40 @@ const _safeStringify = (data: unknown): string => {
   } catch {
     return "{}";
   }
+};
+
+// Helper function to convert FormulaTableData to FormulaDataFromDB
+const convertToFormulaDataFromDB = (
+  formula: FormulaTableData
+): FormulaDataFromDB => {
+  return {
+    id: formula.id,
+    disciplineId: formula.disciplineId,
+    periodId: formula.periodId,
+    categoryRequirements:
+      typeof formula.categoryRequirements === "string"
+        ? formula.categoryRequirements
+        : typeof formula.categoryRequirements === "object" &&
+            formula.categoryRequirements !== null
+          ? (formula.categoryRequirements as
+              | string
+              | Record<string, CategoryRequirementsES>)
+          : _safeStringify(formula.categoryRequirements),
+    paymentParameters:
+      typeof formula.paymentParameters === "string"
+        ? formula.paymentParameters
+        : typeof formula.paymentParameters === "object" &&
+            formula.paymentParameters !== null
+          ? (formula.paymentParameters as
+              | string
+              | Record<string, PaymentParametersES>)
+          : _safeStringify(formula.paymentParameters),
+    createdAt: formula.createdAt,
+    updatedAt: formula.updatedAt,
+    tenantId: formula.tenantId,
+    discipline: formula.discipline,
+    period: formula.period,
+  };
 };
 
 type FormulaDialogData = {
@@ -400,12 +440,15 @@ export default function FormulasPage() {
                       size="sm"
                       variant="ghost"
                       className="h-7 text-xs"
-                      onClick={() =>
-                        handleCalculate(
-                          periodData.period.id,
-                          periodData.formulas[0]?.disciplineId
-                        )
-                      }
+                      onClick={() => {
+                        const firstFormula = periodData.formulas[0];
+                        if (firstFormula?.disciplineId) {
+                          handleCalculate(
+                            periodData.period.id,
+                            firstFormula.disciplineId
+                          );
+                        }
+                      }}
                     >
                       <Calculator className="h-3.5 w-3.5 mr-1" />
                       Calcular
@@ -457,7 +500,9 @@ export default function FormulasPage() {
 
       {/* Dialog para crear/editar fórmula */}
       <FormulaDialog
-        formulaData={dialogFormula}
+        formulaData={
+          dialogFormula ? convertToFormulaDataFromDB(dialogFormula) : null
+        }
         isOpen={isDialogOpen}
         onClose={handleDialogClose}
         onSubmit={handleDialogSubmit}

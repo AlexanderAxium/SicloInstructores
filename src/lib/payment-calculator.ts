@@ -120,8 +120,11 @@ export async function calculateClassPayment(
       }
 
       if (tariff === 0 && sortedTarifas.length > 0) {
-        tariff = sortedTarifas[sortedTarifas.length - 1].tarifa;
-        tariffType = "Tarifa máxima";
+        const lastTariff = sortedTarifas[sortedTarifas.length - 1];
+        if (lastTariff) {
+          tariff = lastTariff.tarifa;
+          tariffType = "Tarifa máxima";
+        }
       }
     }
 

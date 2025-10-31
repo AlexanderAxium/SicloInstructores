@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePagination } from "@/hooks/usePagination";
 import { shouldShowVisualCategory } from "@/lib/config";
 import type { PeriodFromAPI } from "@/types";
+import type { InstructorCategoryType } from "@/types/instructor";
 import { trpc } from "@/utils/trpc";
 import {
   Calculator,
@@ -41,34 +42,26 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
 
-type InstructorCategoryType =
-  | "INSTRUCTOR"
-  | "JUNIOR_AMBASSADOR"
-  | "AMBASSADOR"
-  | "SENIOR_AMBASSADOR";
+// Import InstructorCategoryType from types instead of redefining
+// Using the imported type from @/types/instructor
 
-interface ManualCategory {
-  instructorId: string;
-  instructorName: string;
-  disciplineId: string;
-  disciplineName: string;
-  category: InstructorCategoryType;
-}
-
-// Minimal shape of the categories returned by TRPC with relations used in this UI
-type ExistingManualCategory = {
-  instructorId: string;
-  disciplineId: string;
-  category: InstructorCategoryType | string;
-  isManual?: boolean;
-  instructor?: { name?: string | null };
-  discipline?: { name?: string | null };
-  instructorName?: string;
-  disciplineName?: string;
+// Helper function to convert string category to InstructorCategoryType
+const toInstructorCategoryType = (category: string): InstructorCategoryType => {
+  const validCategories: InstructorCategoryType[] = [
+    "INSTRUCTOR",
+    "JUNIOR_AMBASSADOR",
+    "AMBASSADOR",
+    "SENIOR_AMBASSADOR",
+  ];
+  if (validCategories.includes(category as InstructorCategoryType)) {
+    return category as InstructorCategoryType;
+  }
+  // Default fallback
+  return "INSTRUCTOR";
 };
 
-// Types for instructor logs - matching the structure from the trpc response
-type InstructorLog = {
+// Type for logs coming from the API (with string categories)
+type ApiInstructorLog = {
   instructorId: string;
   instructorName: string;
   status: "success" | "error" | "skipped";
@@ -120,7 +113,112 @@ type InstructorLog = {
     totalAmount: number;
     finalPayment: number;
   };
+  error?: string;
 };
+
+// Type for logs expected by DetailedInstructorLogs (with InstructorCategoryType)
+type ConvertedInstructorLog = {
+  instructorId: string;
+  instructorName: string;
+  status: "success" | "error" | "skipped";
+  message: string;
+  details: {
+    categories: Array<{
+      disciplineId: string;
+      disciplineName: string;
+      category: InstructorCategoryType;
+      metrics: Record<string, unknown>;
+      reason: string;
+      allCategoriesEvaluation: Array<{
+        category: InstructorCategoryType;
+        categoryLabel: string;
+        criteria: Array<{
+          key: string;
+          label: string;
+          current: string;
+          required: string;
+          meets: boolean;
+        }>;
+        allMeets: boolean;
+      }>;
+    }>;
+    classes: Array<{
+      classId: string;
+      disciplineName: string;
+      date: string;
+      studio: string;
+      hour: string;
+      spots: number;
+      reservations: number;
+      occupancy: number;
+      category: InstructorCategoryType;
+      baseAmount: number;
+      finalAmount: number;
+      calculation: string;
+    }>;
+    bonuses: {
+      cover: number;
+      branding: number;
+      themeRide: number;
+      workshop: number;
+      versus: number;
+      total: number;
+    };
+    penalties: number;
+    retention: number;
+    totalAmount: number;
+    finalPayment: number;
+  };
+  error?: string;
+};
+
+// Function to convert API logs to the format expected by DetailedInstructorLogs
+const convertInstructorLogs = (
+  logs: ApiInstructorLog[]
+): ConvertedInstructorLog[] => {
+  return logs.map((log) => ({
+    ...log,
+    details: {
+      ...log.details,
+      categories: log.details.categories.map((cat) => ({
+        ...cat,
+        category: toInstructorCategoryType(cat.category),
+        allCategoriesEvaluation: cat.allCategoriesEvaluation.map(
+          (evalItem) => ({
+            ...evalItem,
+            category: toInstructorCategoryType(evalItem.category),
+          })
+        ),
+      })),
+      classes: log.details.classes.map((cls) => ({
+        ...cls,
+        category: toInstructorCategoryType(cls.category),
+      })),
+    },
+  }));
+};
+
+interface ManualCategory {
+  instructorId: string;
+  instructorName: string;
+  disciplineId: string;
+  disciplineName: string;
+  category: InstructorCategoryType;
+}
+
+// Minimal shape of the categories returned by TRPC with relations used in this UI
+type ExistingManualCategory = {
+  instructorId: string;
+  disciplineId: string;
+  category: InstructorCategoryType | string;
+  isManual?: boolean;
+  instructor?: { name?: string | null };
+  discipline?: { name?: string | null };
+  instructorName?: string;
+  disciplineName?: string;
+};
+
+// Types for instructor logs - using ApiInstructorLog defined above
 
 type Summary = {
   total: number;
@@ -133,7 +231,7 @@ type Summary = {
 export default function CalcularPagosPage() {
   const router = useRouter();
   const [selectedPeriodId, setSelectedPeriodId] = useState<string>("");
-  const [instructorLogs, setInstructorLogs] = useState<InstructorLog[]>([]);
+  const [instructorLogs, setInstructorLogs] = useState<ApiInstructorLog[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("calculator");
@@ -857,7 +955,7 @@ export default function CalcularPagosPage() {
           {/* Results */}
           {instructorLogs.length > 0 && summary && (
             <DetailedInstructorLogs
-              instructorLogs={instructorLogs}
+              instructorLogs={convertInstructorLogs(instructorLogs)}
               summary={summary}
             />
           )}
