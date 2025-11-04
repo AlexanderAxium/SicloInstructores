@@ -8,12 +8,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/utils/trpc";
-import { Building2, Globe, Mail, Save, Settings, Shield } from "lucide-react";
+import {
+  Building2,
+  Globe,
+  GraduationCap,
+  Mail,
+  RotateCcw,
+  Save,
+  Shield,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -68,6 +77,208 @@ function getFieldErrorMessage(errorCode: string, fieldName: string): string {
     default:
       return "Valor inválido";
   }
+}
+
+function InstructorsPasswordResetTab() {
+  const [selectedInstructorIds, setSelectedInstructorIds] = useState<
+    Set<string>
+  >(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+
+  // Get all instructors
+  const { data: instructorsData, isLoading } = trpc.instructor.getAll.useQuery({
+    limit: 1000,
+    offset: 0,
+  });
+
+  const instructors = instructorsData?.instructors || [];
+
+  // Reset passwords mutation
+  const resetPasswordsMutation = trpc.instructor.resetPasswords.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Se resetearon ${data.count} contraseña(s) exitosamente`);
+      setSelectedInstructorIds(new Set());
+      setSelectAll(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Error al resetear las contraseñas");
+    },
+  });
+
+  // Handle individual checkbox
+  const handleToggleInstructor = (instructorId: string) => {
+    const newSelected = new Set(selectedInstructorIds);
+    if (newSelected.has(instructorId)) {
+      newSelected.delete(instructorId);
+    } else {
+      newSelected.add(instructorId);
+    }
+    setSelectedInstructorIds(newSelected);
+    setSelectAll(
+      newSelected.size === instructors.length && instructors.length > 0
+    );
+  };
+
+  // Handle select all
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(instructors.map((i) => i.id));
+      setSelectedInstructorIds(allIds);
+      setSelectAll(true);
+    } else {
+      setSelectedInstructorIds(new Set());
+      setSelectAll(false);
+    }
+  };
+
+  // Handle reset passwords
+  const handleResetPasswords = () => {
+    if (selectedInstructorIds.size === 0) {
+      toast.error("Por favor selecciona al menos un instructor");
+      return;
+    }
+
+    if (
+      !confirm(
+        `¿Estás seguro de que quieres resetear las contraseñas de ${selectedInstructorIds.size} instructor(es)? Las contraseñas se establecerán a su valor por defecto.`
+      )
+    ) {
+      return;
+    }
+
+    resetPasswordsMutation.mutate({
+      instructorIds: Array.from(selectedInstructorIds),
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="text-center text-muted-foreground">
+            Cargando instructores...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <GraduationCap className="h-4 w-4" />
+          Reseteo de Contraseñas
+        </CardTitle>
+        <CardDescription className="text-sm">
+          Gestiona el reseteo de contraseñas de instructores. Las contraseñas se
+          establecerán a su valor por defecto (nombre en minúsculas sin espacios
+          + número de letras + "#" si es par, o "%" si es impar). Ejemplo: "Dani
+          Mua" → "danimua7%"
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {instructors.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-muted-foreground">
+              No hay instructores disponibles
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Select All and Reset Button */}
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="select-all"
+                  checked={selectAll}
+                  onCheckedChange={handleSelectAll}
+                />
+                <Label
+                  htmlFor="select-all"
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Seleccionar todos ({selectedInstructorIds.size} de{" "}
+                  {instructors.length})
+                </Label>
+              </div>
+              <Button
+                onClick={handleResetPasswords}
+                disabled={
+                  selectedInstructorIds.size === 0 ||
+                  resetPasswordsMutation.isPending
+                }
+                size="sm"
+              >
+                {resetPasswordsMutation.isPending ? (
+                  <>
+                    <RotateCcw className="h-4 w-4 animate-spin" />
+                    Reseteando...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4" />
+                    Resetear Contraseñas ({selectedInstructorIds.size})
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Instructors List */}
+            <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              {instructors.map((instructor) => {
+                const isSelected = selectedInstructorIds.has(instructor.id);
+                const nameWithoutSpaces = instructor.name
+                  .toLowerCase()
+                  .replace(/\s+/g, "");
+                const letterCount = nameWithoutSpaces.length;
+                const symbol = letterCount % 2 === 0 ? "#" : "%";
+                const defaultPassword = `${nameWithoutSpaces}${letterCount}${symbol}`;
+
+                return (
+                  <div
+                    key={instructor.id}
+                    className={`flex items-center justify-between p-3 rounded-md border border-border transition-colors ${
+                      isSelected ? "bg-muted/50" : "bg-background"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3 flex-1">
+                      <Checkbox
+                        id={`instructor-${instructor.id}`}
+                        checked={isSelected}
+                        onCheckedChange={() =>
+                          handleToggleInstructor(instructor.id)
+                        }
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor={`instructor-${instructor.id}`}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          {instructor.name}
+                        </Label>
+                        {instructor.fullName && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {instructor.fullName}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Contraseña por defecto:{" "}
+                          <span className="font-mono font-medium">
+                            {defaultPassword}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function SettingsPage() {
@@ -210,47 +421,55 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Settings className="h-8 w-8 text-primary" />
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-2xl font-bold text-foreground">
             Configuraciones
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Gestiona la configuración del sistema y la información de la empresa
           </p>
         </div>
       </div>
 
-      <Tabs defaultValue="company" className="space-y-6">
+      <Tabs defaultValue="company" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="company" className="flex items-center gap-2">
+          <TabsTrigger
+            value="company"
+            className="flex items-center gap-2 text-sm"
+          >
             <Building2 className="h-4 w-4" />
             Información de la Empresa
           </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Sistema
+          <TabsTrigger
+            value="instructors"
+            className="flex items-center gap-2 text-sm"
+          >
+            <GraduationCap className="h-4 w-4" />
+            Instructores
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="company" className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <TabsContent value="company" className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Basic Information */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="h-4 w-4" />
                   Información Básica
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Configura la información principal de la empresa
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nombre de la Empresa</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name" className="text-sm">
+                      Nombre de la Empresa
+                    </Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -260,8 +479,10 @@ export default function SettingsPage() {
                       placeholder="Siclo Instructores"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="displayName">Nombre para Mostrar</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="displayName" className="text-sm">
+                      Nombre para Mostrar
+                    </Label>
                     <Input
                       id="displayName"
                       value={formData.displayName}
@@ -273,8 +494,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descripción</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="description" className="text-sm">
+                    Descripción
+                  </Label>
                   <Textarea
                     id="description"
                     value={formData.description}
@@ -287,8 +510,10 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="foundedYear">Año de Fundación</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="foundedYear" className="text-sm">
+                      Año de Fundación
+                    </Label>
                     <Input
                       id="foundedYear"
                       type="number"
@@ -299,8 +524,10 @@ export default function SettingsPage() {
                       placeholder="2024"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="website">Sitio Web</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="website" className="text-sm">
+                      Sitio Web
+                    </Label>
                     <Input
                       id="website"
                       value={formData.website}
@@ -316,17 +543,21 @@ export default function SettingsPage() {
 
             {/* Contact Information */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Mail className="h-4 w-4" />
                   Información de Contacto
                 </CardTitle>
-                <CardDescription>Datos de contacto y ubicación</CardDescription>
+                <CardDescription className="text-sm">
+                  Datos de contacto y ubicación
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-sm">
+                      Email
+                    </Label>
                     <Input
                       id="email"
                       type="email"
@@ -337,8 +568,10 @@ export default function SettingsPage() {
                       placeholder="info@myapp.com"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone" className="text-sm">
+                      Teléfono
+                    </Label>
                     <Input
                       id="phone"
                       value={formData.phone}
@@ -350,8 +583,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address">Dirección</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="address" className="text-sm">
+                    Dirección
+                  </Label>
                   <Input
                     id="address"
                     value={formData.address}
@@ -363,8 +598,10 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">Ciudad</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="city" className="text-sm">
+                      Ciudad
+                    </Label>
                     <Input
                       id="city"
                       value={formData.city}
@@ -374,8 +611,10 @@ export default function SettingsPage() {
                       placeholder="Lima"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="country">País</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="country" className="text-sm">
+                      País
+                    </Label>
                     <Input
                       id="country"
                       value={formData.country}
@@ -391,19 +630,21 @@ export default function SettingsPage() {
 
             {/* Social Media */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Globe className="h-4 w-4" />
                   Redes Sociales
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Enlaces a las redes sociales de la empresa
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="facebookUrl">Facebook</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="facebookUrl" className="text-sm">
+                      Facebook
+                    </Label>
                     <Input
                       id="facebookUrl"
                       value={formData.facebookUrl}
@@ -413,8 +654,10 @@ export default function SettingsPage() {
                       placeholder="https://facebook.com/myapp"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="twitterUrl">Twitter</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="twitterUrl" className="text-sm">
+                      Twitter
+                    </Label>
                     <Input
                       id="twitterUrl"
                       value={formData.twitterUrl}
@@ -424,8 +667,10 @@ export default function SettingsPage() {
                       placeholder="https://twitter.com/myapp"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="instagramUrl">Instagram</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="instagramUrl" className="text-sm">
+                      Instagram
+                    </Label>
                     <Input
                       id="instagramUrl"
                       value={formData.instagramUrl}
@@ -435,8 +680,10 @@ export default function SettingsPage() {
                       placeholder="https://instagram.com/myapp"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedinUrl">LinkedIn</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="linkedinUrl" className="text-sm">
+                      LinkedIn
+                    </Label>
                     <Input
                       id="linkedinUrl"
                       value={formData.linkedinUrl}
@@ -446,8 +693,10 @@ export default function SettingsPage() {
                       placeholder="https://linkedin.com/company/myapp"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="youtubeUrl">YouTube</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="youtubeUrl" className="text-sm">
+                      YouTube
+                    </Label>
                     <Input
                       id="youtubeUrl"
                       value={formData.youtubeUrl}
@@ -463,18 +712,20 @@ export default function SettingsPage() {
 
             {/* SEO Information */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Globe className="h-4 w-4" />
                   SEO y Metadatos
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Información para motores de búsqueda
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="metaTitle">Título SEO</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="metaTitle" className="text-sm">
+                    Título SEO
+                  </Label>
                   <Input
                     id="metaTitle"
                     value={formData.metaTitle}
@@ -484,8 +735,10 @@ export default function SettingsPage() {
                     placeholder="Siclo Instructores - Gestión de Fitness"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="metaDescription">Descripción SEO</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="metaDescription" className="text-sm">
+                    Descripción SEO
+                  </Label>
                   <Textarea
                     id="metaDescription"
                     value={formData.metaDescription}
@@ -496,8 +749,10 @@ export default function SettingsPage() {
                     rows={3}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="metaKeywords">Palabras Clave</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="metaKeywords" className="text-sm">
+                    Palabras Clave
+                  </Label>
                   <Input
                     id="metaKeywords"
                     value={formData.metaKeywords}
@@ -511,12 +766,8 @@ export default function SettingsPage() {
             </Card>
 
             {/* Submit Button */}
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="min-w-[200px]"
-              >
+            <div className="flex justify-end pt-2">
+              <Button type="submit" disabled={isLoading} size="sm">
                 <Save className="h-4 w-4 mr-2" />
                 {isLoading ? "Guardando..." : "Guardar Cambios"}
               </Button>
@@ -524,30 +775,8 @@ export default function SettingsPage() {
           </form>
         </TabsContent>
 
-        <TabsContent value="system" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Configuración del Sistema
-              </CardTitle>
-              <CardDescription>
-                Configuraciones avanzadas del sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">
-                  Configuración del Sistema
-                </h3>
-                <p className="text-muted-foreground">
-                  Las configuraciones del sistema estarán disponibles
-                  próximamente.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="instructors" className="space-y-4">
+          <InstructorsPasswordResetTab />
         </TabsContent>
       </Tabs>
     </div>

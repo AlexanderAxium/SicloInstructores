@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -118,6 +127,15 @@ export function CoverDialog({
   const classesLimit = 20;
   const [allLoadedClasses, setAllLoadedClasses] = useState<any[]>([]);
 
+  // State for instructor correction dialog
+  const [showInstructorCorrectionDialog, setShowInstructorCorrectionDialog] =
+    useState(false);
+  const [instructorCorrectionInfo, setInstructorCorrectionInfo] = useState<{
+    oldInstructor: string;
+    newInstructor: string;
+    classId: string;
+  } | null>(null);
+
   // Get classes for selected period with pagination
   const { data: classesData, isLoading: isLoadingClasses } =
     trpc.classes.getWithFilters.useQuery(
@@ -201,6 +219,13 @@ export function CoverDialog({
 
   // Watch periodId to update class search
   const watchedPeriodId = form.watch("periodId");
+  const linkedClassId = form.watch("classId");
+
+  // Get linked class by ID if it exists (when editing a cover with a linked class)
+  const { data: linkedClassData } = trpc.classes.getById.useQuery(
+    { id: linkedClassId! },
+    { enabled: !!linkedClassId && isEdit }
+  );
 
   useEffect(() => {
     if (watchedPeriodId) {
@@ -253,13 +278,97 @@ export function CoverDialog({
     }
   }, [isOpen, isEdit, coverData, form, isInstructor, instructorId]);
 
-  const handleSubmit = (data: CoverFormData) => {
+  // Store pending submit data when instructor needs to be corrected
+  const [pendingSubmitData, setPendingSubmitData] =
+    useState<CoverFormData | null>(null);
+
+  const handleSubmit = async (data: CoverFormData) => {
+    let finalReplacementInstructorId = data.replacementInstructorId;
+    let instructorWasChanged = false;
+    let oldInstructorName = "";
+    let newInstructorName = "";
+    let classIdForInfo = "";
+
+    // Solo hacer corrección automática si el cover está aprobado
+    const isCoverApproved =
+      data.justification === "APPROVED" ||
+      (isEdit && coverData?.justification === "APPROVED");
+
+    // Si hay una clase enlazada Y el cover está aprobado, verificar que el instructor reemplazo sea el instructor de esa clase
+    if (data.classId && isCoverApproved) {
+      // Buscar la clase en las clases cargadas primero
+      let classItem = classes.find((c) => c.id === data.classId);
+
+      // Si no está en las clases cargadas, usar linkedClassData
+      if (!classItem && linkedClassData) {
+        classItem = linkedClassData as any;
+      }
+
+      // Si tampoco está ahí, usar coverData.class si está editando
+      if (!classItem && coverData?.class) {
+        classItem = coverData.class as any;
+      }
+
+      if (classItem) {
+        const classInstructorId =
+          classItem.instructorId || classItem.instructor?.id;
+
+        if (
+          classInstructorId &&
+          classInstructorId !== data.replacementInstructorId
+        ) {
+          // El instructor reemplazo no coincide con el instructor de la clase
+          finalReplacementInstructorId = classInstructorId;
+          instructorWasChanged = true;
+
+          // Obtener nombres de instructores para el diálogo
+          const oldInstructor = instructors.find(
+            (i) => i.id === data.replacementInstructorId
+          );
+          const newInstructor =
+            instructors.find((i) => i.id === classInstructorId) ||
+            classItem.instructor;
+
+          oldInstructorName =
+            oldInstructor?.name || data.replacementInstructorId;
+          newInstructorName = newInstructor?.name || classInstructorId;
+          classIdForInfo = data.classId;
+        }
+      }
+    }
+
+    // Si se cambió el instructor, mostrar el diálogo informativo primero
+    if (instructorWasChanged) {
+      setInstructorCorrectionInfo({
+        oldInstructor: oldInstructorName,
+        newInstructor: newInstructorName,
+        classId: classIdForInfo,
+      });
+      // Actualizar el formulario con el instructor correcto
+      form.setValue("replacementInstructorId", finalReplacementInstructorId);
+      // Guardar los datos para enviar después de que el usuario vea el diálogo
+      setPendingSubmitData({
+        ...data,
+        replacementInstructorId: finalReplacementInstructorId,
+      });
+      setShowInstructorCorrectionDialog(true);
+      return; // No continuar con el submit todavía
+    }
+
+    // Si no hubo cambio, proceder normalmente
+    proceedWithSubmit(data, finalReplacementInstructorId);
+  };
+
+  const proceedWithSubmit = (
+    data: CoverFormData,
+    replacementInstructorId: string
+  ) => {
     // Transform to the expected format
     if (isEdit) {
       const updateData: UpdateCoverData = {
         id: data.id!,
         originalInstructorId: data.originalInstructorId,
-        replacementInstructorId: data.replacementInstructorId,
+        replacementInstructorId: replacementInstructorId,
         disciplineId: data.disciplineId,
         periodId: data.periodId,
         date: data.date,
@@ -275,7 +384,7 @@ export function CoverDialog({
     } else {
       const createData: CreateCoverData = {
         originalInstructorId: data.originalInstructorId,
-        replacementInstructorId: data.replacementInstructorId,
+        replacementInstructorId: replacementInstructorId,
         disciplineId: data.disciplineId,
         periodId: data.periodId,
         date: data.date,
@@ -285,6 +394,18 @@ export function CoverDialog({
         nameChange: data.nameChange ?? null,
       };
       onSubmit(createData);
+    }
+  };
+
+  const handleInstructorCorrectionDialogClose = () => {
+    setShowInstructorCorrectionDialog(false);
+    // Proceder con el submit después de que el usuario vea el diálogo
+    if (pendingSubmitData) {
+      proceedWithSubmit(
+        pendingSubmitData,
+        pendingSubmitData.replacementInstructorId
+      );
+      setPendingSubmitData(null);
     }
   };
 
@@ -599,21 +720,123 @@ export function CoverDialog({
                       </PopoverContent>
                     </Popover>
                   ) : (
-                    <div className="text-sm text-muted-foreground p-3 border rounded-md bg-muted/50">
+                    <div className="text-sm text-muted-foreground p-3 border border-border rounded-md bg-muted/50">
                       Selecciona un período para buscar clases disponibles
                     </div>
                   )}
-                  {field.value && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => field.onChange(null)}
-                      className="w-full mt-2"
-                    >
-                      Desenlazar clase
-                    </Button>
-                  )}
+                  {field.value &&
+                    (() => {
+                      // Try to find class in loaded classes first
+                      let classItem = classes.find((c) => c.id === field.value);
+
+                      // If not found and we have linked class data from API, use it
+                      if (!classItem && linkedClassData) {
+                        classItem = linkedClassData as any;
+                      }
+
+                      // Also check if coverData has class information (when editing)
+                      if (!classItem && coverData?.class) {
+                        classItem = coverData.class as any;
+                      }
+
+                      // Get instructor and discipline information
+                      const instructor = classItem
+                        ? classItem.instructor?.name ||
+                          instructors.find(
+                            (i) => i.id === classItem.instructorId
+                          )?.name ||
+                          null
+                        : null;
+                      const discipline = classItem
+                        ? classItem.discipline?.name ||
+                          disciplines.find(
+                            (d) => d.id === classItem.disciplineId
+                          )?.name ||
+                          null
+                        : null;
+                      const classExists = !!classItem;
+
+                      return (
+                        <div className="mt-2 space-y-2">
+                          <div className="flex items-center justify-between p-3 border border-border rounded-md bg-muted/30">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">
+                                  Clase enlazada:
+                                </span>
+                                <Badge
+                                  variant={
+                                    classExists ? "default" : "secondary"
+                                  }
+                                >
+                                  ID: {field.value}
+                                </Badge>
+                              </div>
+                              {classExists ? (
+                                <div className="text-sm text-muted-foreground space-y-0.5 mt-1">
+                                  {instructor && (
+                                    <div>
+                                      <span className="font-medium">
+                                        Instructor:
+                                      </span>{" "}
+                                      {instructor}
+                                    </div>
+                                  )}
+                                  {discipline && (
+                                    <div>
+                                      <span className="font-medium">
+                                        Disciplina:
+                                      </span>{" "}
+                                      {discipline}
+                                    </div>
+                                  )}
+                                  {classItem.date && (
+                                    <div>
+                                      <span className="font-medium">
+                                        Fecha:
+                                      </span>{" "}
+                                      {format(
+                                        new Date(classItem.date),
+                                        "dd/MM/yyyy HH:mm",
+                                        { locale: es }
+                                      )}
+                                    </div>
+                                  )}
+                                  {classItem.studio && (
+                                    <div>
+                                      <span className="font-medium">
+                                        Estudio:
+                                      </span>{" "}
+                                      {classItem.studio}
+                                    </div>
+                                  )}
+                                  {classItem.room && (
+                                    <div>
+                                      <span className="font-medium">Sala:</span>{" "}
+                                      {classItem.room}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground italic mt-1">
+                                  (La clase no está disponible en el período
+                                  seleccionado)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => field.onChange(null)}
+                            className="w-full"
+                          >
+                            Desenlazar clase
+                          </Button>
+                        </div>
+                      );
+                    })()}
                   <FormMessage />
                 </FormItem>
               )}
@@ -653,7 +876,7 @@ export function CoverDialog({
                     control={form.control}
                     name="bonusPayment"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
                         <FormControl>
                           <Checkbox
                             checked={field.value || false}
@@ -671,7 +894,7 @@ export function CoverDialog({
                     control={form.control}
                     name="fullHousePayment"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
                         <FormControl>
                           <Checkbox
                             checked={field.value || false}
@@ -738,7 +961,7 @@ export function CoverDialog({
               )}
             />
 
-            <div className="flex justify-end space-x-2 pt-4 border-t">
+            <div className="flex justify-end space-x-2 pt-4 border-t border-border">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
@@ -755,6 +978,67 @@ export function CoverDialog({
           </form>
         </Form>
       </DialogContent>
+
+      {/* Diálogo informativo sobre corrección de instructor */}
+      <AlertDialog
+        open={showInstructorCorrectionDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleInstructorCorrectionDialogClose();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Instructor Reemplazo Actualizado
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se ha actualizado automáticamente el instructor de reemplazo para
+              que coincida con el instructor de la clase enlazada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {instructorCorrectionInfo && (
+            <div className="py-4 space-y-2">
+              <div className="text-sm space-y-1">
+                <p>
+                  <span className="font-medium">Clase enlazada:</span>{" "}
+                  <Badge variant="secondary">
+                    ID: {instructorCorrectionInfo.classId}
+                  </Badge>
+                </p>
+                <p>
+                  <span className="font-medium">Instructor anterior:</span>{" "}
+                  <span className="text-muted-foreground">
+                    {instructorCorrectionInfo.oldInstructor}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-medium">Instructor actualizado:</span>{" "}
+                  <span className="text-primary font-medium">
+                    {instructorCorrectionInfo.newInstructor}
+                  </span>
+                </p>
+              </div>
+              <div className="mt-4 p-3 bg-muted/50 border border-border rounded-md text-sm text-muted-foreground">
+                <p className="font-medium mb-1">
+                  ¿Por qué se hizo este cambio?
+                </p>
+                <p>
+                  Cuando un cover está enlazado a una clase, el instructor de
+                  reemplazo debe ser el mismo que el instructor asignado a esa
+                  clase. Esto asegura la consistencia de los datos.
+                </p>
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleInstructorCorrectionDialogClose}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

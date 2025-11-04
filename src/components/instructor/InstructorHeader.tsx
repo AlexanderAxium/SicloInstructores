@@ -135,8 +135,8 @@ export function InstructorHeader({
 
   return (
     <Card>
-      <CardHeader>
-        <div className="space-y-3">
+      <CardHeader className="pb-3">
+        <div className="space-y-2.5">
           {/* Header principal compacto */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -149,14 +149,14 @@ export function InstructorHeader({
                 </Button>
               )}
               <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-9 w-9">
                   <AvatarImage src={undefined} alt={instructor.name} />
                   <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                     {getInitials(instructor.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h1 className="text-base font-bold text-foreground">
+                  <h1 className="text-base font-semibold text-foreground">
                     {instructor.name}
                   </h1>
                 </div>
@@ -197,128 +197,124 @@ export function InstructorHeader({
 
           {/* Información expandible */}
           {isInfoExpanded && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <Separator />
 
               {/* Información Personal */}
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Users className="h-4 w-4" />
+                <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
                   Información Personal
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div className="space-y-2">
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Nombre
-                      </div>
-                      {isEditing ? (
-                        <Input
-                          value={editData.name}
-                          onChange={(e) =>
-                            setEditData({ ...editData, name: e.target.value })
-                          }
-                          className="h-9"
-                        />
-                      ) : (
-                        <p className="text-sm text-foreground">
-                          {instructor.name}
-                        </p>
-                      )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Nombre
                     </div>
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Nombre Completo
-                      </div>
-                      {isEditing ? (
-                        <Input
-                          value={editData.fullName}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              fullName: e.target.value,
-                            })
-                          }
-                          className="h-9"
-                        />
-                      ) : (
-                        <p className="text-sm text-foreground">
-                          {instructor.fullName || "-"}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Teléfono
-                      </div>
-                      {isEditing ? (
-                        <Input
-                          value={editData.phone}
-                          onChange={(e) =>
-                            setEditData({ ...editData, phone: e.target.value })
-                          }
-                          className="h-9"
-                        />
-                      ) : (
-                        <p className="text-sm text-foreground flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                          {instructor.phone || "-"}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        DNI
-                      </div>
-                      {isEditing ? (
-                        <Input
-                          value={editData.DNI}
-                          onChange={(e) =>
-                            setEditData({ ...editData, DNI: e.target.value })
-                          }
-                          className="h-9"
-                        />
-                      ) : (
-                        <p className="text-sm text-foreground">
-                          {instructor.DNI || "-"}
-                        </p>
-                      )}
-                    </div>
+                    {isEditing ? (
+                      <Input
+                        value={editData.name}
+                        onChange={(e) =>
+                          setEditData({ ...editData, name: e.target.value })
+                        }
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm text-foreground py-1.5">
+                        {instructor.name}
+                      </p>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <div className="space-y-1.5">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        Persona de Contacto
-                      </div>
-                      {isEditing ? (
-                        <Input
-                          value={editData.contactPerson}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              contactPerson: e.target.value,
-                            })
-                          }
-                          className="h-9"
-                        />
-                      ) : (
-                        <p className="text-sm text-foreground">
-                          {instructor.contactPerson || "-"}
-                        </p>
-                      )}
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Nombre Completo
                     </div>
+                    {isEditing ? (
+                      <Input
+                        value={editData.fullName}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            fullName: e.target.value,
+                          })
+                        }
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm text-foreground py-1.5">
+                        {instructor.fullName || "-"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Persona de Contacto
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        value={editData.contactPerson}
+                        onChange={(e) =>
+                          setEditData({
+                            ...editData,
+                            contactPerson: e.target.value,
+                          })
+                        }
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm text-foreground py-1.5">
+                        {instructor.contactPerson || "-"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      Teléfono
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        value={editData.phone}
+                        onChange={(e) =>
+                          setEditData({ ...editData, phone: e.target.value })
+                        }
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm text-foreground flex items-center gap-1.5 py-1.5">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                        {instructor.phone || "-"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      DNI
+                    </div>
+                    {isEditing ? (
+                      <Input
+                        value={editData.DNI}
+                        onChange={(e) =>
+                          setEditData({ ...editData, DNI: e.target.value })
+                        }
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm text-foreground py-1.5">
+                        {instructor.DNI || "-"}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Información Bancaria */}
               <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
+                <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5" />
                   Información Bancaria
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="text-xs font-medium text-muted-foreground">
                       Banco
                     </div>
@@ -328,15 +324,15 @@ export function InstructorHeader({
                         onChange={(e) =>
                           setEditData({ ...editData, bank: e.target.value })
                         }
-                        className="h-9"
+                        className="h-8 text-sm"
                       />
                     ) : (
-                      <p className="text-sm text-foreground">
+                      <p className="text-sm text-foreground py-1.5">
                         {instructor.bank || "-"}
                       </p>
                     )}
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="text-xs font-medium text-muted-foreground">
                       Cuenta
                     </div>
@@ -349,15 +345,15 @@ export function InstructorHeader({
                             bankAccount: e.target.value,
                           })
                         }
-                        className="h-9"
+                        className="h-8 text-sm"
                       />
                     ) : (
-                      <p className="text-sm text-foreground">
+                      <p className="text-sm text-foreground py-1.5">
                         {instructor.bankAccount || "-"}
                       </p>
                     )}
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="text-xs font-medium text-muted-foreground">
                       CCI
                     </div>
@@ -367,10 +363,10 @@ export function InstructorHeader({
                         onChange={(e) =>
                           setEditData({ ...editData, CCI: e.target.value })
                         }
-                        className="h-9"
+                        className="h-8 text-sm"
                       />
                     ) : (
-                      <p className="text-sm text-foreground">
+                      <p className="text-sm text-foreground py-1.5">
                         {instructor.CCI || "-"}
                       </p>
                     )}
@@ -381,8 +377,8 @@ export function InstructorHeader({
               {/* Cambio de Contraseña - Solo en edición */}
               {isEditing && (
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
+                  <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Lock className="h-3.5 w-3.5" />
                     Seguridad
                   </h3>
                   <div className="max-w-md">
@@ -400,10 +396,10 @@ export function InstructorHeader({
                           })
                         }
                         placeholder="Dejar vacío para mantener la contraseña actual"
-                        className="h-9"
+                        className="h-8 text-sm"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Dejar vacío si no deseas cambiar la contraseña
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Dejar vacío para mantener la contraseña actual
                       </p>
                     </div>
                   </div>

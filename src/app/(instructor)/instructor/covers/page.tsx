@@ -350,7 +350,7 @@ export default function InstructorCoversPage() {
             </Badge>
           ) : record.fullHousePayment ? (
             <Badge variant="default" className="text-xs bg-blue-600">
-              Full House
+              Full House{record.class?.id ? ` - ID: ${record.class.id}` : ""}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs">

@@ -631,8 +631,13 @@ export const instructorRouter = router({
 
       // Check if instructor has a password set
       if (!instructor.password) {
-        // For instructors without a password, use the demo pattern
-        const expectedPassword = `${instructor.name.toLowerCase().replace(/\s+/g, "")}123`;
+        // For instructors without a password, use the default pattern
+        const nameWithoutSpaces = instructor.name
+          .toLowerCase()
+          .replace(/\s+/g, "");
+        const letterCount = nameWithoutSpaces.length;
+        const symbol = letterCount % 2 === 0 ? "#" : "%";
+        const expectedPassword = `${nameWithoutSpaces}${letterCount}${symbol}`;
 
         if (input.password !== expectedPassword) {
           throw new Error("Invalid password");
@@ -661,6 +666,67 @@ export const instructorRouter = router({
       return {
         token,
         instructor: instructorData,
+      };
+    }),
+
+  // Reset passwords for multiple instructors (protected)
+  resetPasswords: protectedProcedure
+    .input(
+      z.object({
+        instructorIds: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user?.tenantId) {
+        throw new Error("User tenant not found");
+      }
+
+      const tenantId = ctx.user.tenantId as string;
+
+      // Get all instructors that need password reset
+      const instructors = await prisma.instructor.findMany({
+        where: {
+          id: { in: input.instructorIds },
+          tenantId: tenantId,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      if (instructors.length === 0) {
+        throw new Error("No se encontraron instructores para resetear");
+      }
+
+      // Generate default passwords and hash them
+      const bcrypt = await import("bcryptjs");
+      const updatePromises = instructors.map(async (instructor) => {
+        // Default password pattern: nombreInstructor.toLowerCase().replace(/\s+/g, "") + numberOfLetters + (# if even, % if odd)
+        const nameWithoutSpaces = instructor.name
+          .toLowerCase()
+          .replace(/\s+/g, "");
+        const letterCount = nameWithoutSpaces.length;
+        const symbol = letterCount % 2 === 0 ? "#" : "%";
+        const defaultPassword = `${nameWithoutSpaces}${letterCount}${symbol}`;
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+        return prisma.instructor.update({
+          where: {
+            id: instructor.id,
+            tenantId: tenantId,
+          },
+          data: {
+            password: hashedPassword,
+          },
+        });
+      });
+
+      await Promise.all(updatePromises);
+
+      return {
+        success: true,
+        count: instructors.length,
       };
     }),
 });
