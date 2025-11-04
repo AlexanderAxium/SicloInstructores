@@ -319,9 +319,10 @@ export async function getOrCalculateCategory(
       continue;
     }
 
+    const classesPerWeek = metrics.totalClasses / 4;
     const meetsRequirements =
       metrics.averageOccupancy >= catRequirements.ocupacion &&
-      metrics.totalClasses >= catRequirements.clases &&
+      classesPerWeek >= catRequirements.clases &&
       metrics.totalLocations >= catRequirements.localesEnLima &&
       metrics.totalDoubleShifts >= catRequirements.dobleteos &&
       metrics.nonPrimeHours >= catRequirements.horariosNoPrime &&
@@ -329,7 +330,7 @@ export async function getOrCalculateCategory(
       (!catRequirements.lineamientos || metrics.meetsGuidelines);
 
     logs.push(
-      `📊 Evaluando ${cat}: cumple=${meetsRequirements} (ocupación: ${metrics.averageOccupancy}% vs ${catRequirements.ocupacion}%, clases: ${metrics.totalClasses} vs ${catRequirements.clases}, locations: ${metrics.totalLocations} vs ${catRequirements.localesEnLima}, eventos: ${metrics.eventParticipation} vs ${catRequirements.participacionEventos})`
+      `📊 Evaluando ${cat}: cumple=${meetsRequirements} (ocupación: ${metrics.averageOccupancy}% vs ${catRequirements.ocupacion}%, clases por semana: ${classesPerWeek.toFixed(1)} vs ${catRequirements.clases}, locations: ${metrics.totalLocations} vs ${catRequirements.localesEnLima}, eventos: ${metrics.eventParticipation} vs ${catRequirements.participacionEventos})`
     );
 
     if (meetsRequirements) {
