@@ -27,6 +27,7 @@ import {
   LogOut,
   Receipt,
   User,
+  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -71,6 +72,12 @@ export function InstructorSidebar() {
       href: "/instructor",
       icon: User,
       description: "Información personal y estadísticas",
+    },
+    {
+      title: "Covers",
+      href: "/instructor/covers",
+      icon: UserCheck,
+      description: "Crea y gestiona tus covers",
     },
   ];
 

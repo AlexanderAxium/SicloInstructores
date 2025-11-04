@@ -34,6 +34,13 @@ export const coversRouter = router({
                 fullName: true,
               },
             },
+            discipline: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
             class: {
               select: {
                 id: true,
@@ -97,6 +104,13 @@ export const coversRouter = router({
               fullName: true,
               phone: true,
               DNI: true,
+            },
+          },
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
             },
           },
           class: {
@@ -233,6 +247,13 @@ export const coversRouter = router({
                 fullName: true,
               },
             },
+            discipline: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
             class: {
               select: {
                 id: true,
@@ -281,14 +302,14 @@ export const coversRouter = router({
         periodId: z.string(),
         date: z.string(),
         time: z.string(),
-        classId: z.string().optional(),
+        classId: z.string().optional().nullable(),
         justification: z
           .enum(["PENDING", "APPROVED", "REJECTED"])
           .default("PENDING"),
         bonusPayment: z.boolean().default(false),
         fullHousePayment: z.boolean().default(false),
-        comments: z.string().optional(),
-        nameChange: z.string().optional(),
+        comments: z.string().optional().nullable(),
+        nameChange: z.string().optional().nullable(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -402,12 +423,18 @@ export const coversRouter = router({
     .input(
       z.object({
         id: z.string(),
+        originalInstructorId: z.string().optional(),
         replacementInstructorId: z.string().optional(),
+        disciplineId: z.string().optional(),
+        periodId: z.string().optional(),
+        date: z.string().optional(),
+        time: z.string().optional(),
+        classId: z.string().optional().nullable(),
         justification: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
         bonusPayment: z.boolean().optional(),
         fullHousePayment: z.boolean().optional(),
-        comments: z.string().optional(),
-        nameChange: z.string().optional(),
+        comments: z.string().optional().nullable(),
+        nameChange: z.string().optional().nullable(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -417,6 +444,36 @@ export const coversRouter = router({
       }
 
       const { id, ...updateData } = input;
+
+      // Check if user is admin or if instructor is editing their own cover
+      const isAdmin = ctx.user !== null;
+      const instructorId = ctx.instructor?.id;
+
+      // Get the cover first to check permissions
+      const existingCover = await prisma.cover.findUnique({
+        where: {
+          id,
+          tenantId: tenantId,
+        },
+      });
+
+      if (!existingCover) {
+        throw new Error("Cover not found");
+      }
+
+      // If instructor, only allow editing their own covers and restrict certain fields
+      if (!isAdmin && instructorId) {
+        if (existingCover.replacementInstructorId !== instructorId) {
+          throw new Error("You can only edit your own covers");
+        }
+
+        // Remove admin-only fields from updateData
+        updateData.justification = undefined;
+        updateData.bonusPayment = undefined;
+        updateData.fullHousePayment = undefined;
+        updateData.originalInstructorId = undefined;
+        updateData.replacementInstructorId = undefined;
+      }
 
       // Verify replacement instructor exists if being updated
       if (updateData.replacementInstructorId) {
@@ -428,12 +485,26 @@ export const coversRouter = router({
         }
       }
 
+      // Convert date string to Date if provided
+      const { date, ...restUpdateData } = updateData;
+      const updatePayload: typeof restUpdateData & { date?: Date } = {
+        ...restUpdateData,
+      };
+      if (date) {
+        updatePayload.date = new Date(date);
+      }
+
+      // Handle nullable classId
+      if (updateData.classId !== undefined) {
+        updatePayload.classId = updateData.classId || null;
+      }
+
       const cover = await prisma.cover.update({
         where: {
           id,
           tenantId: tenantId,
         },
-        data: updateData,
+        data: updatePayload,
         include: {
           originalInstructor: {
             select: {
@@ -468,6 +539,13 @@ export const coversRouter = router({
               id: true,
               number: true,
               year: true,
+            },
+          },
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
             },
           },
         },
@@ -520,6 +598,13 @@ export const coversRouter = router({
             select: {
               name: true,
               fullName: true,
+            },
+          },
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
             },
           },
           class: {
@@ -581,6 +666,13 @@ export const coversRouter = router({
             select: {
               name: true,
               fullName: true,
+            },
+          },
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
             },
           },
           class: {
@@ -658,6 +750,13 @@ export const coversRouter = router({
               fullName: true,
             },
           },
+          discipline: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
           class: {
             select: {
               date: true,
@@ -696,6 +795,133 @@ export const coversRouter = router({
           confirmed: confirmed.length,
           uniqueInstructors,
         },
+      };
+    }),
+
+  // Get my replacement covers (for instructors - only covers where they are replacement)
+  getMyReplacementCovers: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        periodId: z.string().optional(),
+        justification: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+        limit: z.number().min(1).max(1000).default(20),
+        offset: z.number().min(0).default(0),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      // Get instructor ID from context
+      const instructorId = ctx.instructor?.id;
+      if (!instructorId) {
+        throw new Error("Instructor not found in context");
+      }
+
+      const tenantId = ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("Tenant not found");
+      }
+
+      const where: {
+        tenantId: string;
+        replacementInstructorId: string;
+        OR?: Array<{
+          originalInstructor?: {
+            name?: { contains: string; mode: "insensitive" };
+            fullName?: { contains: string; mode: "insensitive" };
+          };
+          comments?: { contains: string; mode: "insensitive" };
+        }>;
+        periodId?: string;
+        justification?: "PENDING" | "APPROVED" | "REJECTED";
+      } = {
+        tenantId,
+        replacementInstructorId: instructorId,
+      };
+
+      if (input.search) {
+        where.OR = [
+          {
+            originalInstructor: {
+              name: { contains: input.search, mode: "insensitive" },
+            },
+          },
+          {
+            originalInstructor: {
+              fullName: { contains: input.search, mode: "insensitive" },
+            },
+          },
+          { comments: { contains: input.search, mode: "insensitive" } },
+        ];
+      }
+
+      if (input.periodId) {
+        where.periodId = input.periodId;
+      }
+
+      if (input.justification) {
+        where.justification = input.justification;
+      }
+
+      const [covers, total] = await Promise.all([
+        prisma.cover.findMany({
+          where,
+          include: {
+            originalInstructor: {
+              select: {
+                id: true,
+                name: true,
+                fullName: true,
+              },
+            },
+            replacementInstructor: {
+              select: {
+                id: true,
+                name: true,
+                fullName: true,
+              },
+            },
+            discipline: {
+              select: {
+                id: true,
+                name: true,
+                color: true,
+              },
+            },
+            class: {
+              select: {
+                id: true,
+                date: true,
+                studio: true,
+                room: true,
+                discipline: {
+                  select: {
+                    name: true,
+                    color: true,
+                  },
+                },
+              },
+            },
+            period: {
+              select: {
+                id: true,
+                number: true,
+                year: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: input.limit,
+          skip: input.offset,
+        }),
+        prisma.cover.count({ where }),
+      ]);
+
+      return {
+        covers,
+        total,
+        hasMore: input.offset + input.limit < total,
       };
     }),
 });

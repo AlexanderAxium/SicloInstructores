@@ -31,6 +31,7 @@ import {
   Shield,
   Star,
   Upload,
+  UserCheck,
   UserCog,
   Users,
 } from "lucide-react";
@@ -268,6 +269,16 @@ export function AppSidebar() {
 
         {(() => {
           const bonusItems: NavItem[] = [
+            {
+              title: "Covers",
+              href: "/dashboard/covers",
+              icon: UserCheck,
+              description: "Gestionar covers del sistema",
+              requiredPermissions: {
+                action: PermissionAction.READ,
+                resource: PermissionResource.COVER,
+              },
+            },
             {
               title: "Workshops",
               href: "/dashboard/workshops",

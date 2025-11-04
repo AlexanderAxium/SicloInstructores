@@ -216,6 +216,7 @@ export const classesRouter = router({
             name?: { contains: string; mode: "insensitive" };
           };
         }>;
+        id?: { contains: string; mode: "insensitive" };
         instructorId?: string;
         disciplineId?: string;
         periodId?: string;
@@ -230,21 +231,11 @@ export const classesRouter = router({
       };
 
       if (input.search) {
-        where.OR = [
-          { studio: { contains: input.search, mode: "insensitive" } },
-          { room: { contains: input.search, mode: "insensitive" } },
-          { specialText: { contains: input.search, mode: "insensitive" } },
-          {
-            instructor: {
-              name: { contains: input.search, mode: "insensitive" },
-            },
-          },
-          {
-            instructor: {
-              fullName: { contains: input.search, mode: "insensitive" },
-            },
-          },
-        ];
+        // Search only by ID when search term is provided
+        const searchTerm = input.search.trim();
+        if (searchTerm.length > 0) {
+          where.id = { contains: searchTerm, mode: "insensitive" };
+        }
       }
 
       if (input.instructorId) {

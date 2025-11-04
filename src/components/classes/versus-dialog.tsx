@@ -34,7 +34,7 @@ type VersusFormData = z.infer<typeof versusFormSchema>;
 import { trpc } from "@/utils/trpc";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -74,6 +74,7 @@ export function VersusDialog({
   const [instructors, setInstructors] = useState<string[]>(
     isEdit && classData ? [classData.instructorId] : ["", ""]
   );
+  const lastResetKey = useRef<string>("");
 
   // Obtener datos para los selectores
   const { data: disciplinesData } = trpc.disciplines.getAll.useQuery();
@@ -128,8 +129,22 @@ export function VersusDialog({
           },
   });
 
-  // Resetear el formulario cuando cambie la clase
+  // Resetear el formulario cuando cambie la clase o se abra el diálogo
   useEffect(() => {
+    if (!isOpen) return;
+
+    // Create a stable key to track if we've already reset for this data
+    const resetKey = JSON.stringify({
+      isOpen,
+      classDataId: classData?.id,
+      versusClassesLength: versusClasses.length,
+      versusClassesIds: versusClasses.map((c) => c.id),
+    });
+
+    // Skip if we've already reset for this exact state
+    if (lastResetKey.current === resetKey) return;
+    lastResetKey.current = resetKey;
+
     if (classData) {
       // Si hay múltiples clases versus, usar la primera como referencia para los datos compartidos
       const referenceClass =
@@ -190,7 +205,7 @@ export function VersusDialog({
       });
       setInstructors(["", ""]);
     }
-  }, [classData, versusClasses, form]);
+  }, [isOpen, classData, versusClasses, form.reset]);
 
   const addInstructor = () => {
     setInstructors([...instructors, ""]);
