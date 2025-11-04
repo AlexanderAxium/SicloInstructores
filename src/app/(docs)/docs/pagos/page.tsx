@@ -131,10 +131,10 @@ export default function PagosDocsPage() {
                       Covers (Reemplazos)
                     </p>
                     <p className="text-xs text-slate-700">
-                      S/. 30.00 por cada cover con bono activado
+                      S/. 80.00 por cada cover con bono activado y aprobado
                     </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Ejemplo: 3 covers = S/. 90.00
+                      Ejemplo: 3 covers = S/. 240.00
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-md p-3 border border-slate-300">
@@ -142,10 +142,11 @@ export default function PagosDocsPage() {
                       Brandings
                     </p>
                     <p className="text-xs text-slate-700">
-                      S/. 50.00 por cada branding
+                      S/. 5.00 por cada número de branding (suma de números)
                     </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Ejemplo: 2 brandings = S/. 100.00
+                      Ejemplo: 2 brandings con números 10 y 5 = (10+5) × S/.5 =
+                      S/. 75.00
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-md p-3 border border-slate-300">
@@ -153,10 +154,10 @@ export default function PagosDocsPage() {
                       Theme Rides
                     </p>
                     <p className="text-xs text-slate-700">
-                      S/. 40.00 por cada theme ride
+                      S/. 30.00 por cada número de theme ride (suma de números)
                     </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Ejemplo: 1 theme ride = S/. 40.00
+                      Ejemplo: 1 theme ride con número 2 = 2 × S/.30 = S/. 60.00
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-md p-3 border border-slate-300">

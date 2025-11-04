@@ -174,13 +174,13 @@ export function CategoryTab({
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-xs sm:text-sm text-muted-foreground">
-                            Total de Clases:
+                            Clases por Semana:
                           </span>
                           <Badge
                             variant="outline"
                             className="text-xs bg-primary/10 text-primary border-primary/20"
                           >
-                            {metricasReales.totalClasses || 0}
+                            {Math.round((metricasReales.totalClasses || 0) / 4)}
                           </Badge>
                         </div>
                         <div className="flex justify-between items-center">

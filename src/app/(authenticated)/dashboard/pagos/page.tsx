@@ -203,11 +203,11 @@ export default function PagosPage() {
       width: "150px",
       render: (_, payment) => {
         const totalBonuses =
+          (payment.cover || 0) +
           payment.branding +
           payment.themeRide +
           payment.workshop +
-          payment.versusBonus +
-          (payment.bonus || 0);
+          payment.versusBonus;
         return (
           <TooltipProvider>
             <Tooltip>
@@ -226,6 +226,12 @@ export default function PagosPage() {
               <TooltipContent side="top" className="max-w-xs">
                 <div className="space-y-1">
                   <div className="font-medium text-xs">Detalle de Bonos:</div>
+                  {payment.cover > 0 && (
+                    <div className="text-xs">
+                      <span className="text-green-600">Cover:</span> +S/{" "}
+                      {payment.cover.toFixed(2)}
+                    </div>
+                  )}
                   {payment.branding > 0 && (
                     <div className="text-xs">
                       <span className="text-green-600">Branding:</span> +S/{" "}
@@ -248,12 +254,6 @@ export default function PagosPage() {
                     <div className="text-xs">
                       <span className="text-green-600">Versus:</span> +S/{" "}
                       {payment.versusBonus.toFixed(2)}
-                    </div>
-                  )}
-                  {payment.bonus && payment.bonus > 0 && (
-                    <div className="text-xs">
-                      <span className="text-green-600">Bono:</span> +S/{" "}
-                      {payment.bonus.toFixed(2)}
                     </div>
                   )}
                   {totalBonuses === 0 && (
@@ -597,7 +597,6 @@ export default function PagosPage() {
         "Theme Ride": payment.themeRide.toFixed(2),
         Workshop: payment.workshop.toFixed(2),
         "Versus Bonus": payment.versusBonus.toFixed(2),
-        "Bono Extra": (payment.bonus || 0).toFixed(2),
         Penalización: payment.penalty.toFixed(2),
         "Retención (8%)": payment.retention.toFixed(2),
         "Pago Final": payment.finalPayment.toFixed(2),

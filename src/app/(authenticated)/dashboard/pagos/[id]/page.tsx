@@ -314,14 +314,13 @@ export default function PaymentDetailPage() {
     amount: number,
     retention: number,
     adjustment: number,
-    adjustmentType: string,
-    bonus = 0
+    adjustmentType: string
   ): number => {
     const calculatedAdjustment =
       adjustmentType === "PORCENTAJE"
         ? (amount * adjustment) / 100
         : adjustment;
-    const adjustedAmount = amount + calculatedAdjustment + bonus;
+    const adjustedAmount = amount + calculatedAdjustment;
     return adjustedAmount - retention;
   };
 
@@ -354,8 +353,7 @@ export default function PaymentDetailPage() {
     payment.amount,
     payment.retention,
     payment.adjustment,
-    payment.adjustmentType,
-    payment.bonus || 0
+    payment.adjustmentType
   );
 
   return (

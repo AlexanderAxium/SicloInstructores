@@ -9,7 +9,8 @@ import { useInstructorAuth } from "@/contexts/InstructorAuthContext";
 import { usePagination } from "@/hooks/usePagination";
 import type { PaymentsListResponse } from "@/types/payments";
 import { trpc } from "@/utils/trpc";
-import { DollarSign, GraduationCap } from "lucide-react";
+import { DollarSign, Eye, GraduationCap } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 // Tipo para las clases del instructor
@@ -251,6 +252,19 @@ export function InstructorTabs() {
           <div className="text-xs text-muted-foreground">
             VS: S/ {record.versusBonus.toFixed(2)}
           </div>
+        </div>
+      ),
+    },
+    {
+      key: "acciones",
+      title: "Acciones",
+      width: "80px",
+      headerClassName: "text-center",
+      render: (_, record) => (
+        <div className="flex justify-center">
+          <Link href={`/pago/${record.id}`}>
+            <Eye className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+          </Link>
         </div>
       ),
     },

@@ -358,18 +358,19 @@ export const formulasRouter = router({
       };
     }),
 
-  // Get formulas by period (protected)
+  // Get formulas by period (protected - supports both users and instructors)
   getByPeriod: protectedProcedure
     .input(z.object({ periodId: z.string() }))
     .query(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
-        throw new Error("User tenant not found");
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      if (!tenantId) {
+        throw new Error("User or instructor tenant not found");
       }
 
       const formulas = await prisma.formula.findMany({
         where: {
           periodId: input.periodId,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         include: {
           discipline: {

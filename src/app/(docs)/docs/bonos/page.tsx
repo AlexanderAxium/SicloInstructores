@@ -29,20 +29,20 @@ export default function BonosDocsPage() {
             <div className="bg-green-50 rounded-md p-4 border border-green-300">
               <ul className="list-disc list-inside space-y-2 text-sm text-green-900">
                 <li>
-                  <strong>Bono por Cover:</strong> S/. 30.00 por cada cover con
-                  bonificación activada
+                  <strong>Bono por Cover:</strong> S/. 80.00 por cada cover con
+                  bonificación activada y aprobado
                 </li>
                 <li>
                   Solo aplica cuando el cover tiene la opción de "bonificación"
-                  habilitada
+                  habilitada y está aprobado
                 </li>
                 <li>Este bono se suma automáticamente a tu pago del período</li>
                 <li>Puedes consultar tus covers en la sección de Pagos</li>
               </ul>
             </div>
             <p className="text-muted-foreground mt-4">
-              Ejemplo: Si cubriste 3 clases con bonificación, recibirás S/.
-              90.00 adicionales en tu pago.
+              Ejemplo: Si cubriste 3 clases con bonificación aprobada, recibirás
+              S/. 240.00 adicionales en tu pago.
             </p>
           </div>
         </section>
@@ -59,21 +59,23 @@ export default function BonosDocsPage() {
             <div className="bg-blue-50 rounded-md p-4 border border-blue-300">
               <ul className="list-disc list-inside space-y-2 text-sm text-blue-900">
                 <li>
-                  <strong>Bono por Branding:</strong> S/. 50.00 por cada
-                  branding registrado
+                  <strong>Bono por Branding:</strong> S/. 5.00 por cada número
+                  de branding (se suma el total de números)
                 </li>
                 <li>
                   Se registran por período y se suman automáticamente a tu pago
                 </li>
-                <li>Cada branding cuenta independientemente</li>
+                <li>
+                  El cálculo se basa en la suma de todos los números de branding
+                </li>
                 <li>
                   Puedes ver cuántos brandings tienes en el detalle de tu pago
                 </li>
               </ul>
             </div>
             <p className="text-muted-foreground mt-4">
-              Ejemplo: Si participaste en 2 brandings, recibirás S/. 100.00
-              adicionales.
+              Ejemplo: Si tienes 2 brandings con números 10 y 5, recibirás
+              (10+5) × S/.5 = S/. 75.00 adicionales.
             </p>
           </div>
         </section>
@@ -89,18 +91,21 @@ export default function BonosDocsPage() {
             <div className="bg-purple-50 rounded-md p-4 border border-purple-300">
               <ul className="list-disc list-inside space-y-2 text-sm text-purple-900">
                 <li>
-                  <strong>Bono por Theme Ride:</strong> S/. 40.00 por cada theme
-                  ride
+                  <strong>Bono por Theme Ride:</strong> S/. 30.00 por cada
+                  número de theme ride (se suma el total de números)
                 </li>
                 <li>
                   Se registra automáticamente cuando impartes una clase temática
                 </li>
-                <li>Se suma a tu cálculo de pago del período</li>
+                <li>
+                  El cálculo se basa en la suma de todos los números de theme
+                  rides
+                </li>
               </ul>
             </div>
             <p className="text-muted-foreground mt-4">
-              Ejemplo: Si impartiste 1 theme ride, recibirás S/. 40.00
-              adicionales.
+              Ejemplo: Si impartiste 1 theme ride con número 2, recibirás 2 ×
+              S/.30 = S/. 60.00 adicionales.
             </p>
           </div>
         </section>
@@ -192,13 +197,16 @@ export default function BonosDocsPage() {
           </p>
           <ul className="list-disc list-inside space-y-2 text-sm text-green-900">
             <li>
-              <strong>Covers:</strong> S/. 30.00 por cada cover con bonificación
+              <strong>Covers:</strong> S/. 80.00 por cada cover con bonificación
+              aprobada
             </li>
             <li>
-              <strong>Brandings:</strong> S/. 50.00 por cada branding
+              <strong>Brandings:</strong> S/. 5.00 por cada número (suma de
+              números)
             </li>
             <li>
-              <strong>Theme Rides:</strong> S/. 40.00 por cada theme ride
+              <strong>Theme Rides:</strong> S/. 30.00 por cada número (suma de
+              números)
             </li>
             <li>
               <strong>Workshops:</strong> Monto variable según el workshop

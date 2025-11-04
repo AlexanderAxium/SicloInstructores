@@ -278,15 +278,6 @@ export function PaymentDetailPDF({
             </Text>
           </View>
 
-          {payment.bonus && payment.bonus > 0 && (
-            <View style={styles.row}>
-              <Text style={styles.label}>Bono:</Text>
-              <Text style={styles.value}>
-                +{formatCurrency(payment.bonus || 0)}
-              </Text>
-            </View>
-          )}
-
           {payment.cover > 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>

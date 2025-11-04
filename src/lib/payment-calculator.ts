@@ -222,21 +222,33 @@ export function calculateAdditionalBonuses(
   logs.push(`⚡ Theme Rides del instructor: ${themeRides.length}`);
   logs.push(`🎓 Workshops del instructor: ${workshops.length}`);
 
-  // Calculate cover bonus (S/.30 per cover with bonus)
-  const coversWithBonus = covers.filter((cover) => cover.bonusPayment);
-  const coverBonus = coversWithBonus.length * 30;
+  // Calculate cover bonus (S/.80 per cover with bonus and approved)
+  const coversWithBonus = covers.filter(
+    (cover) => cover.bonusPayment && cover.justification === "APPROVED"
+  );
+  const coverBonus = coversWithBonus.length * 80;
   logs.push(
-    `🔄 Covers con bono: ${coversWithBonus.length} x S/.30 = S/.${coverBonus}`
+    `🔄 Covers con bono: ${coversWithBonus.length} x S/.80 = S/.${coverBonus}`
   );
 
-  // Calculate branding bonus (S/.50 per branding)
-  const brandingBonus = brandings.length * 50;
-  logs.push(`🏆 Brandeos: ${brandings.length} x S/.50 = S/.${brandingBonus}`);
-
-  // Calculate theme ride bonus (S/.40 per theme ride)
-  const themeRideBonus = themeRides.length * 40;
+  // Calculate branding bonus (suma de números × S/.5, igual que sistema antiguo)
+  const totalBrandings = brandings.reduce(
+    (total, branding) => total + (branding.number || 0),
+    0
+  );
+  const brandingBonus = totalBrandings * 5;
   logs.push(
-    `⚡ Theme Rides: ${themeRides.length} x S/.40 = S/.${themeRideBonus}`
+    `🏆 Brandeos: ${totalBrandings} (suma de números) x S/.5 = S/.${brandingBonus}`
+  );
+
+  // Calculate theme ride bonus (suma de números × S/.30, igual que sistema antiguo)
+  const totalThemeRides = themeRides.reduce(
+    (total, themeRide) => total + (themeRide.number || 0),
+    0
+  );
+  const themeRideBonus = totalThemeRides * 30;
+  logs.push(
+    `⚡ Theme Rides: ${totalThemeRides} (suma de números) x S/.30 = S/.${themeRideBonus}`
   );
 
   // Calculate workshop bonus (variable amount)

@@ -567,8 +567,7 @@ export const paymentsRouter = router({
         payment.branding +
         payment.themeRide +
         payment.workshop +
-        payment.versusBonus +
-        (payment.bonus || 0);
+        payment.versusBonus;
 
       return {
         payment,
@@ -645,7 +644,7 @@ export const paymentsRouter = router({
             };
           }
 
-          // Preserve reajuste and comments
+          // Preserve reajuste and comments (bonus is deprecated, always 0)
           const preservedAdjustment = existingPayment.adjustment || 0;
           const preservedAdjustmentType =
             existingPayment.adjustmentType || "FIXED";
@@ -710,7 +709,7 @@ export const paymentsRouter = router({
               themeRide: calculationData.bonuses.themeRide,
               workshop: calculationData.bonuses.workshop,
               versusBonus: calculationData.bonuses.versus,
-              bonus: calculationData.bonuses.total,
+              bonus: 0,
               finalPayment: recalculatedFinal,
               comments: preservedComments,
             },
@@ -771,7 +770,7 @@ export const paymentsRouter = router({
             themeRide: calculationData.bonuses.themeRide,
             workshop: calculationData.bonuses.workshop,
             versusBonus: calculationData.bonuses.versus,
-            bonus: calculationData.bonuses.total,
+            bonus: 0,
             finalPayment: recalculatedFinal,
             comments: `Cálculo automático - ${new Date().toLocaleString()}`,
           },

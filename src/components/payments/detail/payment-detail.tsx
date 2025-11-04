@@ -141,7 +141,6 @@ export function PaymentDetails({
   const subtotal =
     totalBaseAmount +
     adjustmentAmount +
-    (payment.bonus || 0) +
     totalCover +
     totalBranding +
     totalThemeRide +
@@ -431,18 +430,6 @@ export function PaymentDetails({
                 </div>
               </div>
             </div>
-
-            {/* Bono */}
-            {payment.bonus !== null &&
-              payment.bonus !== undefined &&
-              payment.bonus > 0 && (
-                <div className="flex justify-between items-center py-3 px-4 sm:px-6 hover:bg-muted/5">
-                  <div className="text-xs sm:text-sm font-medium">Bono:</div>
-                  <div className="font-medium text-xs sm:text-sm text-emerald-600">
-                    +{formatCurrency(payment.bonus)}
-                  </div>
-                </div>
-              )}
 
             {/* Cover */}
             {totalCover > 0 && (
