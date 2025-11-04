@@ -364,9 +364,6 @@ export function CategoryTab({
                             <th className="border border-border p-2 text-center bg-muted/50 font-medium">
                               Embajador
                             </th>
-                            <th className="border border-border p-2 text-center bg-muted/50 font-medium">
-                              Embajador Senior
-                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -449,18 +446,6 @@ export function CategoryTab({
                                       ? "Sí"
                                       : "No"
                                     : (requisitos?.EMBAJADOR?.[key] ?? "-")}
-                                </td>
-                                <td
-                                  className={`border border-border p-2 text-center ${getCellClass("EMBAJADOR_SENIOR")}`}
-                                >
-                                  {typeof requisitos?.EMBAJADOR_SENIOR?.[
-                                    key
-                                  ] === "boolean"
-                                    ? requisitos.EMBAJADOR_SENIOR[key]
-                                      ? "Sí"
-                                      : "No"
-                                    : (requisitos?.EMBAJADOR_SENIOR?.[key] ??
-                                      "-")}
                                 </td>
                               </tr>
                             );

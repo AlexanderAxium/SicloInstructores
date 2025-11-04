@@ -186,7 +186,7 @@ export function InstructorSidebar() {
                               Período {payment.period?.number || ""} -{" "}
                               {payment.period?.year || ""}
                             </div>
-                            <div className="text-xs text-muted-foreground truncate">
+                            <div className="text-xs text-muted-foreground/70 truncate">
                               {formatCurrency(payment.finalPayment)}
                             </div>
                           </div>

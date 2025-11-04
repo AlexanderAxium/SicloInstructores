@@ -393,18 +393,20 @@ export async function calculateInstructorPaymentData(
     // Get or calculate instructor category for this discipline
     let instructorCategory: string;
 
-    // First check if there's an existing category
+    // Check if there's an existing category
     const categoryInfo = categories.find(
       (c) => c.disciplineId === disciplineId
     );
 
-    if (categoryInfo) {
+    // Only use existing category if it's manual, otherwise always recalculate
+    if (categoryInfo?.isManual) {
       instructorCategory = categoryInfo.category;
       logs.push(
-        `📋 Usando categoría existente para ${discipline.name}: ${instructorCategory}`
+        `📋 Usando categoría manual existente para ${discipline.name}: ${instructorCategory}`
       );
     } else {
-      // Calculate category based on formula requirements
+      // Always recalculate category for non-manual or missing categories
+      // getOrCalculateCategory will update or create the category automatically
       instructorCategory = await getOrCalculateCategory(
         instructorId,
         disciplineId,
@@ -413,7 +415,7 @@ export async function calculateInstructorPaymentData(
         logs
       );
       logs.push(
-        `📋 Categoría calculada para ${discipline.name}: ${instructorCategory}`
+        `📋 Categoría recalculada para ${discipline.name}: ${instructorCategory}`
       );
     }
 

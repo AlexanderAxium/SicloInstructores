@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-family-sans: "Poppins", "sans-serif";
+  --font-family-sans: "DM Sans", "sans-serif";
 
   /* Colors for light mode */
   --color-background: hsl(0 0% 97%);

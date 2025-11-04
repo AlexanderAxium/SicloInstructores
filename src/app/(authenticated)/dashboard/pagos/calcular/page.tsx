@@ -553,8 +553,11 @@ export default function CalcularPagosPage() {
               {extra}
             </span>
             {hasManual && (
-              <Badge variant="secondary" className="h-5 text-[10px] px-1.5">
-                Manual
+              <Badge
+                variant="outline"
+                className="h-5 text-[9px] px-1.5 font-bold bg-orange-100 text-orange-700 border-orange-400"
+              >
+                ⚠️ MANUAL
               </Badge>
             )}
           </div>

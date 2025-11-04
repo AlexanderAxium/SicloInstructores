@@ -354,12 +354,18 @@ export function DetailedInstructorLogs({
                                         </div>
                                         <Badge
                                           variant="outline"
-                                          className="bg-primary/10 text-primary border-primary/20"
+                                          className={
+                                            category.reason ===
+                                            "Asignación manual"
+                                              ? "bg-orange-100 text-orange-700 border-orange-300"
+                                              : "bg-primary/10 text-primary border-primary/20"
+                                          }
                                         >
                                           {getCategoryTranslation(
                                             category.category
-                                          )}{" "}
-                                          - Asignada
+                                          )}
+                                          {category.reason ===
+                                            "Asignación manual" && " - Manual"}
                                         </Badge>
                                       </div>
                                       <p className="text-sm text-muted-foreground mb-3">

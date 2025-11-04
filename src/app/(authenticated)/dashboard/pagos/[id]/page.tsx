@@ -319,7 +319,7 @@ export default function PaymentDetailPage() {
     adjustmentType: string
   ): number => {
     const calculatedAdjustment =
-      adjustmentType === "PERCENTAGE" || adjustmentType === "PORCENTAJE"
+      adjustmentType === "PERCENTAGE"
         ? (amount * adjustment) / 100
         : adjustment;
     const adjustedAmount = amount + calculatedAdjustment;

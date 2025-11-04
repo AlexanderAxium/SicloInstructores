@@ -226,10 +226,10 @@ export function AppSidebar() {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground border-2 border-sidebar-primary-foreground">
-                  <span className="text-lg font-bold">S</span>
+                  <span className="text-lg font-normal">S</span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Siclo</span>
+                  <span className="truncate font-normal">Siclo</span>
                   <span className="truncate text-xs">Instructores</span>
                 </div>
               </Link>
