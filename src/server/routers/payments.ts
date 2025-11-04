@@ -54,8 +54,18 @@ export const paymentsRouter = router({
         prisma.instructorPayment.count(),
       ]);
 
+      // For public endpoint, we don't include categories (security: no tenantId available)
+      // Categories will be empty array and badges won't show
+      const paymentsWithCategories = payments.map((payment) => ({
+        ...payment,
+        instructor: {
+          ...payment.instructor,
+          categories: [],
+        },
+      }));
+
       return {
-        payments,
+        payments: paymentsWithCategories,
         total,
         hasMore: offset + limit < total,
       };
@@ -213,8 +223,50 @@ export const paymentsRouter = router({
         prisma.instructorPayment.count({ where }),
       ]);
 
+      // Fetch categories for each payment separately
+      const tenantId = ctx.user?.tenantId || ctx.instructor?.tenantId;
+      const paymentsWithCategories = await Promise.all(
+        payments.map(async (payment) => {
+          if (!tenantId) {
+            return {
+              ...payment,
+              instructor: {
+                ...payment.instructor,
+                categories: [],
+              },
+            };
+          }
+
+          const categories = await prisma.instructorCategory.findMany({
+            where: {
+              instructorId: payment.instructorId,
+              periodId: payment.periodId,
+              tenantId,
+            },
+            select: {
+              id: true,
+              category: true,
+              discipline: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          });
+
+          return {
+            ...payment,
+            instructor: {
+              ...payment.instructor,
+              categories,
+            },
+          };
+        })
+      );
+
       return {
-        payments,
+        payments: paymentsWithCategories,
         total,
         hasMore: input.offset + input.limit < total,
       };

@@ -27,6 +27,8 @@ import { useExcelExport } from "@/hooks/useExcelExport";
 import { usePagination } from "@/hooks/usePagination";
 import { usePeriodFilter } from "@/hooks/usePeriodFilter";
 import { useRBAC } from "@/hooks/useRBAC";
+import { CATEGORIES_CONFIG, mostrarCategoriaVisual } from "@/lib/config";
+import type { InstructorCategoryType } from "@/types/instructor";
 import { PermissionAction, PermissionResource } from "@/types/rbac";
 import { trpc } from "@/utils/trpc";
 import {
@@ -71,6 +73,14 @@ type InstructorPayment = {
     id: string;
     name: string;
     fullName: string | null;
+    categories?: Array<{
+      id: string;
+      category: string;
+      discipline: {
+        id: string;
+        name: string;
+      };
+    }>;
   };
   period: {
     id: string;
@@ -170,11 +180,50 @@ export default function PagosPage() {
       key: "instructor",
       title: "Instructor",
       width: "200px",
-      render: (_, payment) => (
-        <span className="text-sm text-foreground">
-          {payment.instructor.name}
-        </span>
-      ),
+      render: (_, payment) => {
+        // Get categories for this instructor and period
+        const categories = payment.instructor.categories || [];
+
+        // Filter only visual categories
+        const visualCategories = categories.filter((cat) =>
+          mostrarCategoriaVisual(cat.discipline.name)
+        );
+
+        // Find the highest category (excluding INSTRUCTOR)
+        let highestCategory: InstructorCategoryType | null = null;
+        const priorityOrder = CATEGORIES_CONFIG.PRIORITY_ORDER.filter(
+          (cat) => cat !== "INSTRUCTOR"
+        );
+
+        for (const categoryPriority of priorityOrder) {
+          if (
+            visualCategories.some((cat) => cat.category === categoryPriority)
+          ) {
+            highestCategory = categoryPriority as InstructorCategoryType;
+            break;
+          }
+        }
+
+        const categoryName = highestCategory
+          ? CATEGORIES_CONFIG.DISPLAY_NAMES[highestCategory]
+          : null;
+        const categoryColor = highestCategory
+          ? CATEGORIES_CONFIG.BADGE_COLORS[highestCategory]
+          : null;
+
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-foreground">
+              {payment.instructor.name}
+            </span>
+            {highestCategory && categoryName && categoryColor && (
+              <Badge variant="outline" className={`${categoryColor} text-xs`}>
+                {categoryName}
+              </Badge>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "period",

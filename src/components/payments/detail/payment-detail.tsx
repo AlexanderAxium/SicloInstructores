@@ -123,7 +123,7 @@ export function PaymentDetails({
 
   // Calculate adjustment amount
   const adjustmentAmount =
-    payment.adjustmentType === "PORCENTAJE"
+    payment.adjustmentType === "PERCENTAGE"
       ? totalBaseAmount * (payment.adjustment / 100)
       : payment.adjustment;
 
@@ -298,7 +298,7 @@ export function PaymentDetails({
                         variant="outline"
                         className="font-normal text-xs sm:text-xs"
                       >
-                        {payment.adjustmentType === "PORCENTAJE"
+                        {payment.adjustmentType === "PERCENTAGE"
                           ? `${payment.adjustment}%`
                           : "Fijo"}
                       </Badge>
@@ -311,7 +311,9 @@ export function PaymentDetails({
                         onClick={() => {
                           setNewAdjustment(payment.adjustment);
                           setAdjustmentType(
-                            payment.adjustmentType as "FIJO" | "PORCENTAJE"
+                            payment.adjustmentType === "PERCENTAGE"
+                              ? "PORCENTAJE"
+                              : "FIJO"
                           );
                           setIsEditingAdjustment(true);
                         }}

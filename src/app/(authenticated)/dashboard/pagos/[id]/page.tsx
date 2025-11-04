@@ -154,7 +154,9 @@ export default function PaymentDetailPage() {
   useEffect(() => {
     if (payment) {
       setNewAdjustment(payment.adjustment);
-      setAdjustmentType(payment.adjustmentType as "FIJO" | "PORCENTAJE");
+      setAdjustmentType(
+        payment.adjustmentType === "PERCENTAGE" ? "PORCENTAJE" : "FIJO"
+      );
     }
   }, [payment]);
 
@@ -317,7 +319,7 @@ export default function PaymentDetailPage() {
     adjustmentType: string
   ): number => {
     const calculatedAdjustment =
-      adjustmentType === "PORCENTAJE"
+      adjustmentType === "PERCENTAGE" || adjustmentType === "PORCENTAJE"
         ? (amount * adjustment) / 100
         : adjustment;
     const adjustedAmount = amount + calculatedAdjustment;

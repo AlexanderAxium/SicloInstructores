@@ -263,7 +263,7 @@ export function PaymentDetailPDF({
           <View style={styles.row}>
             <Text style={styles.label}>
               Reajuste (
-              {payment.adjustmentType === "PORCENTAJE"
+              {payment.adjustmentType === "PERCENTAGE"
                 ? `${payment.adjustment}%`
                 : "Fijo"}
               ):
@@ -271,7 +271,7 @@ export function PaymentDetailPDF({
             <Text style={styles.value}>
               {payment.adjustment >= 0 ? "+" : ""}
               {formatCurrency(
-                payment.adjustmentType === "PORCENTAJE"
+                payment.adjustmentType === "PERCENTAGE"
                   ? (payment.amount * payment.adjustment) / 100
                   : payment.adjustment
               )}
