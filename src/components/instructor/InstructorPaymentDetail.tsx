@@ -30,8 +30,21 @@ import { PaymentDetails } from "@/components/payments/detail/payment-detail";
 import { PenalizacionesCoversTab } from "@/components/payments/detail/penalizacion-cover-tab";
 
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useInstructorAuth } from "@/contexts/InstructorAuthContext";
-import { Award, Calendar, FileText } from "lucide-react";
+import {
+  Award,
+  Calendar,
+  ChevronDown,
+  Download,
+  FileText,
+  Printer,
+} from "lucide-react";
 
 // Helper functions to convert API types to regular types
 const convertInstructorFromAPI = (
@@ -285,15 +298,31 @@ export default function InstructorPaymentDetailPage() {
     back: () => router.back(),
   };
 
+  // Calculate classes summary for header
+  const classesCount = instructorClasses.length;
+  const classesByDiscipline = instructorClasses.reduce<Record<string, Class[]>>(
+    (acc, clase) => {
+      const disciplineId = String(clase.disciplineId);
+      if (!acc[disciplineId]) {
+        acc[disciplineId] = [];
+      }
+      acc[disciplineId].push(clase);
+      return acc;
+    },
+    {}
+  );
+  const disciplinesCount = Object.keys(classesByDiscipline).length;
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header - Read-only version for instructors */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-card rounded-lg p-3 sm:p-4 shadow-sm border border-border">
-        <div className="flex items-start gap-2 sm:gap-3 w-full sm:w-auto">
+      <div className="flex flex-col gap-4 bg-card rounded-lg p-4 sm:p-6 shadow-sm border border-border">
+        {/* Top section: Title and back button */}
+        <div className="flex items-start gap-3 w-full">
           <button
             type="button"
             onClick={() => router.push("/instructor")}
-            className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 flex items-center justify-center cursor-pointer rounded-md border border-border hover:bg-muted/10 bg-transparent p-0"
+            className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 flex items-center justify-center cursor-pointer rounded-md border border-border hover:bg-muted/10 bg-transparent p-0 transition-colors"
           >
             <svg
               className="h-4 w-4 sm:h-5 sm:w-5"
@@ -312,56 +341,75 @@ export default function InstructorPaymentDetailPage() {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
               Detalle de Pago
             </h1>
-
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
-              <div className="flex items-center gap-1">
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {instructor.name} -{" "}
-                  {period ? `P${period.number} ${period.year}` : ""}
-                </p>
-              </div>
-            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate mt-1">
+              {instructor.name} -{" "}
+              {period ? `P${period.number} ${period.year}` : ""}
+            </p>
           </div>
+
+          {/* Export dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="h-9 px-3 sm:px-4 inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background text-sm font-medium hover:bg-muted/50 hover:text-foreground transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Exportar</span>
+                <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleExportPDF}
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Exportar a PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handlePrint}
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Imprimir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {/* Actions - Read-only */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="h-9 px-3 sm:px-4 inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background text-sm font-medium hover:bg-muted/50 hover:text-foreground transition-colors"
-          >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              role="img"
-              aria-label="Imprimir"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10h10M7 6h10M7 14h4" />
-            </svg>
-            <span className="hidden sm:inline">Imprimir</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleExportPDF}
-            className="h-9 px-3 sm:px-4 inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background text-sm font-medium hover:bg-muted/50 hover:text-foreground transition-colors"
-          >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              role="img"
-              aria-label="Exportar PDF"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-            <span className="hidden sm:inline">Exportar PDF</span>
-          </button>
+        {/* Classes summary section */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-3 border-t border-border">
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground mb-1">Clases</span>
+            <span className="text-base sm:text-lg font-semibold text-foreground">
+              {classesCount}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground mb-1">
+              Disciplinas
+            </span>
+            <span className="text-base sm:text-lg font-semibold text-foreground">
+              {disciplinesCount}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground mb-1">
+              Ocupación
+            </span>
+            <span className="text-base sm:text-lg font-semibold text-foreground">
+              {averageOccupancy}%
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground mb-1">
+              Monto Final
+            </span>
+            <span className="text-base sm:text-lg font-semibold text-foreground">
+              {formatCurrency(payment.finalPayment)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -382,8 +430,7 @@ export default function InstructorPaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Resumen</span>
-                  <span className="sm:hidden">Pago</span>
+                  <span>Resumen</span>
                 </div>
                 {activeTab === "details" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
@@ -401,8 +448,7 @@ export default function InstructorPaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Detalles</span>
-                  <span className="sm:hidden">Det.</span>
+                  <span>Detalles</span>
                 </div>
                 {activeTab === "penalties-covers" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
@@ -420,8 +466,7 @@ export default function InstructorPaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Clases</span>
-                  <span className="sm:hidden">Cls.</span>
+                  <span>Clases</span>
                 </div>
                 {activeTab === "classes" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
@@ -439,8 +484,7 @@ export default function InstructorPaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <Award className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Categoría</span>
-                  <span className="sm:hidden">Cat.</span>
+                  <span>Categoría</span>
                 </div>
                 {activeTab === "category" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />

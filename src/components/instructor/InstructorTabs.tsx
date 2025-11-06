@@ -1,37 +1,16 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { TableColumn } from "@/components/ui/scrollable-table";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInstructorAuth } from "@/contexts/InstructorAuthContext";
 import { usePagination } from "@/hooks/usePagination";
 import type { PaymentsListResponse } from "@/types/payments";
 import { trpc } from "@/utils/trpc";
-import { DollarSign, Eye, GraduationCap } from "lucide-react";
+import { ArrowRight, DollarSign, Eye } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-
-// Tipo para las clases del instructor
-interface InstructorClass {
-  id: string;
-  date: string;
-  totalReservations: number;
-  paidReservations: number;
-  spots: number;
-  specialText?: string | null;
-  isVersus: boolean;
-  versusNumber?: number | null;
-  discipline: {
-    name: string;
-    color?: string | null;
-  };
-  period: {
-    number: number;
-    year: number;
-  };
-}
 
 // Tipo para los pagos del instructor
 interface InstructorPaymentWithPeriod {
@@ -59,24 +38,11 @@ interface InstructorPaymentWithPeriod {
 export function InstructorTabs() {
   const { instructor, isAuthenticated } = useInstructorAuth();
 
-  // Paginación para clases
-  const _classesPagination = usePagination({
-    defaultLimit: 10,
-    defaultPage: 1,
-  });
-
   // Paginación para pagos
   const paymentsPagination = usePagination({
     defaultLimit: 10,
     defaultPage: 1,
   });
-
-  // Get classes with pagination
-  const { data: classesData, isLoading: isLoadingClasses } =
-    trpc.classes.getByInstructor.useQuery(
-      { instructorId: instructor?.id || "" },
-      { enabled: !!instructor?.id }
-    );
 
   // Get payments with pagination
   const { data: paymentsData, isLoading: isLoadingPayments } =
@@ -93,98 +59,13 @@ export function InstructorTabs() {
     return null;
   }
 
-  // Definir columnas para la tabla de clases
-  const classColumns: TableColumn<InstructorClass>[] = [
-    {
-      key: "id",
-      title: "ID",
-      width: "80px",
-      render: (_, record) => (
-        <span className="text-xs font-mono text-muted-foreground">
-          {record.id}
-        </span>
-      ),
-    },
-    {
-      key: "date",
-      title: "Fecha",
-      width: "120px",
-      render: (_, record) => (
-        <span className="text-sm">
-          {new Date(record.date).toLocaleDateString("es-PE")}
-        </span>
-      ),
-    },
-    {
-      key: "time",
-      title: "Hora",
-      width: "80px",
-      render: (_, record) => (
-        <span className="text-sm">
-          {new Date(record.date).toLocaleTimeString("es-PE", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </span>
-      ),
-    },
-    {
-      key: "discipline",
-      title: "Disciplina",
-      width: "150px",
-      render: (_, record) => (
-        <div className="flex items-center gap-1.5">
-          <div
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: record.discipline.color || "#6b7280" }}
-          />
-          <span className="font-medium text-sm truncate">
-            {record.discipline.name}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "totalReservations",
-      title: "Reservas (Total)",
-      width: "120px",
-      headerClassName: "text-center",
-      render: (_, record) => (
-        <div className="text-sm text-center">
-          <div className="font-medium">{record.totalReservations}</div>
-        </div>
-      ),
-    },
-    {
-      key: "spots",
-      title: "Lugares",
-      width: "120px",
-      headerClassName: "text-center",
-      render: (_, record) => (
-        <div className="text-sm text-center">
-          <div className="font-medium">{record.spots}</div>
-        </div>
-      ),
-    },
-    {
-      key: "period",
-      title: "Período",
-      width: "100px",
-      headerClassName: "text-center",
-      render: (_, record) => (
-        <div className="text-sm text-center">
-          <span className="block">
-            {record.period.number}/{record.period.year}
-          </span>
-          {record.isVersus && (
-            <Badge variant="default" className="text-xs mt-1">
-              VS
-            </Badge>
-          )}
-        </div>
-      ),
-    },
-  ];
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency: "PEN",
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
 
   // Definir columnas para la tabla de pagos
   const paymentColumns: TableColumn<InstructorPaymentWithPeriod>[] = [
@@ -270,7 +151,6 @@ export function InstructorTabs() {
     },
   ];
 
-  const classes = classesData?.classes || [];
   const paymentsDataTyped = paymentsData as PaymentsListResponse | undefined;
   const payments: InstructorPaymentWithPeriod[] =
     paymentsDataTyped?.payments.map((p) => ({
@@ -306,54 +186,236 @@ export function InstructorTabs() {
     hasPrev: paymentsPagination.page > 1,
   };
 
-  // Información de paginación para clases (sin paginación real, solo para mostrar todas)
-  const classesPaginationInfo = {
-    total: classes.length,
-    page: 1,
-    limit: classes.length,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return {
+          color: "bg-green-100 text-green-800 hover:bg-green-200",
+          text: "Pagado",
+        };
+      case "PENDING":
+        return {
+          color: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+          text: "Pendiente",
+        };
+      default:
+        return {
+          color: "bg-red-100 text-red-800 hover:bg-red-200",
+          text: "Cancelado",
+        };
+    }
   };
 
   return (
     <Card>
       <CardContent className="p-0">
-        <Tabs defaultValue="clases" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-8 bg-muted/30 rounded-none border-b border-border">
-            <TabsTrigger
-              value="clases"
-              className="flex items-center gap-1.5 text-sm py-1 h-6 data-[state=active]:shadow-none data-[state=active]:bg-white"
-            >
-              <GraduationCap className="h-3.5 w-3.5" />
-              Clases ({classes.length})
-            </TabsTrigger>
-            <TabsTrigger
-              value="pagos"
-              className="flex items-center gap-1.5 text-sm py-1 h-6 data-[state=active]:shadow-none data-[state=active]:bg-white"
-            >
-              <DollarSign className="h-3.5 w-3.5" />
+        {/* Versión móvil - Cards */}
+        <div className="md:hidden">
+          <div className="p-4 pb-2 border-b border-border">
+            <h3 className="text-sm font-medium flex items-center gap-1.5">
+              <DollarSign className="h-4 w-4" />
               Pagos ({totalPayments})
-            </TabsTrigger>
-          </TabsList>
+            </h3>
+          </div>
+          <div className="p-4 space-y-3">
+            {isLoadingPayments ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }, (_, i) => `skeleton-${i}`).map(
+                  (key) => (
+                    <Card key={key} className="animate-pulse">
+                      <CardContent className="p-4">
+                        <div className="h-20 bg-muted rounded" />
+                      </CardContent>
+                    </Card>
+                  )
+                )}
+              </div>
+            ) : payments.length === 0 ? (
+              <div className="text-center py-8">
+                <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-sm text-muted-foreground">
+                  No hay pagos registrados
+                </p>
+              </div>
+            ) : (
+              <>
+                {payments.map((payment) => {
+                  const statusBadge = getStatusBadge(payment.status);
+                  return (
+                    <Card key={payment.id} className="overflow-hidden">
+                      <CardContent className="p-4 grid gap-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium">
+                              Período {payment.period.number}/
+                              {payment.period.year}
+                            </h4>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs font-medium ${statusBadge.color}`}
+                          >
+                            {statusBadge.text}
+                          </Badge>
+                        </div>
 
-          <TabsContent value="clases" className="mt-0 p-4">
-            <ScrollableTable<InstructorClass>
-              data={classes}
-              columns={classColumns}
-              loading={isLoadingClasses}
-              error={undefined}
-              pagination={classesPaginationInfo}
-              onPageChange={() => {}}
-              onPageSizeChange={() => {}}
-              emptyMessage="No hay clases asignadas"
-              emptyIcon={
-                <GraduationCap className="h-12 w-12 text-muted-foreground" />
-              }
-            />
-          </TabsContent>
+                        {/* Resumen financiero */}
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-muted-foreground text-xs">
+                              Monto Base Total
+                            </p>
+                            <p className="font-medium">
+                              {formatCurrency(payment.amount)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-xs">
+                              Retención Total
+                            </p>
+                            <p className="text-destructive font-medium">
+                              -{formatCurrency(payment.retention)}
+                            </p>
+                          </div>
+                          {payment.cover > 0 && (
+                            <div>
+                              <p className="text-muted-foreground text-xs">
+                                Covers
+                              </p>
+                              <p className="text-green-600 font-medium">
+                                +{formatCurrency(payment.cover)}
+                              </p>
+                            </div>
+                          )}
+                          {payment.branding > 0 && (
+                            <div>
+                              <p className="text-muted-foreground text-xs">
+                                Brandeo
+                              </p>
+                              <p className="text-green-600 font-medium">
+                                +{formatCurrency(payment.branding)}
+                              </p>
+                            </div>
+                          )}
+                          {payment.themeRide > 0 && (
+                            <div>
+                              <p className="text-muted-foreground text-xs">
+                                Theme Ride
+                              </p>
+                              <p className="text-green-600 font-medium">
+                                +{formatCurrency(payment.themeRide)}
+                              </p>
+                            </div>
+                          )}
+                          {payment.workshop > 0 && (
+                            <div>
+                              <p className="text-muted-foreground text-xs">
+                                Workshop
+                              </p>
+                              <p className="text-green-600 font-medium">
+                                +{formatCurrency(payment.workshop)}
+                              </p>
+                            </div>
+                          )}
+                          {payment.penalty > 0 && (
+                            <div>
+                              <p className="text-muted-foreground text-xs">
+                                Penalización
+                              </p>
+                              <p className="text-destructive font-medium">
+                                -{formatCurrency(payment.penalty)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
 
-          <TabsContent value="pagos" className="mt-0 p-4">
+                        {payment.comments &&
+                          !payment.comments.startsWith(
+                            "Cálculo automático"
+                          ) && (
+                            <div className="pt-2 border-t border-border">
+                              <p className="text-xs text-muted-foreground">
+                                {payment.comments}
+                              </p>
+                            </div>
+                          )}
+
+                        <div className="flex items-center justify-between pt-2 border-t border-border">
+                          <div>
+                            <p className="text-muted-foreground text-xs mb-1">
+                              MONTO FINAL
+                            </p>
+                            <div className="flex items-center font-medium text-lg">
+                              <ArrowRight className="mr-1 h-4 w-4 text-muted-foreground" />
+                              {formatCurrency(payment.finalPayment)}
+                            </div>
+                          </div>
+                          <Link href={`/pago/${payment.id}`}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Ver Detalles
+                            </Button>
+                          </Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {/* Paginación móvil */}
+                {paymentsPaginationInfo.totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        paymentsPagination.setPage(
+                          Math.max(1, paymentsPagination.page - 1)
+                        )
+                      }
+                      disabled={!paymentsPaginationInfo.hasPrev}
+                    >
+                      Anterior
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Página {paymentsPagination.page} de{" "}
+                      {paymentsPaginationInfo.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        paymentsPagination.setPage(
+                          Math.min(
+                            paymentsPaginationInfo.totalPages,
+                            paymentsPagination.page + 1
+                          )
+                        )
+                      }
+                      disabled={!paymentsPaginationInfo.hasNext}
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Versión desktop - Tabla */}
+        <div className="hidden md:block">
+          <div className="p-4 pb-2 border-b border-border">
+            <h3 className="text-sm font-medium flex items-center gap-1.5">
+              <DollarSign className="h-4 w-4" />
+              Pagos ({totalPayments})
+            </h3>
+          </div>
+          <div className="p-4">
             <ScrollableTable<InstructorPaymentWithPeriod>
               data={payments}
               columns={paymentColumns}
@@ -367,8 +429,8 @@ export function InstructorTabs() {
                 <DollarSign className="h-12 w-12 text-muted-foreground" />
               }
             />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

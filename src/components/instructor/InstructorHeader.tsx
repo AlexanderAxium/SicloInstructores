@@ -206,7 +206,7 @@ export function InstructorHeader({
                   <Users className="h-3.5 w-3.5" />
                   Información Personal
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-muted-foreground">
                       Nombre
@@ -313,7 +313,7 @@ export function InstructorHeader({
                   <DollarSign className="h-3.5 w-3.5" />
                   Información Bancaria
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <div className="text-xs font-medium text-muted-foreground">
                       Banco

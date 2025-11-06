@@ -391,8 +391,7 @@ export default function PaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Resumen</span>
-                  <span className="sm:hidden">Pago</span>
+                  <span>Resumen</span>
                 </div>
                 {activeTab === "details" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
@@ -410,8 +409,7 @@ export default function PaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Detalles</span>
-                  <span className="sm:hidden">Det.</span>
+                  <span>Detalles</span>
                 </div>
                 {activeTab === "penalties-covers" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
@@ -429,8 +427,7 @@ export default function PaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Clases</span>
-                  <span className="sm:hidden">Cls.</span>
+                  <span>Clases</span>
                 </div>
                 {activeTab === "classes" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
@@ -448,8 +445,7 @@ export default function PaymentDetailPage() {
               >
                 <div className="flex items-center">
                   <Award className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Categoría</span>
-                  <span className="sm:hidden">Cat.</span>
+                  <span>Categoría</span>
                 </div>
                 {activeTab === "category" && (
                   <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />

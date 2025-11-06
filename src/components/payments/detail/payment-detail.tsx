@@ -519,18 +519,21 @@ export function PaymentDetails({
       </Card>
 
       {/* Comments Section */}
-      {payment.comments && (
-        <Card className="border border-border rounded-lg shadow-sm">
-          <CardHeader className="pb-3 border-b border-border px-4 sm:px-6">
-            <CardTitle className="text-base sm:text-lg font-medium">
-              Comentarios
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-3 px-4 sm:px-6">
-            <p className="text-sm text-muted-foreground">{payment.comments}</p>
-          </CardContent>
-        </Card>
-      )}
+      {payment.comments &&
+        !payment.comments.startsWith("Cálculo automático") && (
+          <Card className="border border-border rounded-lg shadow-sm">
+            <CardHeader className="pb-3 border-b border-border px-4 sm:px-6">
+              <CardTitle className="text-base sm:text-lg font-medium">
+                Comentarios
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-3 px-4 sm:px-6">
+              <p className="text-sm text-muted-foreground">
+                {payment.comments}
+              </p>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }

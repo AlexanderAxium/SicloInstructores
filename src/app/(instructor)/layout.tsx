@@ -1,6 +1,5 @@
+import { InstructorLayoutClient } from "@/app/(instructor)/InstructorLayoutClient";
 import { InstructorRouteGuard } from "@/components/instructor/InstructorRouteGuard";
-import { InstructorSidebar } from "@/components/instructor/InstructorSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { InstructorAuthProvider } from "@/contexts/InstructorAuthContext";
 import { generateMetadata as generateSEOMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -19,14 +18,7 @@ export default function InstructorLayout({
   return (
     <InstructorAuthProvider>
       <InstructorRouteGuard>
-        <SidebarProvider>
-          <div className="flex h-screen w-full bg-background">
-            <InstructorSidebar />
-            <main className="flex-1 overflow-auto">
-              <div className="container mx-auto py-6 px-4">{children}</div>
-            </main>
-          </div>
-        </SidebarProvider>
+        <InstructorLayoutClient>{children}</InstructorLayoutClient>
       </InstructorRouteGuard>
     </InstructorAuthProvider>
   );

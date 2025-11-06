@@ -452,11 +452,29 @@ export const instructorRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      if (!ctx.user?.tenantId) {
+      // Get tenantId from either user or instructor
+      // ctx.instructor?.tenantId is always string, ctx.user?.tenantId can be string | null
+      const tenantId = ctx.instructor?.tenantId || ctx.user?.tenantId;
+      if (!tenantId) {
         throw new Error("User tenant not found");
       }
 
       const { id, disciplineIds, password, ...updateData } = input;
+
+      // If instructor is updating, only allow them to update their own info
+      if (ctx.instructor && ctx.instructor.id !== id) {
+        throw new Error("No tienes permisos para actualizar este instructor");
+      }
+
+      // If instructor is updating, restrict certain fields (only admins can change these)
+      if (ctx.instructor && !ctx.user) {
+        // Remove admin-only fields from updateData
+        updateData.active = undefined;
+        // Instructors cannot change disciplineIds
+        if (disciplineIds) {
+          throw new Error("No tienes permisos para cambiar las disciplinas");
+        }
+      }
 
       // Hash password if provided
       let hashedPassword: string | undefined;
@@ -468,7 +486,7 @@ export const instructorRouter = router({
       const instructor = await prisma.instructor.update({
         where: {
           id,
-          tenantId: ctx.user.tenantId,
+          tenantId: tenantId,
         },
         data: {
           ...updateData,
