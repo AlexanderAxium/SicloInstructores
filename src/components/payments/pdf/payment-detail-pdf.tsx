@@ -1,3 +1,4 @@
+import { formatDateInLima, formatTime } from "@/lib/date-utils";
 import type { Class } from "@/types/classes";
 import type {
   DisciplineFromAPI,
@@ -172,10 +173,6 @@ export function PaymentDetailPDF({
     return `S/ ${amount.toFixed(2)}`;
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("es-PE");
-  };
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -200,9 +197,7 @@ export function PaymentDetailPDF({
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Fecha de emisión:</Text>
-            <Text style={styles.value}>
-              {formatDate(new Date().toISOString())}
-            </Text>
+            <Text style={styles.value}>{formatDateInLima(new Date())}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Estado:</Text>
@@ -371,6 +366,7 @@ export function PaymentDetailPDF({
               <Text style={[styles.tableCell, { flex: 1.5 }]}>Estudio</Text>
               <Text style={[styles.tableCell, { flex: 1.5 }]}>Disciplina</Text>
               <Text style={styles.tableCell}>Reservas</Text>
+              <Text style={styles.tableCell}>Monto</Text>
             </View>
             {instructorClasses
               .slice(0, 50)
@@ -378,19 +374,25 @@ export function PaymentDetailPDF({
                 const discipline = disciplines.find(
                   (d) => d.id === clase.disciplineId
                 );
+                const classCalculation = (
+                  payment.details as {
+                    classCalculations?: Array<{
+                      classId: string;
+                      calculatedAmount: number;
+                    }>;
+                  }
+                )?.classCalculations?.find((c) => c.classId === clase.id);
+                const monto = classCalculation?.calculatedAmount || 0;
                 return (
                   <View
                     key={`class-${clase.id}-${index}`}
                     style={styles.tableRow}
                   >
                     <Text style={[styles.tableCell, { flex: 1.5 }]}>
-                      {formatDate(clase.date.toISOString())}
+                      {formatDateInLima(clase.date)}
                     </Text>
                     <Text style={styles.tableCell}>
-                      {new Date(clase.date).toLocaleTimeString("es-PE", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatTime(clase.date, 5)}
                     </Text>
                     <Text style={[styles.tableCell, { flex: 1.5 }]}>
                       {clase.studio}
@@ -400,6 +402,9 @@ export function PaymentDetailPDF({
                     </Text>
                     <Text style={styles.tableCell}>
                       {clase.totalReservations}/{clase.spots}
+                    </Text>
+                    <Text style={styles.tableCell}>
+                      {monto > 0 ? formatCurrency(monto) : "-"}
                     </Text>
                   </View>
                 );

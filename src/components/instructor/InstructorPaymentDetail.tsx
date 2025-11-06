@@ -37,14 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useInstructorAuth } from "@/contexts/InstructorAuthContext";
-import {
-  Award,
-  Calendar,
-  ChevronDown,
-  Download,
-  FileText,
-  Printer,
-} from "lucide-react";
+import { Award, Calendar, ChevronDown, Download, FileText } from "lucide-react";
 
 // Helper functions to convert API types to regular types
 const convertInstructorFromAPI = (
@@ -232,10 +225,6 @@ export default function InstructorPaymentDetailPage() {
     );
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat("es-PE", {
       style: "currency",
@@ -366,13 +355,6 @@ export default function InstructorPaymentDetailPage() {
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Exportar a PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={handlePrint}
-              >
-                <Printer className="mr-2 h-4 w-4" />
-                Imprimir
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

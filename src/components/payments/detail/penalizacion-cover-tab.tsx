@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 // components/penalizacion-cover-tab.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDateInLima } from "@/lib/date-utils";
 import type {
   BrandingWithRelations,
   ClassWithRelations,
@@ -570,9 +571,7 @@ export function PenalizacionesCoversTab({
                             </span>
                           </div>
                           <div className="mt-1 space-y-1">
-                            <div>
-                              Fecha: {new Date(clase.date).toLocaleDateString()}
-                            </div>
+                            <div>Fecha: {formatDateInLima(clase.date)}</div>
                             <div>Disciplina: {clase.discipline?.name}</div>
                             <div>Instructores: {clase.vsNum}</div>
                           </div>

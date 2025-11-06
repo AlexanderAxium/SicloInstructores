@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { CATEGORIES_CONFIG, shouldShowVisualCategory } from "@/lib/config";
+import { formatDateInLima } from "@/lib/date-utils";
 import {
   formatMetricValue,
   getCategoryTranslation,
@@ -164,10 +165,6 @@ export function DetailedInstructorLogs({
       currency: "PEN",
       minimumFractionDigits: 2,
     }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-PE");
   };
 
   return (
@@ -630,7 +627,7 @@ export function DetailedInstructorLogs({
                                       <div className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4 text-muted-foreground" />
                                         <span className="font-medium">
-                                          {formatDate(classItem.date)}
+                                          {formatDateInLima(classItem.date)}
                                         </span>
                                         <span className="text-sm text-muted-foreground">
                                           {classItem.hour}

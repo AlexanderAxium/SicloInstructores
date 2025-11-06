@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { isNonPrimeHour } from "@/lib/config";
+import { formatDateInLima, formatTime } from "@/lib/date-utils";
 import type { Class, Discipline } from "@/types";
 import {
   AlertTriangle,
@@ -175,31 +176,10 @@ export function ClassesTab({
     setCurrentPage(1);
   };
 
-  const obtenerHora = useCallback((fecha: string | Date): string => {
-    try {
-      const dateObj = new Date(fecha);
-      if (Number.isNaN(dateObj.getTime())) {
-        return "00:00";
-      }
-
-      return dateObj.toLocaleTimeString("es-PE", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "America/Lima",
-      });
-    } catch (_error) {
-      return "00:00";
-    }
+  const esClaseHorarioNoPrime = useCallback((clase: Class): boolean => {
+    const hora = formatTime(clase.date, 5);
+    return isNonPrimeHour(clase.studio || "", hora);
   }, []);
-
-  const esClaseHorarioNoPrime = useCallback(
-    (clase: Class): boolean => {
-      const hora = obtenerHora(clase.date);
-      return isNonPrimeHour(clase.studio || "", hora);
-    },
-    [obtenerHora]
-  );
 
   const estaEnRangoHorario = useCallback(
     (hora: string, inicio: string, fin: string): boolean => {
@@ -284,7 +264,7 @@ export function ClassesTab({
         return false;
       }
 
-      const horaClase = obtenerHora(clase.date);
+      const horaClase = formatTime(clase.date, 5);
       if (!estaEnRangoHorario(horaClase, filters.horaInicio, filters.horaFin)) {
         return false;
       }
@@ -311,7 +291,6 @@ export function ClassesTab({
     disciplines,
     esClaseHorarioNoPrime,
     estaEnRangoHorario,
-    obtenerHora,
   ]);
 
   const sortedClasses = useMemo(() => {
@@ -336,8 +315,8 @@ export function ClassesTab({
           break;
         }
         case "horario": {
-          const horaA = obtenerHora(a.date);
-          const horaB = obtenerHora(b.date);
+          const horaA = formatTime(a.date, 5);
+          const horaB = formatTime(b.date, 5);
           comparison = horaA.localeCompare(horaB);
           break;
         }
@@ -385,7 +364,6 @@ export function ClassesTab({
     sortField,
     sortDirection,
     disciplines,
-    obtenerHora,
     payment?.details?.classCalculations,
   ]);
 
@@ -881,7 +859,7 @@ export function ClassesTab({
                   const reservasCompletas =
                     clase.totalReservations >= clase.spots;
                   const esNoPrime = esClaseHorarioNoPrime(clase);
-                  const hora = obtenerHora(clase.date);
+                  const hora = formatTime(clase.date, 5);
 
                   return (
                     <TableRow
@@ -893,7 +871,7 @@ export function ClassesTab({
                       </TableCell>
                       <TableCell className="font-medium whitespace-nowrap text-foreground">
                         <div>
-                          {new Date(clase.date).toLocaleDateString()}
+                          {formatDateInLima(clase.date)}
                           <div className="text-xs text-muted-foreground mt-1 md:hidden">
                             {hora} • {clase.studio}
                             {esNoPrime && (
