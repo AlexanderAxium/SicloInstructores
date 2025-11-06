@@ -624,7 +624,7 @@ export const instructorRouter = router({
       const instructor = await prisma.instructor.findFirst({
         where: {
           name: {
-            contains: input.name,
+            equals: input.name,
             mode: "insensitive",
           },
         },
