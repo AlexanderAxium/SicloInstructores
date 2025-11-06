@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: template-db
+    container_name: siclo-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: dev

@@ -720,7 +720,7 @@ export function FormulaDialog({
                                       e.target.value
                                     )
                                   }
-                                  className="w-20 mx-auto h-6 text-xs"
+                                  className="w-24 mx-auto h-8 text-xs text-center"
                                   disabled={simpleTariff && index > 0}
                                 />
                               </td>
@@ -765,7 +765,7 @@ export function FormulaDialog({
                                             }
                                           );
                                         }}
-                                        className="w-12 h-6 text-xs"
+                                        className="w-16 h-8 text-xs text-center"
                                       />
                                       <span className="ml-1 text-xs">
                                         reservas
@@ -819,7 +819,7 @@ export function FormulaDialog({
                                             e.target.value
                                           )
                                         }
-                                        className="w-20 mx-auto h-6 text-xs"
+                                        className="w-24 mx-auto h-8 text-xs text-center"
                                         disabled={
                                           simpleTariff && categoryIndex > 0
                                         }
@@ -850,7 +850,7 @@ export function FormulaDialog({
                                       e.target.value
                                     )
                                   }
-                                  className="w-20 mx-auto h-6 text-xs"
+                                  className="w-24 mx-auto h-8 text-xs text-center"
                                   disabled={simpleTariff && index > 0}
                                 />
                               </td>
@@ -874,7 +874,7 @@ export function FormulaDialog({
                                       e.target.value
                                     )
                                   }
-                                  className="w-20 mx-auto h-6 text-xs"
+                                  className="w-24 mx-auto h-8 text-xs text-center"
                                   disabled={simpleTariff && index > 0}
                                 />
                               </td>
@@ -920,7 +920,7 @@ export function FormulaDialog({
                                             e.target.value
                                           )
                                         }
-                                        className="w-16 h-6 text-xs"
+                                        className="w-20 h-8 text-xs text-center"
                                         disabled={simpleTariff && index > 0}
                                       />
                                     ) : (
@@ -953,7 +953,7 @@ export function FormulaDialog({
                                       e.target.value
                                     )
                                   }
-                                  className="w-20 mx-auto h-6 text-xs"
+                                  className="w-24 mx-auto h-8 text-xs text-center"
                                   disabled={simpleTariff && index > 0}
                                 />
                               </td>

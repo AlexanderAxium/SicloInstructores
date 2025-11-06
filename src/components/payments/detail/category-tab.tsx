@@ -180,7 +180,9 @@ export function CategoryTab({
                             variant="outline"
                             className="text-xs bg-primary/10 text-primary border-primary/20"
                           >
-                            {Math.round((metricasReales.totalClasses || 0) / 4)}
+                            {((metricasReales.totalClasses || 0) / 4).toFixed(
+                              2
+                            )}
                           </Badge>
                         </div>
                         <div className="flex justify-between items-center">
