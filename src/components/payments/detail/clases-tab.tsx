@@ -858,6 +858,7 @@ export function ClassesTab({
                   );
                   const reservasCompletas =
                     clase.totalReservations >= clase.spots;
+                  const esNoPrime = esClaseHorarioNoPrime(clase);
                   const hora = formatTime(clase.date, 5);
 
                   return (
@@ -873,6 +874,19 @@ export function ClassesTab({
                           {formatDateInLima(clase.date)}
                           <div className="text-xs text-muted-foreground mt-1 md:hidden">
                             {hora} • {clase.studio}
+                            {esNoPrime && (
+                              <Badge
+                                variant="outline"
+                                className="hidden"
+                                style={{
+                                  borderColor: "#f59e0b",
+                                  color: "#f59e0b",
+                                  backgroundColor: "#f59e0b1a",
+                                }}
+                              >
+                                NP
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -880,6 +894,19 @@ export function ClassesTab({
                         <div className="flex items-center gap-1.5">
                           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                           <span>{hora}</span>
+                          {esNoPrime && (
+                            <Badge
+                              variant="outline"
+                              className="hidden"
+                              style={{
+                                borderColor: "#f59e0b",
+                                color: "#f59e0b",
+                                backgroundColor: "#f59e0b1a",
+                              }}
+                            >
+                              No Prime
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
