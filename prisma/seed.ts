@@ -708,11 +708,11 @@ async function main() {
     createdPeriods.push(createdPeriod);
   }
 
-  // Create disciplines (only 4 as requested)
+  // Create disciplines (updated set)
   console.log("🏃 Creating disciplines...");
   const disciplines = [
     {
-      name: "Síclo",
+      name: "Rueda",
       description: "Clases de ciclismo indoor de alta intensidad",
       color: "#FF5733",
       active: true,
@@ -721,12 +721,6 @@ async function main() {
       name: "Barre",
       description: "Entrenamiento que combina ballet, yoga y pilates",
       color: "#33FF57",
-      active: true,
-    },
-    {
-      name: "Yoga",
-      description: "Práctica que conecta el cuerpo, la respiración y la mente",
-      color: "#3357FF",
       active: true,
     },
     {
@@ -758,7 +752,7 @@ async function main() {
     dobleteos: number;
     ocupacion: number;
     lineamientos: boolean;
-    localesEnLima: number;
+    localesEnBogota: number;
     horariosNoPrime: number;
     participacionEventos: boolean;
     antiguedadMinima?: number;
@@ -771,11 +765,19 @@ async function main() {
     maximo: number;
     tarifas: Array<{ tarifa: number; numeroReservas: number }>;
     cuotaFija: number;
+    reservasIncluidas: number;
     tarifaFullHouse: number;
     ajustePorDobleteo: number;
     minimoGarantizado: number;
     retencionPorcentaje: number;
   }
+
+  const buildPaymentParameters = (params: SeedPaymentParameter) => ({
+    INSTRUCTOR: { ...params },
+    JUNIOR_AMBASSADOR: { ...params },
+    AMBASSADOR: { ...params },
+    SENIOR_AMBASSADOR: { ...params },
+  });
 
   const formulasByDiscipline: Record<
     string,
@@ -784,14 +786,14 @@ async function main() {
       paymentParameters: Record<string, SeedPaymentParameter>;
     }
   > = {
-    Síclo: {
+    Rueda: {
       categoryRequirements: {
         INSTRUCTOR: {
           clases: 0,
           dobleteos: 0,
           ocupacion: 0,
           lineamientos: true,
-          localesEnLima: 1,
+          localesEnBogota: 1,
           horariosNoPrime: 0,
           participacionEventos: false,
         },
@@ -800,7 +802,7 @@ async function main() {
           dobleteos: 0,
           ocupacion: 40,
           lineamientos: true,
-          localesEnLima: 2,
+          localesEnBogota: 2,
           horariosNoPrime: 0,
           participacionEventos: false,
         },
@@ -809,7 +811,7 @@ async function main() {
           dobleteos: 0,
           ocupacion: 60,
           lineamientos: true,
-          localesEnLima: 3,
+          localesEnBogota: 3,
           horariosNoPrime: 0,
           participacionEventos: true,
         },
@@ -818,69 +820,26 @@ async function main() {
           dobleteos: 10,
           ocupacion: 80,
           lineamientos: true,
-          localesEnLima: 4,
+          localesEnBogota: 4,
           horariosNoPrime: 10,
           participacionEventos: true,
         },
       },
-      paymentParameters: {
-        INSTRUCTOR: {
-          bono: 0,
-          maximo: 450,
-          tarifas: [
-            { tarifa: 3.25, numeroReservas: 19 },
-            { tarifa: 4.25, numeroReservas: 49 },
-            { tarifa: 5.25, numeroReservas: 59 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 5.25,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 0,
-          retencionPorcentaje: 8,
-        },
-        JUNIOR_AMBASSADOR: {
-          bono: 0,
-          maximo: 450,
-          tarifas: [
-            { tarifa: 3.5, numeroReservas: 19 },
-            { tarifa: 4.5, numeroReservas: 49 },
-            { tarifa: 5.5, numeroReservas: 59 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 5.5,
-          ajustePorDobleteo: 0.25,
-          minimoGarantizado: 60,
-          retencionPorcentaje: 8,
-        },
-        AMBASSADOR: {
-          bono: 0,
-          maximo: 450,
-          tarifas: [
-            { tarifa: 4, numeroReservas: 19 },
-            { tarifa: 5, numeroReservas: 49 },
-            { tarifa: 6, numeroReservas: 59 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 6,
-          ajustePorDobleteo: 0.5,
-          minimoGarantizado: 80,
-          retencionPorcentaje: 8,
-        },
-        SENIOR_AMBASSADOR: {
-          bono: 0.5,
-          maximo: 450,
-          tarifas: [
-            { tarifa: 4, numeroReservas: 19 },
-            { tarifa: 5, numeroReservas: 49 },
-            { tarifa: 6, numeroReservas: 59 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 6,
-          ajustePorDobleteo: 1,
-          minimoGarantizado: 100,
-          retencionPorcentaje: 8,
-        },
-      },
+      paymentParameters: buildPaymentParameters({
+        bono: 0,
+        maximo: 200000,
+        tarifas: [
+          { tarifa: 3000, numeroReservas: 19 },
+          { tarifa: 4000, numeroReservas: 34 },
+          { tarifa: 5000, numeroReservas: 40 },
+        ],
+        cuotaFija: 75_000,
+        reservasIncluidas: 10,
+        tarifaFullHouse: 5000,
+        ajustePorDobleteo: 0,
+        minimoGarantizado: 75_000,
+        retencionPorcentaje: 8,
+      }),
     },
     Barre: {
       categoryRequirements: {
@@ -889,7 +848,7 @@ async function main() {
           dobleteos: 0,
           ocupacion: 0,
           lineamientos: true,
-          localesEnLima: 1,
+          localesEnBogota: 1,
           horariosNoPrime: 0,
           participacionEventos: false,
         },
@@ -898,7 +857,7 @@ async function main() {
           dobleteos: 1,
           ocupacion: 40,
           lineamientos: true,
-          localesEnLima: 2,
+          localesEnBogota: 2,
           horariosNoPrime: 1,
           participacionEventos: false,
         },
@@ -907,7 +866,7 @@ async function main() {
           dobleteos: 2,
           ocupacion: 60,
           lineamientos: true,
-          localesEnLima: 3,
+          localesEnBogota: 3,
           horariosNoPrime: 2,
           participacionEventos: true,
         },
@@ -916,147 +875,25 @@ async function main() {
           dobleteos: 3,
           ocupacion: 80,
           lineamientos: true,
-          localesEnLima: 4,
+          localesEnBogota: 4,
           horariosNoPrime: 3,
           participacionEventos: true,
         },
       },
-      paymentParameters: {
-        INSTRUCTOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 8 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-        JUNIOR_AMBASSADOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 8 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-        AMBASSADOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 8 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-        SENIOR_AMBASSADOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 8 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-      },
-    },
-    Yoga: {
-      categoryRequirements: {
-        INSTRUCTOR: {
-          clases: 0,
-          dobleteos: 0,
-          ocupacion: 0,
-          lineamientos: true,
-          localesEnLima: 1,
-          horariosNoPrime: 0,
-          participacionEventos: false,
-        },
-        EMBAJADOR_JUNIOR: {
-          clases: 4,
-          dobleteos: 1,
-          ocupacion: 40,
-          lineamientos: true,
-          localesEnLima: 2,
-          horariosNoPrime: 1,
-          participacionEventos: false,
-        },
-        EMBAJADOR: {
-          clases: 6,
-          dobleteos: 2,
-          ocupacion: 60,
-          lineamientos: true,
-          localesEnLima: 3,
-          horariosNoPrime: 2,
-          participacionEventos: true,
-        },
-        EMBAJADOR_SENIOR: {
-          clases: 9,
-          dobleteos: 3,
-          ocupacion: 80,
-          lineamientos: true,
-          localesEnLima: 4,
-          horariosNoPrime: 3,
-          participacionEventos: true,
-        },
-      },
-      paymentParameters: {
-        INSTRUCTOR: {
-          bono: 0,
-          maximo: 256,
-          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
-          cuotaFija: 40,
-          tarifaFullHouse: 8,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 0,
-          retencionPorcentaje: 8,
-        },
-        JUNIOR_AMBASSADOR: {
-          bono: 0,
-          maximo: 256,
-          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
-          cuotaFija: 40,
-          tarifaFullHouse: 8,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 0,
-          retencionPorcentaje: 8,
-        },
-        AMBASSADOR: {
-          bono: 0,
-          maximo: 256,
-          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
-          cuotaFija: 40,
-          tarifaFullHouse: 8,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 0,
-          retencionPorcentaje: 8,
-        },
-        SENIOR_AMBASSADOR: {
-          bono: 0,
-          maximo: 256,
-          tarifas: [{ tarifa: 8, numeroReservas: 50 }],
-          cuotaFija: 40,
-          tarifaFullHouse: 8,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 0,
-          retencionPorcentaje: 8,
-        },
-      },
+      paymentParameters: buildPaymentParameters({
+        bono: 0,
+        maximo: 140000,
+        tarifas: [
+          { tarifa: 4000, numeroReservas: 22 },
+          { tarifa: 5000, numeroReservas: 30 },
+        ],
+        cuotaFija: 75_000,
+        reservasIncluidas: 10,
+        tarifaFullHouse: 5000,
+        ajustePorDobleteo: 0,
+        minimoGarantizado: 75_000,
+        retencionPorcentaje: 8,
+      }),
     },
     Ejercito: {
       categoryRequirements: {
@@ -1065,7 +902,7 @@ async function main() {
           dobleteos: 0,
           ocupacion: 0,
           lineamientos: true,
-          localesEnLima: 1,
+          localesEnBogota: 1,
           horariosNoPrime: 0,
           participacionEventos: false,
         },
@@ -1074,7 +911,7 @@ async function main() {
           dobleteos: 1,
           ocupacion: 40,
           lineamientos: true,
-          localesEnLima: 2,
+          localesEnBogota: 2,
           horariosNoPrime: 1,
           participacionEventos: false,
         },
@@ -1083,7 +920,7 @@ async function main() {
           dobleteos: 2,
           ocupacion: 60,
           lineamientos: true,
-          localesEnLima: 3,
+          localesEnBogota: 3,
           horariosNoPrime: 2,
           participacionEventos: true,
         },
@@ -1092,65 +929,27 @@ async function main() {
           dobleteos: 3,
           ocupacion: 80,
           lineamientos: true,
-          localesEnLima: 4,
+          localesEnBogota: 4,
           horariosNoPrime: 3,
           participacionEventos: true,
         },
       },
-      paymentParameters: {
-        INSTRUCTOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 9 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-        JUNIOR_AMBASSADOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 9 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-        AMBASSADOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 9 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-        SENIOR_AMBASSADOR: {
-          bono: 0,
-          maximo: 300,
-          tarifas: [
-            { tarifa: 0, numeroReservas: 9 },
-            { tarifa: 6, numeroReservas: 49 },
-          ],
-          cuotaFija: 0,
-          tarifaFullHouse: 7,
-          ajustePorDobleteo: 0,
-          minimoGarantizado: 50,
-          retencionPorcentaje: 8,
-        },
-      },
+      paymentParameters: buildPaymentParameters({
+        bono: 0,
+        maximo: 133000,
+        tarifas: [
+          { tarifa: 5000, numeroReservas: 15 },
+          { tarifa: 7000, numeroReservas: 16 },
+          { tarifa: 5000, numeroReservas: 18 },
+          { tarifa: 7000, numeroReservas: 19 },
+        ],
+        cuotaFija: 70_000,
+        reservasIncluidas: 10,
+        tarifaFullHouse: 7000,
+        ajustePorDobleteo: 0,
+        minimoGarantizado: 70_000,
+        retencionPorcentaje: 8,
+      }),
     },
   };
 
@@ -1189,7 +988,7 @@ async function main() {
 - Roles: 5 per tenant (super_admin, admin, moderator, user, viewer)
 - Permissions: ${createdPermissions.length} permissions (${createdPermissions.length / 2} per tenant)
 - Periods: ${createdPeriods.length} periods for 2025
-- Disciplines: ${createdDisciplines.length} fitness disciplines (Síclo, Barre, Yoga, Ejercito)
+- Disciplines: ${createdDisciplines.length} fitness disciplines (Rueda, Barre, Ejercito)
 - Formulas: ${createdDisciplines.length * createdPeriods.length} formulas with complete payment structure
 
 🔐 Login Credentials:
@@ -1207,7 +1006,7 @@ async function main() {
 - User: user@democorp.com / DemoUser123!@#
 
 🏋️ Basic Data Created:
-- Disciplines: Síclo, Barre, Yoga, Ejercito (4 disciplines total)
+- Disciplines: Rueda, Barre, Ejercito (3 disciplines total)
 - Periods: 13 periods for 2025 (complete year)
 - Formulas: Complete payment structure for periods 10 and 11 with:
   * Category requirements (INSTRUCTOR, EMBAJADOR_JUNIOR, EMBAJADOR, EMBAJADOR_SENIOR)

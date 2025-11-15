@@ -154,7 +154,7 @@ export async function calculateClassPayment(
       calculatedAmount = calculatedAmount / clase.versusNumber;
     }
 
-    const calculationDetail = `${reservations} reservas × S/.${tariff.toFixed(2)} = S/.${calculatedAmount.toFixed(2)} (${tariffType})`;
+    const calculationDetail = `${reservations} reservas × COP ${tariff.toFixed(2)} = COP ${(tariff * reservations).toFixed(2)} (${tariffType})`;
 
     logs.push(
       `💰 PAGO POR CLASE [${clase.id}]: ${discipline.name} - ${new Date(clase.date).toLocaleDateString()}`
@@ -222,33 +222,33 @@ export function calculateAdditionalBonuses(
   logs.push(`⚡ Theme Rides del instructor: ${themeRides.length}`);
   logs.push(`🎓 Workshops del instructor: ${workshops.length}`);
 
-  // Calculate cover bonus (S/.80 per cover with bonus and approved)
+  // Calculate cover bonus (COP 80 per cover with bonus and approved)
   const coversWithBonus = covers.filter(
     (cover) => cover.bonusPayment && cover.justification === "APPROVED"
   );
   const coverBonus = coversWithBonus.length * 80;
   logs.push(
-    `🔄 Covers con bono: ${coversWithBonus.length} x S/.80 = S/.${coverBonus}`
+    `🔄 Covers con bono: ${coversWithBonus.length} x COP 80 = COP ${coverBonus}`
   );
 
-  // Calculate branding bonus (suma de números × S/.5, igual que sistema antiguo)
+  // Calculate branding bonus (suma de números × COP 5, igual que sistema antiguo)
   const totalBrandings = brandings.reduce(
     (total, branding) => total + (branding.number || 0),
     0
   );
   const brandingBonus = totalBrandings * 5;
   logs.push(
-    `🏆 Brandeos: ${totalBrandings} (suma de números) x S/.5 = S/.${brandingBonus}`
+    `🏆 Brandeos: ${totalBrandings} (suma de números) x COP 5 = COP ${brandingBonus}`
   );
 
-  // Calculate theme ride bonus (suma de números × S/.30, igual que sistema antiguo)
+  // Calculate theme ride bonus (suma de números × COP 30, igual que sistema antiguo)
   const totalThemeRides = themeRides.reduce(
     (total, themeRide) => total + (themeRide.number || 0),
     0
   );
   const themeRideBonus = totalThemeRides * 30;
   logs.push(
-    `⚡ Theme Rides: ${totalThemeRides} (suma de números) x S/.30 = S/.${themeRideBonus}`
+    `⚡ Theme Rides: ${totalThemeRides} (suma de números) x COP 30 = COP ${themeRideBonus}`
   );
 
   // Calculate workshop bonus (variable amount)
@@ -256,7 +256,7 @@ export function calculateAdditionalBonuses(
     (total: number, workshop) => total + workshop.payment,
     0
   );
-  logs.push(`🎓 Workshops: S/.${workshopBonus.toFixed(2)}`);
+  logs.push(`🎓 Workshops: COP ${workshopBonus.toFixed(2)}`);
 
   // Versus bonus is calculated per class, not per instructor
   const versusBonus = 0;
@@ -301,7 +301,7 @@ export function calculatePenalties(
     `⚠️ Penalizaciones: ${totalPoints} puntos totales, ${excessPoints} excedentes`
   );
   logs.push(
-    `💰 Descuento por penalizaciones: ${penaltyPercentage}% = S/.${penaltyAmount.toFixed(2)}`
+    `💰 Descuento por penalizaciones: ${penaltyPercentage}% = COP ${penaltyAmount.toFixed(2)}`
   );
 
   return penaltyAmount;
@@ -460,13 +460,13 @@ export async function calculateInstructorPaymentData(
 
   // Calculate retention (8% of base amount)
   const retentionAmount = totalAmount * 0.08;
-  logs.push(`💰 Retención (8%): S/.${retentionAmount.toFixed(2)}`);
+  logs.push(`💰 Retención (8%): COP ${retentionAmount.toFixed(2)}`);
 
   // Calculate final payment
   const finalPayment =
     totalAmount + bonuses.total - penaltyAmount - retentionAmount;
 
-  logs.push(`💰 Pago final: S/.${finalPayment.toFixed(2)}`);
+  logs.push(`💰 Pago final: COP ${finalPayment.toFixed(2)}`);
 
   return {
     baseAmount: totalAmount,

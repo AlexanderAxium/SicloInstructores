@@ -60,9 +60,9 @@ export function InstructorTabs() {
   }
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("es-PE", {
+    return new Intl.NumberFormat("es-CO", {
       style: "currency",
-      currency: "PEN",
+      currency: "COP",
       minimumFractionDigits: 2,
     }).format(amount);
   };
@@ -86,7 +86,7 @@ export function InstructorTabs() {
       width: "120px",
       render: (_, record) => (
         <span className="text-sm font-medium">
-          S/ {record.amount.toFixed(2)}
+          {formatCurrency(record.amount)}
         </span>
       ),
     },
@@ -96,7 +96,7 @@ export function InstructorTabs() {
       width: "120px",
       render: (_, record) => (
         <span className="text-sm font-semibold text-green-600">
-          S/ {record.finalPayment.toFixed(2)}
+          {formatCurrency(record.finalPayment)}
         </span>
       ),
     },
@@ -129,9 +129,9 @@ export function InstructorTabs() {
       width: "120px",
       render: (_, record) => (
         <div className="text-sm">
-          <div className="font-medium">S/ {(record.bonus || 0).toFixed(2)}</div>
+          <div className="font-medium">{formatCurrency(record.bonus || 0)}</div>
           <div className="text-xs text-muted-foreground">
-            VS: S/ {record.versusBonus.toFixed(2)}
+            VS: {formatCurrency(record.versusBonus)}
           </div>
         </div>
       ),

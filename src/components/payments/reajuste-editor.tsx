@@ -75,7 +75,7 @@ export function ReajusteEditor({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="FIJO" className="text-xs">
-              S/
+              COP
             </SelectItem>
             <SelectItem value="PORCENTAJE" className="text-xs">
               %

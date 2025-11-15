@@ -215,7 +215,7 @@ export function CalculateFormulaDialog({
               _tipoTarifa = `Hasta ${tarifa.numeroReservas} reservas`;
               tarifaEncontrada = true;
               detalles.push(
-                `Tarifa aplicada: ${tarifa.numeroReservas} reservas × S/.${tarifa.tarifa}`
+                `Tarifa aplicada: ${tarifa.numeroReservas} reservas × COP ${tarifa.tarifa}`
               );
               break;
             }
@@ -226,22 +226,22 @@ export function CalculateFormulaDialog({
             tarifaAplicada = parametros.tarifaFullHouse || 0;
             _tipoTarifa = "Full House (por defecto)";
             detalles.push(
-              `Tarifa Full House aplicada por defecto: S/.${tarifaAplicada}`
+              `Tarifa Full House aplicada por defecto: COP ${tarifaAplicada}`
             );
           }
         }
       }
 
-      // Calculate base amount: tariff * reservations
+      // Calculate payment: tariff × reservations
       let montoPago = tarifaAplicada * reservaciones;
       detalles.push(
-        `\n${reservaciones} reservas × S/.${tarifaAplicada.toFixed(2)} = S/.${(reservaciones * tarifaAplicada).toFixed(2)}`
+        `${reservaciones} reservas × COP ${tarifaAplicada.toFixed(2)} = COP ${(reservaciones * tarifaAplicada).toFixed(2)}`
       );
 
       // Apply fixed quota if it exists
       if (parametros.cuotaFija && parametros.cuotaFija > 0) {
         montoPago += parametros.cuotaFija;
-        detalles.push(`Cuota fija: +S/.${parametros.cuotaFija.toFixed(2)}`);
+        detalles.push(`Cuota fija: +COP ${parametros.cuotaFija.toFixed(2)}`);
       }
 
       // Check if minimum guaranteed applies
@@ -252,19 +252,19 @@ export function CalculateFormulaDialog({
       ) {
         _minimoAplicado = true;
         detalles.push(
-          `\nAplicando mínimo garantizado: S/.${montoPago.toFixed(2)} < S/.${parametros.minimoGarantizado.toFixed(2)}`
+          `\nAplicando mínimo garantizado: COP ${montoPago.toFixed(2)} < COP ${parametros.minimoGarantizado.toFixed(2)}`
         );
         montoPago = parametros.minimoGarantizado;
-        detalles.push(`Monto con mínimo: S/.${montoPago.toFixed(2)}`);
+        detalles.push(`Monto con mínimo: COP ${montoPago.toFixed(2)}`);
       }
 
       // Check if maximum applies
       if (montoPago > parametros.maximo && parametros.maximo > 0) {
         detalles.push(
-          `\nAplicando máximo: S/.${montoPago.toFixed(2)} > S/.${parametros.maximo.toFixed(2)}`
+          `\nAplicando máximo: COP ${montoPago.toFixed(2)} > COP ${parametros.maximo.toFixed(2)}`
         );
         montoPago = parametros.maximo;
-        detalles.push(`Monto final: S/.${montoPago.toFixed(2)}`);
+        detalles.push(`Monto final: COP ${montoPago.toFixed(2)}`);
       }
 
       setCalculatedPayment(montoPago);
@@ -478,7 +478,7 @@ export function CalculateFormulaDialog({
                 Resultado del Cálculo:
               </p>
               <p className="text-2xl font-bold text-foreground mb-3">
-                S/.{calculatedPayment.toFixed(2)}
+                COP {calculatedPayment.toFixed(2)}
               </p>
               {calculationDetails && (
                 <div className="text-sm text-muted-foreground whitespace-pre-line bg-muted/50 p-3 rounded border border-border">

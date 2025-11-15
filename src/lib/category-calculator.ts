@@ -21,7 +21,7 @@ export interface DisciplineMetrics {
 export interface CategoryRequirements {
   ocupacion: number;
   clases: number;
-  localesEnLima: number;
+  localesEnBogota: number;
   dobleteos: number;
   horariosNoPrime: number;
   participacionEventos: boolean;
@@ -150,14 +150,14 @@ async function calculateNonPrimeHours(
   classes: Class[],
   disciplineId: string
 ): Promise<number> {
-  // Get discipline to check if it's Síclo
+  // Get discipline to check if it's Rueda
   const discipline = await prisma.discipline.findUnique({
     where: { id: disciplineId },
     select: { name: true },
   });
 
-  // Only calculate for Síclo
-  if (discipline?.name !== "Síclo") return 0;
+  // Only calculate for Rueda
+  if (discipline?.name !== "Rueda") return 0;
 
   let nonPrimeCount = 0;
 
@@ -187,7 +187,7 @@ export function determineCategory(
   if (
     metrics.averageOccupancy >= requirements.ocupacion &&
     metrics.totalClasses / 4 >= requirements.clases &&
-    metrics.totalLocations >= requirements.localesEnLima &&
+    metrics.totalLocations >= requirements.localesEnBogota &&
     metrics.totalDoubleShifts >= requirements.dobleteos &&
     metrics.nonPrimeHours >= requirements.horariosNoPrime &&
     (metrics.eventParticipation || !requirements.participacionEventos) &&
@@ -209,7 +209,7 @@ export function determineCategory(
     if (
       metrics.averageOccupancy >= requirements.ocupacion * 0.8 &&
       metrics.totalClasses / 4 >= requirements.clases * 0.8 &&
-      metrics.totalLocations >= requirements.localesEnLima * 0.8 &&
+      metrics.totalLocations >= requirements.localesEnBogota * 0.8 &&
       metrics.totalDoubleShifts >= requirements.dobleteos * 0.8 &&
       metrics.nonPrimeHours >= requirements.horariosNoPrime * 0.8 &&
       (metrics.eventParticipation || !requirements.participacionEventos) &&
@@ -323,14 +323,15 @@ export async function getOrCalculateCategory(
     const meetsRequirements =
       metrics.averageOccupancy >= catRequirements.ocupacion &&
       classesPerWeek >= catRequirements.clases &&
-      metrics.totalLocations >= catRequirements.localesEnLima &&
+      metrics.totalLocations >= catRequirements.localesEnBogota &&
+      metrics.totalLocations >= catRequirements.localesEnBogota &&
       metrics.totalDoubleShifts >= catRequirements.dobleteos &&
       metrics.nonPrimeHours >= catRequirements.horariosNoPrime &&
       (!catRequirements.participacionEventos || metrics.eventParticipation) &&
       (!catRequirements.lineamientos || metrics.meetsGuidelines);
 
     logs.push(
-      `📊 Evaluando ${cat}: cumple=${meetsRequirements} (ocupación: ${metrics.averageOccupancy}% vs ${catRequirements.ocupacion}%, clases por semana: ${classesPerWeek.toFixed(1)} vs ${catRequirements.clases}, locations: ${metrics.totalLocations} vs ${catRequirements.localesEnLima}, eventos: ${metrics.eventParticipation} vs ${catRequirements.participacionEventos})`
+      `📊 Evaluando ${cat}: cumple=${meetsRequirements} (ocupación: ${metrics.averageOccupancy}% vs ${catRequirements.ocupacion}%, clases por semana: ${classesPerWeek.toFixed(1)} vs ${catRequirements.clases}, locations: ${metrics.totalLocations} vs ${catRequirements.localesEnBogota}, eventos: ${metrics.eventParticipation} vs ${catRequirements.participacionEventos})`
     );
 
     if (meetsRequirements) {
@@ -458,20 +459,20 @@ export function evaluateCategoryCriteria(
     });
   }
 
-  if (metrics.totalLocations >= catRequirements.localesEnLima) {
+  if (metrics.totalLocations >= catRequirements.localesEnBogota) {
     meets.push({
-      key: "localesEnLima",
-      label: "Locales en Lima",
+      key: "localesEnBogota",
+      label: "Locales en Bogotá",
       current: metrics.totalLocations,
-      required: catRequirements.localesEnLima,
+      required: catRequirements.localesEnBogota,
       meets: true,
     });
   } else {
     failed.push({
-      key: "localesEnLima",
-      label: "Locales en Lima",
+      key: "localesEnBogota",
+      label: "Locales en Bogotá",
       current: metrics.totalLocations,
-      required: catRequirements.localesEnLima,
+      required: catRequirements.localesEnBogota,
       meets: false,
     });
   }
@@ -616,11 +617,11 @@ export function evaluateAllCategories(
         meets: classesPerWeek >= requiredClassesPerWeek,
       },
       {
-        key: "localesEnLima",
-        label: "Locales en Lima",
+        key: "localesEnBogota",
+        label: "Locales en Bogotá",
         current: metrics.totalLocations,
-        required: catRequirements.localesEnLima,
-        meets: metrics.totalLocations >= catRequirements.localesEnLima,
+        required: catRequirements.localesEnBogota,
+        meets: metrics.totalLocations >= catRequirements.localesEnBogota,
       },
       {
         key: "dobleteos",

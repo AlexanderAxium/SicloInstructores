@@ -5,7 +5,7 @@ import type { InstructorCategoryType } from "./instructor";
 export interface CategoryRequirements {
   occupancy: number;
   classes: number;
-  locationsInLima: number;
+  locationsInBogota: number;
   doubleShifts: number;
   nonPrimeHours: number;
   eventParticipation: boolean;
@@ -28,6 +28,7 @@ export interface PaymentParameters {
   bonus: number;
   retentionPercentage?: number;
   adjustmentForDoubleShift?: number;
+  includedReservations?: number;
 }
 
 // Penalty discount rules interface
@@ -90,7 +91,7 @@ export interface FormulasListResponse {
 export interface CategoryRequirementsES {
   ocupacion: number;
   clases: number;
-  localesEnLima: number;
+  localesEnBogota: number;
   dobleteos: number;
   horariosNoPrime: number;
   participacionEventos: boolean;

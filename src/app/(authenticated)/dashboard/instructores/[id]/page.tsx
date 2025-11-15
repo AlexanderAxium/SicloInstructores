@@ -131,6 +131,13 @@ export default function InstructorDetailPage() {
   // Mutación para actualizar instructor
   const updateInstructorMutation = trpc.instructor.update.useMutation();
 
+  const formatCurrency = (amount: number): string =>
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+    }).format(amount);
+
   // Función para manejar el envío del formulario
   const handleSubmit = async () => {
     if (!instructor) return;
@@ -194,7 +201,7 @@ export default function InstructorDetailPage() {
       width: "120px",
       render: (_, record) => (
         <span className="text-sm">
-          {new Date(record.date).toLocaleDateString("es-PE")}
+          {new Date(record.date).toLocaleDateString("es-CO")}
         </span>
       ),
     },
@@ -269,7 +276,7 @@ export default function InstructorDetailPage() {
       width: "120px",
       render: (_, record) => (
         <span className="text-sm font-medium">
-          S/ {record.amount.toFixed(2)}
+          {formatCurrency(record.amount)}
         </span>
       ),
     },
@@ -279,7 +286,7 @@ export default function InstructorDetailPage() {
       width: "120px",
       render: (_, record) => (
         <span className="text-sm font-semibold text-green-600">
-          S/ {record.finalPayment.toFixed(2)}
+          {formatCurrency(record.finalPayment)}
         </span>
       ),
     },
@@ -312,9 +319,9 @@ export default function InstructorDetailPage() {
       width: "120px",
       render: (_, record) => (
         <div className="text-sm">
-          <div className="font-medium">S/ {(record.bonus || 0).toFixed(2)}</div>
+          <div className="font-medium">{formatCurrency(record.bonus || 0)}</div>
           <div className="text-xs text-muted-foreground">
-            VS: S/ {record.versusBonus.toFixed(2)}
+            VS: {formatCurrency(record.versusBonus)}
           </div>
         </div>
       ),

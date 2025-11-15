@@ -1,9 +1,9 @@
 /**
- * Utilidades para manejo de fechas en zona horaria de Lima (GMT-5)
- * Las fechas en la base de datos están almacenadas como UTC pero representan hora local de Lima
+ * Utilidades para manejo de fechas en zona horaria de Bogotá (GMT-5)
+ * Las fechas en la base de datos están almacenadas como UTC pero representan hora local de Bogotá
  */
 
-const LIMA_TIMEZONE = "America/Lima";
+const BOGOTA_TIMEZONE = "America/Bogota";
 
 /**
  * Suma o resta horas a una fecha
@@ -48,11 +48,11 @@ export function addDays(date: string | Date, days: number): Date {
 /**
  * Convierte una fecha a una zona horaria específica
  * @param date - Fecha a convertir
- * @param timezone - Zona horaria IANA (ej: "America/Lima", "America/New_York")
+ * @param timezone - Zona horaria IANA (ej: "America/Bogota", "America/New_York")
  * @returns Fecha formateada en la zona horaria especificada (DD/MM/YYYY HH:MM)
  *
  * @example
- * convertToTimezone(new Date(), "America/Lima") // "06/11/2024 13:00"
+ * convertToTimezone(new Date(), "America/Bogota") // "06/11/2024 13:00"
  * convertToTimezone(new Date(), "America/New_York") // "06/11/2024 14:00"
  */
 export function convertToTimezone(
@@ -66,7 +66,7 @@ export function convertToTimezone(
       return "";
     }
 
-    return dateObj.toLocaleString("es-PE", {
+    return dateObj.toLocaleString("es-CO", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -81,9 +81,9 @@ export function convertToTimezone(
 }
 
 /**
- * Formatea una fecha a hora local de Lima (HH:MM)
+ * Formatea una fecha a hora local de Bogotá (HH:MM)
  */
-export function formatTimeInLima(date: string | Date): string {
+export function formatTimeInBogota(date: string | Date): string {
   try {
     const dateObj = typeof date === "string" ? new Date(date) : date;
 
@@ -91,11 +91,11 @@ export function formatTimeInLima(date: string | Date): string {
       return "00:00";
     }
 
-    return dateObj.toLocaleTimeString("es-PE", {
+    return dateObj.toLocaleTimeString("es-CO", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-      timeZone: LIMA_TIMEZONE,
+      timeZone: BOGOTA_TIMEZONE,
     });
   } catch (_error) {
     return "00:00";
@@ -103,9 +103,9 @@ export function formatTimeInLima(date: string | Date): string {
 }
 
 /**
- * Formatea una fecha a formato corto en Lima (DD/MM/YYYY)
+ * Formatea una fecha a formato corto en Bogotá (DD/MM/YYYY)
  */
-export function formatDateInLima(date: string | Date): string {
+export function formatDateInBogota(date: string | Date): string {
   try {
     const dateObj = typeof date === "string" ? new Date(date) : date;
 
@@ -113,11 +113,11 @@ export function formatDateInLima(date: string | Date): string {
       return "";
     }
 
-    return dateObj.toLocaleDateString("es-PE", {
+    return dateObj.toLocaleDateString("es-CO", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-      timeZone: LIMA_TIMEZONE,
+      timeZone: BOGOTA_TIMEZONE,
     });
   } catch (_error) {
     return "";
@@ -125,9 +125,9 @@ export function formatDateInLima(date: string | Date): string {
 }
 
 /**
- * Formatea una fecha completa en Lima (DD/MM/YYYY HH:MM)
+ * Formatea una fecha completa en Bogotá (DD/MM/YYYY HH:MM)
  */
-export function formatDateTimeInLima(date: string | Date): string {
+export function formatDateTimeInBogota(date: string | Date): string {
   try {
     const dateObj = typeof date === "string" ? new Date(date) : date;
 
@@ -135,14 +135,14 @@ export function formatDateTimeInLima(date: string | Date): string {
       return "";
     }
 
-    return dateObj.toLocaleString("es-PE", {
+    return dateObj.toLocaleString("es-CO", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-      timeZone: LIMA_TIMEZONE,
+      timeZone: BOGOTA_TIMEZONE,
     });
   } catch (_error) {
     return "";
@@ -152,15 +152,15 @@ export function formatDateTimeInLima(date: string | Date): string {
 /**
  * Obtiene la hora en formato HH:MM para validaciones (ej: horarios no prime)
  */
-export function getTimeInLima(date: string | Date): string {
-  return formatTimeInLima(date);
+export function getTimeInBogota(date: string | Date): string {
+  return formatTimeInBogota(date);
 }
 
 /**
  * Formatea solo la hora de una fecha con opción de ajustar horas
  * @param date - Fecha original
  * @param hoursToAdd - Horas a sumar (opcional)
- * @param timezone - Zona horaria (opcional, por defecto Lima)
+ * @param timezone - Zona horaria (opcional, por defecto Bogotá)
  * @returns Hora formateada (HH:MM)
  *
  * @example
@@ -172,7 +172,7 @@ export function getTimeInLima(date: string | Date): string {
 export function formatTime(
   date: string | Date,
   hoursToAdd = 0,
-  timezone: string = LIMA_TIMEZONE
+  timezone: string = BOGOTA_TIMEZONE
 ): string {
   try {
     let dateObj = typeof date === "string" ? new Date(date) : date;
@@ -186,7 +186,7 @@ export function formatTime(
       dateObj = addHours(dateObj, hoursToAdd);
     }
 
-    return dateObj.toLocaleTimeString("es-PE", {
+    return dateObj.toLocaleTimeString("es-CO", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
@@ -201,7 +201,7 @@ export function formatTime(
  * Formatea una fecha con opción de ajustar días
  * @param date - Fecha original
  * @param daysToAdd - Días a sumar (opcional)
- * @param timezone - Zona horaria (opcional, por defecto Lima)
+ * @param timezone - Zona horaria (opcional, por defecto Bogotá)
  * @returns Fecha formateada (DD/MM/YYYY)
  *
  * @example
@@ -212,7 +212,7 @@ export function formatTime(
 export function formatDate(
   date: string | Date,
   daysToAdd = 0,
-  timezone: string = LIMA_TIMEZONE
+  timezone: string = BOGOTA_TIMEZONE
 ): string {
   try {
     let dateObj = typeof date === "string" ? new Date(date) : date;
@@ -226,7 +226,7 @@ export function formatDate(
       dateObj = addDays(dateObj, daysToAdd);
     }
 
-    return dateObj.toLocaleDateString("es-PE", {
+    return dateObj.toLocaleDateString("es-CO", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

@@ -223,8 +223,8 @@ export default function ClasesPage() {
 
 🏃 Disciplina: ${classData.discipline.name}
 👨‍🏫 Instructor: ${classData.instructor.name}
-📅 Fecha: ${new Date(classData.date).toLocaleDateString("es-PE")}
-🕐 Hora: ${new Date(classData.date).toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}
+📅 Fecha: ${new Date(classData.date).toLocaleDateString("es-CO")}
+🕐 Hora: ${new Date(classData.date).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
 📍 Ubicación: ${classData.studio} - ${classData.room}
 🌍 País: ${classData.country}
 🏙️ Ciudad: ${classData.city}
@@ -527,8 +527,8 @@ ${classData.replacementInstructorId ? `🔄 Instructor de Reemplazo: ${classData
     }
 
     const exportData = allClasses.map((clase) => ({
-      Fecha: new Date(clase.date).toLocaleDateString("es-PE"),
-      Hora: new Date(clase.date).toLocaleTimeString("es-PE", {
+      Fecha: new Date(clase.date).toLocaleDateString("es-CO"),
+      Hora: new Date(clase.date).toLocaleTimeString("es-CO", {
         hour: "2-digit",
         minute: "2-digit",
       }),

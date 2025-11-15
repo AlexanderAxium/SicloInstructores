@@ -288,7 +288,7 @@ function WorkshopDialog({
                 name="payment"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pago (S/) *</FormLabel>
+                    <FormLabel>Pago (COP) *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -397,6 +397,13 @@ export default function WorkshopsPage() {
 
   const workshops = workshopsData?.workshops || [];
   const totalWorkshops = workshopsData?.total || 0;
+
+  const formatCurrency = (amount: number): string =>
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+    }).format(amount);
 
   // Obtener utils de tRPC
   const utils = trpc.useUtils();
@@ -528,7 +535,7 @@ export default function WorkshopsPage() {
       width: "120px",
       render: (_, record) => (
         <Badge variant="secondary" className="text-xs">
-          S/ {record.payment.toFixed(2)}
+          {formatCurrency(record.payment)}
         </Badge>
       ),
     },
@@ -621,11 +628,11 @@ export default function WorkshopsPage() {
       Nombre: workshop.name,
       Instructor: workshop.instructor.name,
       Período: `P${workshop.period.number} - ${workshop.period.year}`,
-      Fecha: new Date(workshop.date).toLocaleDateString("es-PE"),
+      Fecha: new Date(workshop.date).toLocaleDateString("es-CO"),
       Pago: workshop.payment.toFixed(2),
       Comentarios: workshop.comments || "",
       "Fecha Creación": new Date(workshop.createdAt).toLocaleDateString(
-        "es-PE"
+        "es-CO"
       ),
     }));
 

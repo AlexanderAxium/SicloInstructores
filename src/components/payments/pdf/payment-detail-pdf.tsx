@@ -1,4 +1,4 @@
-import { formatDateInLima, formatTime } from "@/lib/date-utils";
+import { formatDateInBogota, formatTime } from "@/lib/date-utils";
 import type { Class } from "@/types/classes";
 import type {
   DisciplineFromAPI,
@@ -169,9 +169,12 @@ export function PaymentDetailPDF({
   disciplineStats,
   details,
 }: PaymentDetailPDFProps) {
-  const formatCurrency = (amount: number) => {
-    return `S/ ${amount.toFixed(2)}`;
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+    }).format(amount);
 
   return (
     <Document>
@@ -197,7 +200,7 @@ export function PaymentDetailPDF({
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Fecha de emisión:</Text>
-            <Text style={styles.value}>{formatDateInLima(new Date())}</Text>
+            <Text style={styles.value}>{formatDateInBogota(new Date())}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Estado:</Text>
@@ -343,7 +346,7 @@ export function PaymentDetailPDF({
         <View style={styles.footer}>
           <Text>
             Este documento fue generado automáticamente el{" "}
-            {new Date().toLocaleString("es-PE")}
+            {new Date().toLocaleString("es-CO")}
           </Text>
           <Text>Sistema de Gestión de Instructores - Siclo</Text>
         </View>
@@ -389,7 +392,7 @@ export function PaymentDetailPDF({
                     style={styles.tableRow}
                   >
                     <Text style={[styles.tableCell, { flex: 1.5 }]}>
-                      {formatDateInLima(clase.date)}
+                      {formatDateInBogota(clase.date)}
                     </Text>
                     <Text style={styles.tableCell}>
                       {formatTime(clase.date, 5)}

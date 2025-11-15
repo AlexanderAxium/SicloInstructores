@@ -34,7 +34,7 @@ export default function ClasesDocsPage() {
                     <strong>Fecha y hora:</strong> Cuándo se impartió la clase
                   </li>
                   <li>
-                    <strong>Disciplina:</strong> Tipo de clase (Síclo, Barre,
+                    <strong>Disciplina:</strong> Tipo de clase (Rueda, Barre,
                     Yoga, etc.)
                   </li>
                   <li>
@@ -128,13 +128,13 @@ export default function ClasesDocsPage() {
                   ocupación)
                 </p>
                 <p>• Categoría: AMBASSADOR</p>
-                <p>• Tarifa aplicada: S/. 2.50 por reserva</p>
-                <p>• Cálculo: 45 reservas × S/. 2.50 = S/. 112.50</p>
-                <p>• Si hay cuota fija: + S/. 20.00</p>
+                <p>• Base fija: COP 75,000 (cubre hasta 10 reservas)</p>
+                <p>• Reservas adicionales: 12 → tramo de COP 4,000</p>
+                <p>• Variable: 12 × COP 4,000 = COP 48,000</p>
                 <p>
                   •{" "}
                   <span className="text-slate-900 font-semibold">
-                    Total por esta clase: S/. 132.50
+                    Total por esta clase: COP 123,000
                   </span>
                 </p>
               </div>
@@ -177,8 +177,8 @@ export default function ClasesDocsPage() {
               </p>
               <div className="text-xs text-slate-700 space-y-1 font-mono">
                 <p>• Clase versus con 2 instructores</p>
-                <p>• Pago calculado para la clase: S/. 200.00</p>
-                <p>• Pago por instructor: S/. 200.00 ÷ 2 = S/. 100.00</p>
+                <p>• Pago calculado para la clase: COP 200,000</p>
+                <p>• Pago por instructor: COP 200,000 ÷ 2 = COP 100,000</p>
               </div>
             </div>
           </div>

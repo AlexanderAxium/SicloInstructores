@@ -432,8 +432,8 @@ export const importRouter = router({
                   clase.esInstructorVS && clase.instructoresVS
                     ? clase.instructoresVS.length
                     : null,
-                country: clase.pais || "Perú",
-                city: clase.ciudad || "Lima",
+                country: clase.pais || "Colombia",
+                city: clase.ciudad || "Bogotá",
                 tenantId: ctx.user.tenantId,
               },
             });
@@ -689,8 +689,8 @@ function generateClassTable(
         const vsClass: ClassItem = {
           id: vsId,
           filaOriginal: index + 1,
-          pais: row.País || "Perú",
-          ciudad: row.Ciudad || "Lima",
+          pais: row.País || "Colombia",
+          ciudad: row.Ciudad || "Bogotá",
           instructor: instructor,
           disciplina: row.Disciplina || "",
           estudio: row.Estudio || "",
@@ -751,8 +751,8 @@ function generateClassTable(
     const classItem: ClassItem = {
       id: row.ID_clase || `clase-${index}`,
       filaOriginal: index + 1,
-      pais: row.País || "Perú",
-      ciudad: row.Ciudad || "Lima",
+      pais: row.País || "Colombia",
+      ciudad: row.Ciudad || "Bogotá",
       instructor: row.Instructor || "",
       disciplina: row.Disciplina || "",
       estudio: row.Estudio || "",

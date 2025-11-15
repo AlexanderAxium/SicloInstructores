@@ -110,8 +110,8 @@ export function VersusDialog({
           }
         : {
             id: "",
-            country: "Perú",
-            city: "Lima",
+            country: "Colombia",
+            city: "Bogotá",
             studio: "",
             room: "",
             spots: 0,
@@ -186,8 +186,8 @@ export function VersusDialog({
     } else {
       form.reset({
         id: "",
-        country: "Perú",
-        city: "Lima",
+        country: "Colombia",
+        city: "Bogotá",
         studio: "",
         room: "",
         spots: 0,
@@ -417,7 +417,7 @@ export function VersusDialog({
                     <FormItem>
                       <FormLabel>País *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ej: Perú" {...field} />
+                        <Input placeholder="Ej: Colombia" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -431,7 +431,7 @@ export function VersusDialog({
                     <FormItem>
                       <FormLabel>Ciudad *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ej: Lima" {...field} />
+                        <Input placeholder="Ej: Bogotá" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

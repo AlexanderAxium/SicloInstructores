@@ -1167,7 +1167,7 @@ export const paymentsRouter = router({
             });
 
             instructorLog.status = "success";
-            instructorLog.message = `Pago calculado exitosamente: S/ ${recalculatedFinal.toFixed(2)}`;
+            instructorLog.message = `Pago calculado exitosamente: COP ${recalculatedFinal.toFixed(2)}`;
             instructorLogs.push(instructorLog);
             successCount++;
           } catch (error) {

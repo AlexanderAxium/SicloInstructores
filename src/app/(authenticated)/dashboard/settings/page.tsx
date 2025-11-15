@@ -608,7 +608,7 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         handleInputChange("city", e.target.value)
                       }
-                      placeholder="Lima"
+                      placeholder="Bogotá"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -621,7 +621,7 @@ export default function SettingsPage() {
                       onChange={(e) =>
                         handleInputChange("country", e.target.value)
                       }
-                      placeholder="Perú"
+                      placeholder="Colombia"
                     />
                   </div>
                 </div>

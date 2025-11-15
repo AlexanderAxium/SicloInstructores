@@ -101,8 +101,8 @@ export function ClassDialog({
         }
       : {
           id: "",
-          country: "Perú",
-          city: "Lima",
+          country: "Colombia",
+          city: "Bogotá",
           studio: "",
           room: "",
           spots: 0,
@@ -147,8 +147,8 @@ export function ClassDialog({
     } else {
       form.reset({
         id: "",
-        country: "Perú",
-        city: "Lima",
+        country: "Colombia",
+        city: "Bogotá",
         studio: "",
         room: "",
         spots: 0,
@@ -283,7 +283,7 @@ export function ClassDialog({
                   <FormItem>
                     <FormLabel>País *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Perú" {...field} />
+                      <Input placeholder="Ej: Colombia" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -297,7 +297,7 @@ export function ClassDialog({
                   <FormItem>
                     <FormLabel>Ciudad *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Lima" {...field} />
+                      <Input placeholder="Ej: Bogotá" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

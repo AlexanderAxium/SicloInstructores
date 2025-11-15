@@ -90,12 +90,12 @@ export default function EstadisticasPage() {
     ).find((p) => p.id === selectedPeriod);
     if (!period) return "";
 
-    const startDate = new Date(period.startDate).toLocaleDateString("es-PE", {
+    const startDate = new Date(period.startDate).toLocaleDateString("es-CO", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
-    const endDate = new Date(period.endDate).toLocaleDateString("es-PE", {
+    const endDate = new Date(period.endDate).toLocaleDateString("es-CO", {
       day: "2-digit",
       month: "short",
       year: "numeric",

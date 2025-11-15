@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { ClassFromAPI } from "@/types/classes";
 import type {
   CoverFromAPI,
   CreateCoverData,
@@ -85,6 +86,18 @@ const coverFormSchema = z.object({
 });
 
 type CoverFormData = z.infer<typeof coverFormSchema>;
+
+type CoverClassDetails = NonNullable<CoverFromAPI["class"]> & {
+  instructorId?: string | null;
+  instructor?: {
+    id?: string;
+    name?: string;
+    fullName?: string | null;
+  } | null;
+  disciplineId?: string | null;
+};
+
+type ClassLike = ClassFromAPI | CoverClassDetails;
 
 interface CoverDialogProps {
   coverData?: CoverFromAPI | null;
@@ -125,7 +138,7 @@ export function CoverDialog({
   const [classSearchTerm, setClassSearchTerm] = useState<string>("");
   const [classesPage, setClassesPage] = useState(1);
   const classesLimit = 20;
-  const [allLoadedClasses, setAllLoadedClasses] = useState<any[]>([]);
+  const [allLoadedClasses, setAllLoadedClasses] = useState<ClassFromAPI[]>([]);
 
   // State for instructor correction dialog
   const [showInstructorCorrectionDialog, setShowInstructorCorrectionDialog] =
@@ -173,7 +186,16 @@ export function CoverDialog({
 
   // Reset classes when period or search changes
   useEffect(() => {
-    setAllLoadedClasses([]);
+    const filtersAreEmpty =
+      selectedPeriodForClass.length === 0 &&
+      classSearchTerm.trim().length === 0;
+
+    setAllLoadedClasses((prev) => {
+      if (filtersAreEmpty && prev.length === 0) {
+        return prev;
+      }
+      return [];
+    });
     setClassesPage(1);
   }, [selectedPeriodForClass, classSearchTerm]);
 
@@ -222,10 +244,32 @@ export function CoverDialog({
   const linkedClassId = form.watch("classId");
 
   // Get linked class by ID if it exists (when editing a cover with a linked class)
+  const shouldFetchLinkedClass = Boolean(linkedClassId && isEdit);
   const { data: linkedClassData } = trpc.classes.getById.useQuery(
-    { id: linkedClassId! },
-    { enabled: !!linkedClassId && isEdit }
+    { id: linkedClassId ?? "" },
+    { enabled: shouldFetchLinkedClass }
   );
+
+  const getClassDetails = (classId?: string | null): ClassLike | undefined => {
+    if (!classId) {
+      return undefined;
+    }
+
+    const loadedClass = classes.find((classItem) => classItem.id === classId);
+    if (loadedClass) {
+      return loadedClass;
+    }
+
+    if (linkedClassData && linkedClassData.id === classId) {
+      return linkedClassData;
+    }
+
+    if (coverData?.class && coverData.class.id === classId) {
+      return coverData.class as ClassLike;
+    }
+
+    return undefined;
+  };
 
   useEffect(() => {
     if (watchedPeriodId) {
@@ -296,22 +340,11 @@ export function CoverDialog({
 
     // Si hay una clase enlazada Y el cover está aprobado, verificar que el instructor reemplazo sea el instructor de esa clase
     if (data.classId && isCoverApproved) {
-      // Buscar la clase en las clases cargadas primero
-      let classItem = classes.find((c) => c.id === data.classId);
-
-      // Si no está en las clases cargadas, usar linkedClassData
-      if (!classItem && linkedClassData) {
-        classItem = linkedClassData as any;
-      }
-
-      // Si tampoco está ahí, usar coverData.class si está editando
-      if (!classItem && coverData?.class) {
-        classItem = coverData.class as any;
-      }
+      const classItem = getClassDetails(data.classId);
 
       if (classItem) {
         const classInstructorId =
-          classItem.instructorId || classItem.instructor?.id;
+          classItem.instructorId ?? classItem.instructor?.id;
 
         if (
           classInstructorId &&
@@ -365,8 +398,13 @@ export function CoverDialog({
   ) => {
     // Transform to the expected format
     if (isEdit) {
+      const coverId = data.id ?? coverData?.id;
+      if (!coverId) {
+        toast.error("No se pudo determinar el ID del cover para actualizar.");
+        return;
+      }
       const updateData: UpdateCoverData = {
-        id: data.id!,
+        id: coverId,
         originalInstructorId: data.originalInstructorId,
         replacementInstructorId: replacementInstructorId,
         disciplineId: data.disciplineId,
@@ -626,11 +664,8 @@ export function CoverDialog({
                     >
                       <PopoverTrigger asChild>
                         <FormControl>
-                          {/* biome-ignore lint/a11y/useSemanticElements: Radix UI Popover requires Button with combobox role for accessibility */}
                           <Button
                             variant="outline"
-                            // biome-ignore lint/a11y/useSemanticElements: Required by Radix UI Popover pattern
-                            role="combobox"
                             className="w-full justify-between"
                             disabled={isLoadingClasses}
                           >
@@ -726,35 +761,24 @@ export function CoverDialog({
                   )}
                   {field.value &&
                     (() => {
-                      // Try to find class in loaded classes first
-                      let classItem = classes.find((c) => c.id === field.value);
-
-                      // If not found and we have linked class data from API, use it
-                      if (!classItem && linkedClassData) {
-                        classItem = linkedClassData as any;
-                      }
-
-                      // Also check if coverData has class information (when editing)
-                      if (!classItem && coverData?.class) {
-                        classItem = coverData.class as any;
-                      }
-
-                      // Get instructor and discipline information
-                      const instructor = classItem
-                        ? classItem.instructor?.name ||
-                          instructors.find(
-                            (i) => i.id === classItem.instructorId
-                          )?.name ||
-                          null
-                        : null;
-                      const discipline = classItem
-                        ? classItem.discipline?.name ||
-                          disciplines.find(
-                            (d) => d.id === classItem.disciplineId
-                          )?.name ||
-                          null
-                        : null;
-                      const classExists = !!classItem;
+                      const classItem = getClassDetails(field.value);
+                      const classExists = Boolean(classItem);
+                      const instructor =
+                        classItem?.instructor?.name ||
+                        (classItem?.instructorId
+                          ? instructors.find(
+                              (i) => i.id === classItem.instructorId
+                            )?.name
+                          : null) ||
+                        null;
+                      const discipline =
+                        classItem?.discipline?.name ||
+                        (classItem?.disciplineId
+                          ? disciplines.find(
+                              (d) => d.id === classItem.disciplineId
+                            )?.name
+                          : null) ||
+                        null;
 
                       return (
                         <div className="mt-2 space-y-2">
@@ -790,7 +814,7 @@ export function CoverDialog({
                                       {discipline}
                                     </div>
                                   )}
-                                  {classItem.date && (
+                                  {classItem?.date && (
                                     <div>
                                       <span className="font-medium">
                                         Fecha:
@@ -802,7 +826,7 @@ export function CoverDialog({
                                       )}
                                     </div>
                                   )}
-                                  {classItem.studio && (
+                                  {classItem?.studio && (
                                     <div>
                                       <span className="font-medium">
                                         Estudio:
@@ -810,7 +834,7 @@ export function CoverDialog({
                                       {classItem.studio}
                                     </div>
                                   )}
-                                  {classItem.room && (
+                                  {classItem?.room && (
                                     <div>
                                       <span className="font-medium">Sala:</span>{" "}
                                       {classItem.room}
@@ -884,7 +908,7 @@ export function CoverDialog({
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>Pago S/80</FormLabel>
+                          <FormLabel>Pago COP 80</FormLabel>
                         </div>
                       </FormItem>
                     )}

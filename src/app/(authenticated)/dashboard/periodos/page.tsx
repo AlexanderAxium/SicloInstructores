@@ -513,12 +513,12 @@ export default function PeriodosPage() {
     const exportData = allPeriods.map((period) => ({
       Período: `P${period.number}`,
       Año: period.year,
-      "Fecha Inicio": new Date(period.startDate).toLocaleDateString("es-PE"),
-      "Fecha Fin": new Date(period.endDate).toLocaleDateString("es-PE"),
+      "Fecha Inicio": new Date(period.startDate).toLocaleDateString("es-CO"),
+      "Fecha Fin": new Date(period.endDate).toLocaleDateString("es-CO"),
       "Fecha Pago": period.paymentDate
-        ? new Date(period.paymentDate).toLocaleDateString("es-PE")
+        ? new Date(period.paymentDate).toLocaleDateString("es-CO")
         : "",
-      "Fecha Creación": new Date(period.createdAt).toLocaleDateString("es-PE"),
+      "Fecha Creación": new Date(period.createdAt).toLocaleDateString("es-CO"),
     }));
 
     exportToExcel(exportData, "Periodos", "Períodos", {

@@ -300,9 +300,9 @@ export default function PaymentDetailPage() {
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("es-PE", {
+    return new Intl.NumberFormat("es-CO", {
       style: "currency",
-      currency: "PEN",
+      currency: "COP",
       minimumFractionDigits: 2,
     }).format(amount);
   };

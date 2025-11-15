@@ -82,15 +82,15 @@ export function InstructorSidebar() {
   ];
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("es-PE", {
+    return new Intl.NumberFormat("es-CO", {
       style: "currency",
-      currency: "PEN",
+      currency: "COP",
       minimumFractionDigits: 2,
     }).format(amount);
   };
 
   const _formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat("es-PE", {
+    return new Intl.DateTimeFormat("es-CO", {
       year: "numeric",
       month: "short",
     }).format(new Date(date));

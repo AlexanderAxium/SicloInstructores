@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { CATEGORIES_CONFIG, shouldShowVisualCategory } from "@/lib/config";
-import { formatDateInLima } from "@/lib/date-utils";
+import { formatDateInBogota } from "@/lib/date-utils";
 import {
   formatMetricValue,
   getCategoryTranslation,
@@ -160,9 +160,9 @@ export function DetailedInstructorLogs({
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-PE", {
+    return new Intl.NumberFormat("es-CO", {
       style: "currency",
-      currency: "PEN",
+      currency: "COP",
       minimumFractionDigits: 2,
     }).format(amount);
   };
@@ -627,7 +627,7 @@ export function DetailedInstructorLogs({
                                       <div className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4 text-muted-foreground" />
                                         <span className="font-medium">
-                                          {formatDateInLima(classItem.date)}
+                                          {formatDateInBogota(classItem.date)}
                                         </span>
                                         <span className="text-sm text-muted-foreground">
                                           {classItem.hour}

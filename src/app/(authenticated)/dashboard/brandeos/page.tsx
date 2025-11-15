@@ -567,7 +567,7 @@ export default function BrandeosPage() {
         Período: `P${brandeo.period.number} - ${brandeo.period.year}`,
         Comentarios: brandeo.comments || "",
         "Fecha Creación": new Date(brandeo.createdAt).toLocaleDateString(
-          "es-PE"
+          "es-CO"
         ),
       })
     );

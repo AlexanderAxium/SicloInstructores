@@ -132,11 +132,11 @@ export function ClassesListPDF({
   filters,
 }: ClassesListPDFProps) {
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("es-PE");
+    return new Date(date).toLocaleDateString("es-CO");
   };
 
   const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString("es-PE", {
+    return new Date(date).toLocaleTimeString("es-CO", {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -246,8 +246,8 @@ export function ClassesListPDF({
         {/* Footer */}
         <View style={styles.footer}>
           <Text>
-            Documento generado el {new Date().toLocaleDateString("es-PE")} a las{" "}
-            {new Date().toLocaleTimeString("es-PE")}
+            Documento generado el {new Date().toLocaleDateString("es-CO")} a las{" "}
+            {new Date().toLocaleTimeString("es-CO")}
           </Text>
           <Text>Sistema de Gestión de Clases - Siclo</Text>
         </View>

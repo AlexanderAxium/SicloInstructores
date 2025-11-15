@@ -80,14 +80,16 @@ export default function PagosDocsPage() {
                         AMBASSADOR
                       </span>
                     </p>
-                    <p>• Clase: 45 reservas / 50 spots (90% ocupación)</p>
-                    <p>• Tarifa según fórmula: S/. 2.50 por reserva</p>
-                    <p>• Cálculo: 45 reservas × S/. 2.50 = S/. 112.50</p>
-                    <p>• Cuota fija adicional (si aplica): + S/. 20.00</p>
+                    <p>• Clase: 22 reservas / 30 spots (73% ocupación)</p>
+                    <p>• Base fija: COP 75,000 (incluye 10 reservas)</p>
+                    <p>
+                      • Reservas adicionales: 12 → tramo con tarifa COP 4,000
+                    </p>
+                    <p>• Cálculo variable: 12 × COP 4,000 = COP 48,000</p>
                     <p>
                       •{" "}
                       <span className="text-slate-900 font-semibold">
-                        Total por clase: S/. 132.50
+                        Total por clase: COP 123,000
                       </span>
                     </p>
                   </div>
@@ -131,10 +133,10 @@ export default function PagosDocsPage() {
                       Covers (Reemplazos)
                     </p>
                     <p className="text-xs text-slate-700">
-                      S/. 80.00 por cada cover con bono activado y aprobado
+                      COP 80,000 por cada cover con bono activado y aprobado
                     </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Ejemplo: 3 covers = S/. 240.00
+                      Ejemplo: 3 covers = COP 240,000
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-md p-3 border border-slate-300">
@@ -142,11 +144,11 @@ export default function PagosDocsPage() {
                       Brandings
                     </p>
                     <p className="text-xs text-slate-700">
-                      S/. 5.00 por cada número de branding (suma de números)
+                      COP 5,000 por cada número de branding (suma de números)
                     </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Ejemplo: 2 brandings con números 10 y 5 = (10+5) × S/.5 =
-                      S/. 75.00
+                      Ejemplo: 2 brandings con números 10 y 5 = (10+5) × COP
+                      5,000 = COP 75,000
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-md p-3 border border-slate-300">
@@ -154,10 +156,11 @@ export default function PagosDocsPage() {
                       Theme Rides
                     </p>
                     <p className="text-xs text-slate-700">
-                      S/. 30.00 por cada número de theme ride (suma de números)
+                      COP 30,000 por cada número de theme ride (suma de números)
                     </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Ejemplo: 1 theme ride con número 2 = 2 × S/.30 = S/. 60.00
+                      Ejemplo: 1 theme ride con número 2 = 2 × COP 30,000 = COP
+                      60,000
                     </p>
                   </div>
                   <div className="bg-slate-50 rounded-md p-3 border border-slate-300">
@@ -168,7 +171,7 @@ export default function PagosDocsPage() {
                       Monto variable configurado por workshop
                     </p>
                     <p className="text-xs text-slate-700 mt-1">
-                      Ejemplo: 1 workshop a S/. 150.00
+                      Ejemplo: 1 workshop a COP 150,000
                     </p>
                   </div>
                 </div>
@@ -178,12 +181,12 @@ export default function PagosDocsPage() {
                     Ejemplo Total de Bonos:
                   </p>
                   <div className="text-xs text-green-800 font-mono">
-                    <p>Covers: S/. 90.00</p>
-                    <p>Brandings: S/. 100.00</p>
-                    <p>Theme Rides: S/. 40.00</p>
-                    <p>Workshops: S/. 150.00</p>
+                    <p>Covers: COP 90,000</p>
+                    <p>Brandings: COP 100,000</p>
+                    <p>Theme Rides: COP 40,000</p>
+                    <p>Workshops: COP 150,000</p>
                     <p className="text-foreground font-semibold mt-1">
-                      Total Bonos: S/. 380.00
+                      Total Bonos: COP 380,000
                     </p>
                   </div>
                 </div>
@@ -221,11 +224,11 @@ export default function PagosDocsPage() {
                     <p>
                       • Porcentaje de descuento: 5 × 2% = 10% (máximo alcanzado)
                     </p>
-                    <p>• Monto base antes de penalización: S/. 1,500.00</p>
+                    <p>• Monto base antes de penalización: COP 1,500,000</p>
                     <p>
-                      • Descuento: S/. 1,500.00 × 10% ={" "}
+                      • Descuento: COP 1,500,000 × 10% ={" "}
                       <span className="text-red-700 font-semibold">
-                        S/. 150.00
+                        COP 150,000
                       </span>
                     </p>
                   </div>
@@ -259,21 +262,21 @@ export default function PagosDocsPage() {
                     Ejemplo de Cálculo de Retención:
                   </p>
                   <div className="text-xs text-slate-700 space-y-1 font-mono">
-                    <p>• Monto base: S/. 1,500.00</p>
-                    <p>• Bonos totales: + S/. 380.00</p>
-                    <p>• Penalizaciones: - S/. 150.00</p>
-                    <p>• Ajuste (reajuste): + S/. 100.00</p>
-                    <p>• Subtotal antes de retención: S/. 1,830.00</p>
+                    <p>• Monto base: COP 1,500,000</p>
+                    <p>• Bonos totales: + COP 380,000</p>
+                    <p>• Penalizaciones: - COP 150,000</p>
+                    <p>• Ajuste (reajuste): + COP 100,000</p>
+                    <p>• Subtotal antes de retención: COP 1,830,000</p>
                     <p>
-                      • Retención (8%): S/. 1,830.00 × 0.08 ={" "}
+                      • Retención (8%): COP 1,830,000 × 0.08 ={" "}
                       <span className="text-red-700 font-semibold">
-                        S/. 146.40
+                        COP 146,400
                       </span>
                     </p>
                     <p>
                       •{" "}
                       <span className="text-slate-900 font-semibold">
-                        Pago Final: S/. 1,683.60
+                        Pago Final: COP 1,683,600
                       </span>
                     </p>
                   </div>
@@ -316,28 +319,28 @@ export default function PagosDocsPage() {
                           </p>
                         </div>
                         <div className="text-right text-slate-900">
-                          <p>S/. 1,590.00</p>
+                          <p>COP 1,590,000</p>
                           <p className="text-green-700 font-semibold">
-                            + S/. 380.00
+                            + COP 380,000
                           </p>
-                          <p className="text-green-700"> S/. 90.00</p>
-                          <p className="text-green-700"> S/. 100.00</p>
-                          <p className="text-green-700"> S/. 40.00</p>
-                          <p className="text-green-700"> S/. 150.00</p>
+                          <p className="text-green-700"> COP 90,000</p>
+                          <p className="text-green-700"> COP 100,000</p>
+                          <p className="text-green-700"> COP 40,000</p>
+                          <p className="text-green-700"> COP 150,000</p>
                           <p className="text-red-700 font-semibold">
-                            - S/. 150.00
+                            - COP 150,000
                           </p>
                           <p className="text-blue-700 font-semibold">
-                            + S/. 100.00
+                            + COP 100,000
                           </p>
                           <p className="pt-1 font-semibold text-slate-900">
-                            S/. 1,920.00
+                            COP 1,920,000
                           </p>
                           <p className="text-red-700 font-semibold">
-                            - S/. 153.60
+                            - COP 153,600
                           </p>
                           <p className="pt-1 border-t border-slate-300 font-bold text-lg text-slate-900">
-                            S/. 1,766.40
+                            COP 1,766,400
                           </p>
                         </div>
                       </div>
@@ -432,7 +435,7 @@ export default function PagosDocsPage() {
                   semanas
                 </li>
                 <li>
-                  • <strong>Locales en Lima:</strong> Número de estudios
+                  • <strong>Locales en Bogotá:</strong> Número de estudios
                   diferentes
                 </li>
                 <li>
@@ -560,8 +563,8 @@ export default function PagosDocsPage() {
               período, define tarifas y condiciones
             </li>
             <li>
-              <strong>Bonos adicionales:</strong> Covers (S/.30), Brandings
-              (S/.50), Theme Rides (S/.40), Workshops (variable)
+              <strong>Bonos adicionales:</strong> Covers (COP 80k), Brandings
+              (COP 5k), Theme Rides (COP 30k), Workshops (variable)
             </li>
             <li>
               <strong>Penalizaciones:</strong> Por puntos acumulados (2% por

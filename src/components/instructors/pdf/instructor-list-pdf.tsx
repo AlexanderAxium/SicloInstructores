@@ -119,7 +119,7 @@ export function InstructorListPDF({
   totalCount,
 }: InstructorListPDFProps) {
   const _formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("es-PE");
+    return new Date(date).toLocaleDateString("es-CO");
   };
 
   const activeInstructors = instructors.filter((i) => i.active);
@@ -199,7 +199,7 @@ export function InstructorListPDF({
         {/* Footer */}
         <View style={styles.footer}>
           <Text>
-            Documento generado el {new Date().toLocaleDateString("es-PE")}
+            Documento generado el {new Date().toLocaleDateString("es-CO")}
           </Text>
           <Text>Sistema de Gestión de Instructores - Siclo</Text>
         </View>

@@ -101,7 +101,7 @@ type FormulaDialogData = {
     {
       ocupacion: number;
       clases: number;
-      localesEnLima: number;
+      localesEnBogota: number;
       dobleteos: number;
       horariosNoPrime: number;
       participacionEventos: boolean;
@@ -314,11 +314,11 @@ export default function FormulasPage() {
         "Parámetros de Pago": "Ver detalles en la aplicación",
         "Requisitos de Categoría": "Ver detalles en la aplicación",
         "Fecha Creación": new Date(formula.createdAt || "").toLocaleDateString(
-          "es-PE"
+          "es-CO"
         ),
         "Última Actualización": new Date(
           formula.updatedAt || ""
-        ).toLocaleDateString("es-PE"),
+        ).toLocaleDateString("es-CO"),
       });
     }
 

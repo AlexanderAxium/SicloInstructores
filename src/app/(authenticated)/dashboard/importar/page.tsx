@@ -483,7 +483,7 @@ export default function ImportarPage() {
       className: "text-xs",
       render: (value) => (
         <span className="text-xs">
-          {new Date(value as string).toLocaleDateString("es-PE", {
+          {new Date(value as string).toLocaleDateString("es-CO", {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",

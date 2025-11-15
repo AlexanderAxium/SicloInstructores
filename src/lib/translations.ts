@@ -12,7 +12,7 @@ export const translations = {
   metrics: {
     ocupacion: "Ocupación",
     clases: "Clases",
-    localesEnLima: "Locales en Lima",
+    localesEnBogota: "Locales en Bogotá",
     dobleteos: "Dobleteos",
     horariosNoPrime: "Horarios No Prime",
     participacionEventos: "Participación en Eventos",

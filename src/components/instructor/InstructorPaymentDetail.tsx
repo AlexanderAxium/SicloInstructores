@@ -226,9 +226,9 @@ export default function InstructorPaymentDetailPage() {
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("es-PE", {
+    return new Intl.NumberFormat("es-CO", {
       style: "currency",
-      currency: "PEN",
+      currency: "COP",
       minimumFractionDigits: 2,
     }).format(amount);
   };
@@ -274,7 +274,7 @@ export default function InstructorPaymentDetailPage() {
       : 0;
 
   const _formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat("es-PE", {
+    return new Intl.DateTimeFormat("es-CO", {
       year: "numeric",
       month: "long",
       day: "numeric",

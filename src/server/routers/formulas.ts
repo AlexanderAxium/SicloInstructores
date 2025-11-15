@@ -10,7 +10,7 @@ import { protectedProcedure, publicProcedure, router } from "../trpc";
 const categoryRequirementsSchema = z.object({
   ocupacion: z.number(),
   clases: z.number(),
-  localesEnLima: z.number(),
+  localesEnBogota: z.number(),
   dobleteos: z.number(),
   horariosNoPrime: z.number(),
   participacionEventos: z.boolean(),

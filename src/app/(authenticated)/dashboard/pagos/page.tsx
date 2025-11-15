@@ -174,6 +174,13 @@ export default function PagosPage() {
   const payments = paymentsData?.payments || [];
   const totalPayments = paymentsData?.total || 0;
 
+  const formatCurrency = (amount: number): string =>
+    new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 2,
+    }).format(amount);
+
   // Configuración de columnas de la tabla (siguiendo el orden del sistema antiguo)
   const columns: TableColumn<InstructorPayment>[] = [
     {
@@ -243,7 +250,7 @@ export default function PagosPage() {
       title: "Monto Base",
       width: "120px",
       render: (_, payment) => (
-        <span className="text-sm">S/ {payment.amount.toFixed(2)}</span>
+        <span className="text-sm">{formatCurrency(payment.amount)}</span>
       ),
     },
     {
@@ -264,7 +271,7 @@ export default function PagosPage() {
                 <div className="cursor-help flex items-center gap-1">
                   {totalBonuses > 0 ? (
                     <span className="text-green-600 text-sm">
-                      +S/ {totalBonuses.toFixed(2)}
+                      +{formatCurrency(totalBonuses)}
                     </span>
                   ) : (
                     <span className="text-muted-foreground text-sm">-</span>
@@ -277,32 +284,32 @@ export default function PagosPage() {
                   <div className="font-medium text-xs">Detalle de Bonos:</div>
                   {payment.cover > 0 && (
                     <div className="text-xs">
-                      <span className="text-green-600">Cover:</span> +S/{" "}
-                      {payment.cover.toFixed(2)}
+                      <span className="text-green-600">Cover:</span> +
+                      {formatCurrency(payment.cover)}
                     </div>
                   )}
                   {payment.branding > 0 && (
                     <div className="text-xs">
-                      <span className="text-green-600">Branding:</span> +S/{" "}
-                      {payment.branding.toFixed(2)}
+                      <span className="text-green-600">Branding:</span> +
+                      {formatCurrency(payment.branding)}
                     </div>
                   )}
                   {payment.themeRide > 0 && (
                     <div className="text-xs">
-                      <span className="text-green-600">Theme Ride:</span> +S/{" "}
-                      {payment.themeRide.toFixed(2)}
+                      <span className="text-green-600">Theme Ride:</span> +
+                      {formatCurrency(payment.themeRide)}
                     </div>
                   )}
                   {payment.workshop > 0 && (
                     <div className="text-xs">
-                      <span className="text-green-600">Workshop:</span> +S/{" "}
-                      {payment.workshop.toFixed(2)}
+                      <span className="text-green-600">Workshop:</span> +
+                      {formatCurrency(payment.workshop)}
                     </div>
                   )}
                   {payment.versusBonus > 0 && (
                     <div className="text-xs">
-                      <span className="text-green-600">Versus:</span> +S/{" "}
-                      {payment.versusBonus.toFixed(2)}
+                      <span className="text-green-600">Versus:</span> +
+                      {formatCurrency(payment.versusBonus)}
                     </div>
                   )}
                   {totalBonuses === 0 && (
@@ -341,16 +348,15 @@ export default function PagosPage() {
               <div className="flex items-center gap-1">
                 {payment.adjustment > 0 ? (
                   <span className="text-green-600">
-                    +
                     {payment.adjustmentType === "PERCENTAGE"
-                      ? `${payment.adjustment}%`
-                      : `S/ ${payment.adjustment.toFixed(2)}`}
+                      ? `+${payment.adjustment}%`
+                      : `+${formatCurrency(payment.adjustment)}`}
                   </span>
                 ) : payment.adjustment < 0 ? (
                   <span className="text-red-600">
                     {payment.adjustmentType === "PERCENTAGE"
                       ? `${payment.adjustment}%`
-                      : `S/ ${payment.adjustment.toFixed(2)}`}
+                      : formatCurrency(payment.adjustment)}
                   </span>
                 ) : (
                   <span className="text-muted-foreground">-</span>
@@ -381,7 +387,7 @@ export default function PagosPage() {
                 <TooltipTrigger asChild>
                   <div className="cursor-help flex flex-col">
                     <span className="text-red-600 text-sm">
-                      -S/ {payment.penalty.toFixed(2)}
+                      -{formatCurrency(payment.penalty)}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
                       ({((payment.penalty / payment.amount) * 100).toFixed(1)}%)
@@ -394,7 +400,7 @@ export default function PagosPage() {
                       Detalle de Penalización:
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Penalización aplicada: S/ {payment.penalty.toFixed(2)}
+                      Penalización aplicada: {formatCurrency(payment.penalty)}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       Porcentaje:{" "}
@@ -418,7 +424,7 @@ export default function PagosPage() {
         <div className="text-sm">
           {payment.retention > 0 ? (
             <span className="text-red-600">
-              -S/ {payment.retention.toFixed(2)}
+              -{formatCurrency(payment.retention)}
             </span>
           ) : (
             <span className="text-muted-foreground">-</span>
@@ -432,7 +438,7 @@ export default function PagosPage() {
       width: "120px",
       render: (_, payment) => (
         <span className="text-sm text-foreground">
-          S/ {payment.finalPayment.toFixed(2)}
+          {formatCurrency(payment.finalPayment)}
         </span>
       ),
     },
@@ -651,10 +657,10 @@ export default function PagosPage() {
         "Pago Final": payment.finalPayment.toFixed(2),
         Estado: payment.status,
         "Fecha Creación": new Date(payment.createdAt).toLocaleDateString(
-          "es-PE"
+          "es-CO"
         ),
         "Última Actualización": new Date(payment.updatedAt).toLocaleDateString(
-          "es-PE"
+          "es-CO"
         ),
       };
     });

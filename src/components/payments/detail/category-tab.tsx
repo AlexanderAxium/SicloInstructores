@@ -187,7 +187,7 @@ export function CategoryTab({
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-xs sm:text-sm text-muted-foreground">
-                            Locales en Lima:
+                            Locales en Bogotá:
                           </span>
                           <Badge
                             variant="outline"
@@ -372,7 +372,10 @@ export function CategoryTab({
                           {[
                             { key: "ocupacion", label: "Ocupación (%)" },
                             { key: "clases", label: "Clases por Semana" },
-                            { key: "localesEnLima", label: "Locales en Lima" },
+                            {
+                              key: "localesEnBogota",
+                              label: "Locales en Bogotá",
+                            },
                             { key: "dobleteos", label: "Dobleteos" },
                             {
                               key: "horariosNoPrime",

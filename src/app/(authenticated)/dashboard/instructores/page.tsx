@@ -482,7 +482,7 @@ export default function InstructoresPage() {
         "Total Pagos": instructor.payments?.length || 0,
         Estado: instructor.active ? "Activo" : "Inactivo",
         "Fecha Creación": new Date(instructor.createdAt).toLocaleDateString(
-          "es-PE"
+          "es-CO"
         ),
       })
     );

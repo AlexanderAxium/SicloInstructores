@@ -339,7 +339,7 @@ export default function CoversPage() {
     },
     {
       key: "bonusPayment",
-      title: "Pago S/80",
+      title: "Pago COP 80",
       render: (_, record) => (
         <div className="text-center">
           {record.justification === "PENDING" ? (
@@ -348,7 +348,7 @@ export default function CoversPage() {
             </Badge>
           ) : record.bonusPayment ? (
             <Badge variant="default" className="text-xs bg-green-600">
-              S/80
+              COP 80
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs">
@@ -662,7 +662,7 @@ export default function CoversPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <span className="text-sm font-medium text-muted-foreground">
-                    Pago S/80
+                    Pago COP 80
                   </span>
                   <p className="mt-1">
                     {selectedCover.bonusPayment ? (

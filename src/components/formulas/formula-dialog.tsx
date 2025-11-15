@@ -44,7 +44,7 @@ import { z } from "zod";
 const categoryRequirementsSchema = z.object({
   ocupacion: z.number(),
   clases: z.number(),
-  localesEnLima: z.number(),
+  localesEnBogota: z.number(),
   dobleteos: z.number(),
   horariosNoPrime: z.number(),
   participacionEventos: z.boolean(),
@@ -162,7 +162,7 @@ export function FormulaDialog({
         emptyRequirements[category] = {
           ocupacion: 0,
           clases: 0,
-          localesEnLima: 0,
+          localesEnBogota: 0,
           dobleteos: 0,
           horariosNoPrime: 0,
           participacionEventos: false,
@@ -232,7 +232,7 @@ export function FormulaDialog({
       const current = prev[category] || {
         ocupacion: 0,
         clases: 0,
-        localesEnLima: 0,
+        localesEnBogota: 0,
         dobleteos: 0,
         horariosNoPrime: 0,
         participacionEventos: false,
@@ -1039,7 +1039,7 @@ export function FormulaDialog({
                           </tr>
                           <tr className="bg-muted/20">
                             <td className="font-medium p-2 text-xs">
-                              Locales en Lima
+                              Locales en Bogotá
                             </td>
                             {instructorCategories.map((category) => (
                               <td
@@ -1050,12 +1050,12 @@ export function FormulaDialog({
                                   type="number"
                                   value={
                                     categoryRequirements[category]
-                                      ?.localesEnLima || 0
+                                      ?.localesEnBogota || 0
                                   }
                                   onChange={(e) =>
                                     handleRequirementChange(
                                       category,
-                                      "localesEnLima",
+                                      "localesEnBogota",
                                       e.target.value
                                     )
                                   }

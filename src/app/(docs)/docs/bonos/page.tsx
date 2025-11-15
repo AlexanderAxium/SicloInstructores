@@ -29,7 +29,7 @@ export default function BonosDocsPage() {
             <div className="bg-green-50 rounded-md p-4 border border-green-300">
               <ul className="list-disc list-inside space-y-2 text-sm text-green-900">
                 <li>
-                  <strong>Bono por Cover:</strong> S/. 80.00 por cada cover con
+                  <strong>Bono por Cover:</strong> COP 80,000 por cada cover con
                   bonificación activada y aprobado
                 </li>
                 <li>
@@ -42,7 +42,7 @@ export default function BonosDocsPage() {
             </div>
             <p className="text-muted-foreground mt-4">
               Ejemplo: Si cubriste 3 clases con bonificación aprobada, recibirás
-              S/. 240.00 adicionales en tu pago.
+              COP 240,000 adicionales en tu pago.
             </p>
           </div>
         </section>
@@ -59,7 +59,7 @@ export default function BonosDocsPage() {
             <div className="bg-blue-50 rounded-md p-4 border border-blue-300">
               <ul className="list-disc list-inside space-y-2 text-sm text-blue-900">
                 <li>
-                  <strong>Bono por Branding:</strong> S/. 5.00 por cada número
+                  <strong>Bono por Branding:</strong> COP 5,000 por cada número
                   de branding (se suma el total de números)
                 </li>
                 <li>
@@ -75,7 +75,7 @@ export default function BonosDocsPage() {
             </div>
             <p className="text-muted-foreground mt-4">
               Ejemplo: Si tienes 2 brandings con números 10 y 5, recibirás
-              (10+5) × S/.5 = S/. 75.00 adicionales.
+              (10+5) × COP 5,000 = COP 75,000 adicionales.
             </p>
           </div>
         </section>
@@ -91,7 +91,7 @@ export default function BonosDocsPage() {
             <div className="bg-purple-50 rounded-md p-4 border border-purple-300">
               <ul className="list-disc list-inside space-y-2 text-sm text-purple-900">
                 <li>
-                  <strong>Bono por Theme Ride:</strong> S/. 30.00 por cada
+                  <strong>Bono por Theme Ride:</strong> COP 30,000 por cada
                   número de theme ride (se suma el total de números)
                 </li>
                 <li>
@@ -105,7 +105,7 @@ export default function BonosDocsPage() {
             </div>
             <p className="text-muted-foreground mt-4">
               Ejemplo: Si impartiste 1 theme ride con número 2, recibirás 2 ×
-              S/.30 = S/. 60.00 adicionales.
+              COP 30,000 = COP 60,000 adicionales.
             </p>
           </div>
         </section>
@@ -131,7 +131,7 @@ export default function BonosDocsPage() {
               </ul>
             </div>
             <p className="text-muted-foreground mt-4">
-              Ejemplo: Si impartiste un workshop con pago de S/. 150.00, ese
+              Ejemplo: Si impartiste un workshop con pago de COP 150,000, ese
               monto se agregará a tu pago.
             </p>
           </div>
@@ -176,8 +176,8 @@ export default function BonosDocsPage() {
                 <p>• Puntos permitidos: 10</p>
                 <p>• Puntos excedentes: 15 - 10 = 5 puntos</p>
                 <p>• Descuento: 5 × 2% = 10% (máximo alcanzado)</p>
-                <p>• Si tu monto base es S/. 1,500.00</p>
-                <p>• Descuento aplicado: S/. 150.00</p>
+                <p>• Si tu monto base es COP 1,500,000</p>
+                <p>• Descuento aplicado: COP 150,000</p>
               </div>
             </div>
 
@@ -197,15 +197,15 @@ export default function BonosDocsPage() {
           </p>
           <ul className="list-disc list-inside space-y-2 text-sm text-green-900">
             <li>
-              <strong>Covers:</strong> S/. 80.00 por cada cover con bonificación
-              aprobada
+              <strong>Covers:</strong> COP 80,000 por cada cover con
+              bonificación aprobada
             </li>
             <li>
-              <strong>Brandings:</strong> S/. 5.00 por cada número (suma de
+              <strong>Brandings:</strong> COP 5,000 por cada número (suma de
               números)
             </li>
             <li>
-              <strong>Theme Rides:</strong> S/. 30.00 por cada número (suma de
+              <strong>Theme Rides:</strong> COP 30,000 por cada número (suma de
               números)
             </li>
             <li>

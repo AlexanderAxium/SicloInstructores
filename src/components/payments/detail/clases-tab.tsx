@@ -40,7 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { isNonPrimeHour } from "@/lib/config";
-import { formatDateInLima, formatTime } from "@/lib/date-utils";
+import { formatDateInBogota, formatTime } from "@/lib/date-utils";
 import type { Class, Discipline } from "@/types";
 import {
   AlertTriangle,
@@ -143,9 +143,9 @@ export function ClassesTab({
 }: ClassesTabProps) {
   // Helper function to format currency
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("es-PE", {
+    return new Intl.NumberFormat("es-CO", {
       style: "currency",
-      currency: "PEN",
+      currency: "COP",
       minimumFractionDigits: 2,
     }).format(amount);
   };
@@ -871,7 +871,7 @@ export function ClassesTab({
                       </TableCell>
                       <TableCell className="font-medium whitespace-nowrap text-foreground">
                         <div>
-                          {formatDateInLima(clase.date)}
+                          {formatDateInBogota(clase.date)}
                           <div className="text-xs text-muted-foreground mt-1 md:hidden">
                             {hora} • {clase.studio}
                             {esNoPrime && (

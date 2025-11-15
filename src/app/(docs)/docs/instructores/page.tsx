@@ -108,7 +108,7 @@ export default function InstructoresDocsPage() {
             <p className="text-muted-foreground mb-4">
               <strong>Importante:</strong> Puedes tener diferentes categorías
               para diferentes disciplinas. Por ejemplo, puedes ser EMBAJADOR en
-              Síclo pero INSTRUCTOR en Barre.
+              Rueda pero INSTRUCTOR en Barre.
             </p>
           </div>
         </section>
@@ -137,7 +137,7 @@ export default function InstructoresDocsPage() {
                   clases que impartes por semana
                 </li>
                 <li>
-                  • <strong>Locales en Lima:</strong> Número de estudios
+                  • <strong>Locales en Bogotá:</strong> Número de estudios
                   diferentes donde impartes
                 </li>
                 <li>

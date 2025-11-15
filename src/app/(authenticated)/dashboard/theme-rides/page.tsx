@@ -558,7 +558,7 @@ export default function ThemeRidesPage() {
       Período: `P${themeRide.period.number} - ${themeRide.period.year}`,
       Comentarios: themeRide.comments || "",
       "Fecha Creación": new Date(themeRide.createdAt).toLocaleDateString(
-        "es-PE"
+        "es-CO"
       ),
     }));
 

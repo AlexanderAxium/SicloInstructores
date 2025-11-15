@@ -493,7 +493,7 @@ export default function DisciplinasPage() {
       "Total Clases": discipline._count?.classes || 0,
       Estado: discipline.active ? "Activa" : "Inactiva",
       "Fecha Creación": new Date(discipline.createdAt).toLocaleDateString(
-        "es-PE"
+        "es-CO"
       ),
     }));
 

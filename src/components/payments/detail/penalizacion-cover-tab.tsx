@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 // components/penalizacion-cover-tab.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateInLima } from "@/lib/date-utils";
+import { formatDateInBogota } from "@/lib/date-utils";
 import type {
   BrandingWithRelations,
   ClassWithRelations,
@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 
 const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("es-PE", {
+  return new Intl.NumberFormat("es-CO", {
     style: "currency",
-    currency: "PEN",
+    currency: "COP",
     minimumFractionDigits: 2,
   }).format(amount);
 };
@@ -571,7 +571,7 @@ export function PenalizacionesCoversTab({
                             </span>
                           </div>
                           <div className="mt-1 space-y-1">
-                            <div>Fecha: {formatDateInLima(clase.date)}</div>
+                            <div>Fecha: {formatDateInBogota(clase.date)}</div>
                             <div>Disciplina: {clase.discipline?.name}</div>
                             <div>Instructores: {clase.vsNum}</div>
                           </div>
