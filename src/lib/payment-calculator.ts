@@ -522,13 +522,19 @@ export async function calculateInstructorPaymentData(
   // Get all disciplines for penalty calculation
   const allDisciplines = Array.from(classesByDiscipline.values())
     .map((disciplineClasses) => disciplineClasses[0]?.discipline)
-    .filter((d): d is Discipline => d !== undefined)
+    .filter((d): d is NonNullable<typeof d> => d !== undefined)
     .map((d) => ({ id: d.id, name: d.name }));
 
   // Calculate penalties - only active penalties
   const activePenalties = penalties.filter((p) => p.active);
   const penaltyInfo = calculatePenalties(
-    activePenalties,
+    activePenalties.map((p) => ({
+      points: p.points,
+      type: p.type as Penalty["type"],
+      description: p.description,
+      appliedAt: p.appliedAt,
+      disciplineId: p.disciplineId,
+    })),
     classes.length,
     allDisciplines,
     logs
