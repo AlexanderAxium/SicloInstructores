@@ -228,10 +228,16 @@ export default function PenalizacionesPage() {
   };
 
   const handleDialogSubmit = (data: PenaltyFormData) => {
+    // Convert null to undefined for disciplineId to match API schema
+    const payload = {
+      ...data,
+      disciplineId: data.disciplineId ?? undefined,
+    };
+
     if (selectedPenalty) {
-      updatePenalty.mutate({ id: selectedPenalty.id, ...data });
+      updatePenalty.mutate({ id: selectedPenalty.id, ...payload });
     } else {
-      createPenalty.mutate(data);
+      createPenalty.mutate(payload);
     }
   };
 
