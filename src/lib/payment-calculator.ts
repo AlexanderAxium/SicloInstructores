@@ -31,10 +31,24 @@ export interface BonusCalculation {
   total: number;
 }
 
+export interface PenaltyCalculation {
+  points: number;
+  maxPermitidos: number;
+  excedentes: number;
+  descuento: number;
+  detalle: Array<{
+    tipo: string;
+    puntos: number;
+    descripcion: string;
+    fecha: string;
+    disciplina: string;
+  }>;
+}
+
 export interface PaymentCalculationData {
   baseAmount: number;
   bonuses: BonusCalculation;
-  penalties: number;
+  penalties: PenaltyCalculation;
   retention: number;
   finalPayment: number;
   classCalculations: ClassCalculationResult[];
@@ -274,37 +288,87 @@ export function calculateAdditionalBonuses(
   };
 }
 
+const MAX_PENALIZACION_PORCENTAJE = 10; // Máximo 10% de descuento por penalizaciones
+
 /**
- * Calculate penalties
+ * Calculate penalties - matches SilcoAdmin logic
+ * Returns penalty information including points, discount percentage, and amount
  */
 export function calculatePenalties(
-  penalties: Pick<Penalty, "points">[],
-  baseAmount: number,
+  penalties: Pick<
+    Penalty,
+    "points" | "type" | "description" | "appliedAt" | "disciplineId"
+  >[],
+  totalClasses: number,
+  disciplines: Array<{ id: string; name: string }>,
   logs: string[]
-): number {
+): {
+  points: number;
+  maxPermitidos: number;
+  excedentes: number;
+  descuento: number;
+  detalle: Array<{
+    tipo: string;
+    puntos: number;
+    descripcion: string;
+    fecha: string;
+    disciplina: string;
+  }>;
+} {
   if (penalties.length === 0) {
-    return 0;
+    return {
+      points: 0,
+      maxPermitidos: 0,
+      excedentes: 0,
+      descuento: 0,
+      detalle: [],
+    };
   }
 
-  const totalPoints = penalties.reduce(
-    (sum, penalty) => sum + penalty.points,
-    0
+  const totalClases = totalClasses;
+  const maxPuntosPermitidos = Math.floor(
+    (totalClases * MAX_PENALIZACION_PORCENTAJE) / 100
   );
-  const maxAllowedPoints = 10; // This should come from configuration
-  const excessPoints = Math.max(0, totalPoints - maxAllowedPoints);
 
-  // Calculate penalty percentage (max 10%)
-  const penaltyPercentage = Math.min(excessPoints * 2, 10); // 2% per excess point, max 10%
-  const penaltyAmount = (baseAmount * penaltyPercentage) / 100;
+  // Detalle completo de cada penalización
+  const detallePenalizaciones = penalties.map((p) => ({
+    tipo: p.type,
+    puntos: p.points,
+    descripcion: p.description || "Sin descripción",
+    fecha:
+      typeof p.appliedAt === "string" ? p.appliedAt : p.appliedAt.toISOString(),
+    disciplina: p.disciplineId
+      ? disciplines.find((d) => d.id === p.disciplineId)?.name || "General"
+      : "General",
+  }));
+
+  const totalPuntos = penalties.reduce((sum, p) => sum + p.points, 0);
+  const puntosExcedentes = Math.max(0, totalPuntos - maxPuntosPermitidos);
+  const porcentajeDescuento = Math.min(
+    puntosExcedentes,
+    MAX_PENALIZACION_PORCENTAJE
+  );
 
   logs.push(
-    `⚠️ Penalizaciones: ${totalPoints} puntos totales, ${excessPoints} excedentes`
+    `⚠️ Penalizaciones: ${totalPuntos} puntos totales de ${penalties.length} penalizaciones`
   );
   logs.push(
-    `💰 Descuento por penalizaciones: ${penaltyPercentage}% = S/.${penaltyAmount.toFixed(2)}`
+    `📊 Límite permitido: ${maxPuntosPermitidos} puntos (10% de ${totalClases} clases)`
   );
+  if (puntosExcedentes > 0) {
+    logs.push(`⚠️ Puntos excedentes: ${puntosExcedentes}`);
+    logs.push(`💰 Descuento por penalizaciones: ${porcentajeDescuento}%`);
+  } else {
+    logs.push("✅ No hay puntos excedentes, no se aplica descuento");
+  }
 
-  return penaltyAmount;
+  return {
+    points: totalPuntos,
+    maxPermitidos: maxPuntosPermitidos,
+    excedentes: puntosExcedentes,
+    descuento: porcentajeDescuento,
+    detalle: detallePenalizaciones,
+  };
 }
 
 /**
@@ -455,23 +519,36 @@ export async function calculateInstructorPaymentData(
     logs
   );
 
-  // Calculate penalties
-  const penaltyAmount = calculatePenalties(penalties, totalAmount, logs);
+  // Get all disciplines for penalty calculation
+  const allDisciplines = Array.from(classesByDiscipline.values())
+    .map((disciplineClasses) => disciplineClasses[0]?.discipline)
+    .filter((d): d is Discipline => d !== undefined)
+    .map((d) => ({ id: d.id, name: d.name }));
+
+  // Calculate penalties - only active penalties
+  const activePenalties = penalties.filter((p) => p.active);
+  const penaltyInfo = calculatePenalties(
+    activePenalties,
+    classes.length,
+    allDisciplines,
+    logs
+  );
 
   // Calculate retention (8% of base amount)
   const retentionAmount = totalAmount * 0.08;
   logs.push(`💰 Retención (8%): S/.${retentionAmount.toFixed(2)}`);
 
   // Calculate final payment
-  const finalPayment =
-    totalAmount + bonuses.total - penaltyAmount - retentionAmount;
+  // Note: Penalty discount is applied later in the payment calculation flow
+  // based on base + adjustment + bonuses, not just base
+  const finalPayment = totalAmount + bonuses.total - retentionAmount;
 
-  logs.push(`💰 Pago final: S/.${finalPayment.toFixed(2)}`);
+  logs.push(`💰 Pago final (sin penalización): S/.${finalPayment.toFixed(2)}`);
 
   return {
     baseAmount: totalAmount,
     bonuses,
-    penalties: penaltyAmount,
+    penalties: penaltyInfo,
     retention: retentionAmount,
     finalPayment,
     classCalculations,

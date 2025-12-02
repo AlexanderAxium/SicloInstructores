@@ -256,10 +256,10 @@ export const penaltiesRouter = router({
           "CUSTOM",
         ]),
         points: z.number().min(0),
-        description: z.string().optional(),
+        description: z.string().optional().nullable(),
         active: z.boolean().default(true),
         appliedAt: z.string().optional(),
-        comments: z.string().optional(),
+        comments: z.string().optional().nullable(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -351,10 +351,10 @@ export const penaltiesRouter = router({
           ])
           .optional(),
         points: z.number().optional(),
-        description: z.string().optional(),
+        description: z.string().optional().nullable(),
         active: z.boolean().optional(),
         appliedAt: z.string().optional(),
-        comments: z.string().optional(),
+        comments: z.string().optional().nullable(),
       })
     )
     .mutation(async ({ input, ctx }) => {

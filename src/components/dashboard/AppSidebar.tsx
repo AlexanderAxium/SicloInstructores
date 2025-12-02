@@ -17,6 +17,7 @@ import {
 import { useRBAC } from "@/hooks/useRBAC";
 import { PermissionAction, PermissionResource } from "@/types/rbac";
 import {
+  AlertTriangle,
   BarChart3,
   Bike,
   BookOpen,
@@ -307,6 +308,16 @@ export function AppSidebar() {
               requiredPermissions: {
                 action: PermissionAction.READ,
                 resource: PermissionResource.BRANDEO,
+              },
+            },
+            {
+              title: "Penalizaciones",
+              href: "/dashboard/penalizaciones",
+              icon: AlertTriangle,
+              description: "Gestionar penalizaciones de instructores",
+              requiredPermissions: {
+                action: PermissionAction.READ,
+                resource: PermissionResource.PENALIZACION,
               },
             },
           ];

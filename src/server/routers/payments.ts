@@ -718,16 +718,25 @@ export const paymentsRouter = router({
             logs
           );
 
-          // Recompute retention including preserved adjustment
-          const baseSubtotal =
-            calculationData.baseAmount +
-            calculationData.bonuses.total -
-            calculationData.penalties;
+          // Calculate adjustment amount
           const adjustmentAmount =
             preservedAdjustmentType === "PERCENTAGE"
               ? (calculationData.baseAmount * preservedAdjustment) / 100
               : preservedAdjustment;
-          const subtotalBeforeRetention = baseSubtotal + adjustmentAmount;
+
+          // Calculate penalty discount on base + adjustment + bonuses (matching SilcoAdmin logic)
+          const baseParaPenalizacion =
+            calculationData.baseAmount +
+            adjustmentAmount +
+            calculationData.bonuses.total;
+          const descuentoPenalizacion =
+            calculationData.penalties.descuento || 0;
+          const montoDescuentoPenalizacion =
+            baseParaPenalizacion * (descuentoPenalizacion / 100);
+
+          // Calculate final amounts
+          const subtotalBeforeRetention =
+            baseParaPenalizacion - montoDescuentoPenalizacion;
           const recalculatedRetention =
             subtotalBeforeRetention * RETENTION_VALUE;
           const recalculatedFinal =
@@ -744,7 +753,14 @@ export const paymentsRouter = router({
                 JSON.stringify({
                   classCalculations: calculationData.classCalculations,
                   bonuses: calculationData.bonuses,
-                  penalties: calculationData.penalties,
+                  penalizaciones: {
+                    puntos: calculationData.penalties.points,
+                    maxPermitidos: calculationData.penalties.maxPermitidos,
+                    excedentes: calculationData.penalties.excedentes,
+                    descuento: calculationData.penalties.descuento,
+                    montoDescuento: montoDescuentoPenalizacion,
+                    detalle: calculationData.penalties.detalle,
+                  },
                   retention: recalculatedRetention,
                 })
               ),
@@ -755,7 +771,7 @@ export const paymentsRouter = router({
               retention: recalculatedRetention,
               adjustment: preservedAdjustment,
               adjustmentType: preservedAdjustmentType,
-              penalty: calculationData.penalties,
+              penalty: montoDescuentoPenalizacion,
               cover: calculationData.bonuses.cover,
               branding: calculationData.bonuses.branding,
               themeRide: calculationData.bonuses.themeRide,
@@ -787,12 +803,19 @@ export const paymentsRouter = router({
           logs
         );
 
-        const baseSubtotal =
-          calculationData.baseAmount +
-          calculationData.bonuses.total -
-          calculationData.penalties;
-        const recalculatedRetention = baseSubtotal * RETENTION_VALUE;
-        const recalculatedFinal = baseSubtotal - recalculatedRetention;
+        // Calculate penalty discount on base + bonuses (matching SilcoAdmin logic)
+        const baseParaPenalizacion =
+          calculationData.baseAmount + calculationData.bonuses.total;
+        const descuentoPenalizacion = calculationData.penalties.descuento || 0;
+        const montoDescuentoPenalizacion =
+          baseParaPenalizacion * (descuentoPenalizacion / 100);
+
+        // Calculate final amounts
+        const subtotalBeforeRetention =
+          baseParaPenalizacion - montoDescuentoPenalizacion;
+        const recalculatedRetention = subtotalBeforeRetention * RETENTION_VALUE;
+        const recalculatedFinal =
+          subtotalBeforeRetention - recalculatedRetention;
 
         const payment = await prisma.instructorPayment.create({
           data: {
@@ -805,7 +828,14 @@ export const paymentsRouter = router({
               JSON.stringify({
                 classCalculations: calculationData.classCalculations,
                 bonuses: calculationData.bonuses,
-                penalties: calculationData.penalties,
+                penalizaciones: {
+                  puntos: calculationData.penalties.points,
+                  maxPermitidos: calculationData.penalties.maxPermitidos,
+                  excedentes: calculationData.penalties.excedentes,
+                  descuento: calculationData.penalties.descuento,
+                  montoDescuento: montoDescuentoPenalizacion,
+                  detalle: calculationData.penalties.detalle,
+                },
                 retention: recalculatedRetention,
               })
             ),
@@ -816,7 +846,7 @@ export const paymentsRouter = router({
             retention: recalculatedRetention,
             adjustment: 0,
             adjustmentType: "FIXED",
-            penalty: calculationData.penalties,
+            penalty: montoDescuentoPenalizacion,
             cover: calculationData.bonuses.cover,
             branding: calculationData.bonuses.branding,
             themeRide: calculationData.bonuses.themeRide,
@@ -1091,9 +1121,8 @@ export const paymentsRouter = router({
               });
             }
 
-            // Process bonuses and penalties
+            // Process bonuses
             instructorLog.details.bonuses = result.bonuses;
-            instructorLog.details.penalties = result.penalties;
             instructorLog.details.retention = result.retention;
             instructorLog.details.totalAmount = result.baseAmount;
             instructorLog.details.finalPayment = result.finalPayment;
@@ -1110,20 +1139,36 @@ export const paymentsRouter = router({
             const preservedAdjustmentType = previous?.adjustmentType ?? "FIXED";
             const preservedComments = previous?.comments ?? undefined;
 
+            // Calculate penalty discount amount for logging (after preservedAdjustment is declared)
+            const baseParaPenalizacionLog =
+              result.baseAmount + preservedAdjustment + result.bonuses.total;
+            const montoDescuentoPenalizacionLog =
+              baseParaPenalizacionLog *
+              ((result.penalties.descuento || 0) / 100);
+            instructorLog.details.penalties = montoDescuentoPenalizacionLog;
+
             if (previous) {
               await prisma.instructorPayment.delete({
                 where: { id: previous.id },
               });
             }
 
-            // Recalculate retention including preserved adjustment
-            const baseSubtotal =
-              result.baseAmount + result.bonuses.total - result.penalties;
+            // Calculate adjustment amount
             const adjustmentAmount =
               preservedAdjustmentType === "PERCENTAGE"
                 ? (result.baseAmount * preservedAdjustment) / 100
                 : preservedAdjustment;
-            const subtotalBeforeRetention = baseSubtotal + adjustmentAmount;
+
+            // Calculate penalty discount on base + adjustment + bonuses (matching SilcoAdmin logic)
+            const baseParaPenalizacion =
+              result.baseAmount + adjustmentAmount + result.bonuses.total;
+            const descuentoPenalizacion = result.penalties.descuento || 0;
+            const montoDescuentoPenalizacion =
+              baseParaPenalizacion * (descuentoPenalizacion / 100);
+
+            // Calculate final amounts
+            const subtotalBeforeRetention =
+              baseParaPenalizacion - montoDescuentoPenalizacion;
             const recalculatedRetention =
               subtotalBeforeRetention * RETENTION_VALUE;
             const recalculatedFinal =
@@ -1141,7 +1186,14 @@ export const paymentsRouter = router({
                   JSON.stringify({
                     classCalculations: result.classCalculations,
                     bonuses: result.bonuses,
-                    penalties: result.penalties,
+                    penalizaciones: {
+                      puntos: result.penalties.points,
+                      maxPermitidos: result.penalties.maxPermitidos,
+                      excedentes: result.penalties.excedentes,
+                      descuento: result.penalties.descuento,
+                      montoDescuento: montoDescuentoPenalizacion,
+                      detalle: result.penalties.detalle,
+                    },
                     retention: recalculatedRetention,
                   })
                 ),
@@ -1152,7 +1204,7 @@ export const paymentsRouter = router({
                 retention: recalculatedRetention,
                 adjustment: preservedAdjustment,
                 adjustmentType: preservedAdjustmentType,
-                penalty: result.penalties,
+                penalty: montoDescuentoPenalizacion,
                 cover: result.bonuses.cover,
                 branding: result.bonuses.branding,
                 themeRide: result.bonuses.themeRide,
